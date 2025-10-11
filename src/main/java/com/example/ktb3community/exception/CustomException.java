@@ -1,5 +1,6 @@
 package com.example.ktb3community.exception;
 
+import com.example.ktb3community.common.error.ErrorCode;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 

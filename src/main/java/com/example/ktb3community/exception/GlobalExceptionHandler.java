@@ -1,10 +1,12 @@
 package com.example.ktb3community.exception;
 
+import com.example.ktb3community.common.error.ErrorCode;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.validation.BindException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -13,7 +15,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 
-import java.net.BindException;
 
 @Slf4j
 @RestControllerAdvice
@@ -88,7 +89,7 @@ public class GlobalExceptionHandler {
 //                        ErrorCode.AUTH_UNAUTHORIZED.getMessage()));
 //    }
 //
-//    @ExceptionHandler(AccessΩDeniedException.class)
+//    @ExceptionHandler(AccessDeniedException.class)
 //    public ResponseEntity<ErrorResponseDto> handleAccessDenied(AccessDeniedException ex) {
 //        log.info("[403] Access denied: {}", ex.getMessage());
 //        return ResponseEntity
