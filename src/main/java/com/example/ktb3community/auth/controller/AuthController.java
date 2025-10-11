@@ -1,5 +1,6 @@
 package com.example.ktb3community.auth.controller;
 
+import com.example.ktb3community.auth.dto.LoginRequest;
 import com.example.ktb3community.auth.dto.SignUpRequest;
 import com.example.ktb3community.auth.service.AuthService;
 import com.example.ktb3community.common.response.ApiResponse;
@@ -25,5 +26,19 @@ public class AuthController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.ok(me));
+    }
+
+    @Operation(summary = "로그인")
+    @PostMapping("/login")
+    public ResponseEntity<ApiResponse<MeResponse>> login(@Valid @RequestBody LoginRequest loginRequest) {
+        MeResponse me = authService.login(loginRequest);
+        return ResponseEntity.ok(ApiResponse.ok(me));
+    }
+
+    @Operation(summary = "로그아웃")
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout() {
+        //TODO 쿠키 즉시 만료 로직 추가
+        return ResponseEntity.noContent().build();
     }
 }

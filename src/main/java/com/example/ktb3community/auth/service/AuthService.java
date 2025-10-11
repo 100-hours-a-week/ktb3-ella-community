@@ -1,5 +1,6 @@
 package com.example.ktb3community.auth.service;
 
+import com.example.ktb3community.auth.dto.LoginRequest;
 import com.example.ktb3community.auth.dto.SignUpRequest;
 import com.example.ktb3community.common.error.ErrorCode;
 import com.example.ktb3community.exception.BusinessException;
@@ -26,5 +27,14 @@ public class AuthService {
         }
         User saved = inMemoryUserRepository.save(User.createNew(email, signUpRequest.password(), signUpRequest.nickname(), signUpRequest.profileImageUrl(), Instant.now()));
         return new MeResponse(saved.getEmail(), saved.getNickname(), saved.getProfileImageUrl());
+    }
+
+    public MeResponse login(LoginRequest loginRequest) {
+        String email = loginRequest.email().trim().toLowerCase();
+        User user = inMemoryUserRepository.findByEmail(email).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        if(!user.getPasswordHash().equals(loginRequest.password())) {
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+        }
+        return new MeResponse(user.getEmail(), user.getNickname(), user.getProfileImageUrl());
     }
 }
