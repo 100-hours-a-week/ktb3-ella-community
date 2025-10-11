@@ -23,7 +23,9 @@ public enum ErrorCode {
     TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "TOKEN_EXPIRED", "토큰이 만료되었습니다."),
 
     // User
-    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_NOT_FOUND", "존재하지 않는 사용자입니다.");
+    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_NOT_FOUND", "존재하지 않는 사용자입니다."),
+    EMAIL_ALREADY_EXIST(HttpStatus.CONFLICT, "EMAIL_ALREADY_EXIST", "이미 사용 중인 이메일입니다."),
+    NICKNAME_ALREADY_EXIST(HttpStatus.CONFLICT, "NICKNAME_ALREADY_EXIST", "이미 사용 중인 닉네임입니다.");
 
     private final HttpStatus status;
     private final String code;

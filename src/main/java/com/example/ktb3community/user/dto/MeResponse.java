@@ -1,4 +1,4 @@
-package com.example.ktb3community.user.domain.dto;
+package com.example.ktb3community.user.dto;
 
 public record MeResponse(
         String email,

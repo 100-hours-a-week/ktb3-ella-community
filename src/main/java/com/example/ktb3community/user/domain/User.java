@@ -33,6 +33,12 @@ public class User {
         // TODO: Spring Security 추가 시 비밀번호 암호화 추가
         return new User(null, email, password, nickname, profileImageUrl, now, now, null);
     }
+    // 인메모리용 임시 생성자
+    public static User rehydrate(Long id, String email, String passwordHash,
+                                 String nickname, String profileImageUrl,
+                                 Instant createdAt, Instant updatedAt, Instant deletedAt) {
+        return new User(id, email, passwordHash, nickname, profileImageUrl, createdAt, updatedAt, deletedAt);
+    }
 
     public void updateProfile(String nickname, String profileImageUrl, Instant now) {
         this.nickname = nickname;
