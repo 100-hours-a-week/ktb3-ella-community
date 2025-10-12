@@ -25,11 +25,11 @@ public class PostService {
     private final InMemoryUserRepository inMemoryUserRepository;
     private final CommentService commentService;
 
-    public CreatePostResponse createPost(CreatePostRequest createPostRequest) {
-        if(!inMemoryUserRepository.existsById(createPostRequest.userId())){
+    public CreatePostResponse createPost(Long userId, CreatePostRequest createPostRequest) {
+        if(!inMemoryUserRepository.existsById(userId)){
             throw new UserNotFoundException();
         }
-        Post saved = inMemoryPostRepository.save(Post.createNew(createPostRequest.userId(), createPostRequest.title(),
+        Post saved = inMemoryPostRepository.save(Post.createNew(userId, createPostRequest.title(),
                 createPostRequest.content(), createPostRequest.postImageUrl(), Instant.now()));
         return new CreatePostResponse(saved.getId());
     }

@@ -5,9 +5,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 public record CreatePostRequest(
-        //TODO: userID 임시 추가
-        @Schema(description = "사용자 id", example = "1")
-        Long userId,
         @Schema(description = "게시글 제목", example = "KTB3 커뮤니티 만드는 방법")
         @NotBlank @Size(max = 26)
         String title,

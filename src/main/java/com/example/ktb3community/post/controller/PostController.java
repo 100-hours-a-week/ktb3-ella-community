@@ -24,9 +24,9 @@ public class PostController {
     private final PostService postService;
 
     @Operation(summary = "게시글 생성")
-    @PostMapping
-    public ResponseEntity<ApiResponse<CreatePostResponse>> createPost(@Valid @RequestBody CreatePostRequest createPostRequest) {
-        CreatePostResponse createPostResponse = postService.createPost(createPostRequest);
+    @PostMapping("/{userId}")
+    public ResponseEntity<ApiResponse<CreatePostResponse>> createPost(@PathVariable Long userId, @Valid @RequestBody CreatePostRequest createPostRequest) {
+        CreatePostResponse createPostResponse = postService.createPost(userId, createPostRequest);
         return ResponseEntity.ok(ApiResponse.ok(createPostResponse));
     }
 
