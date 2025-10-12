@@ -9,6 +9,6 @@ public record PostListResponse(
         long likeCount,
         long viewCount,
         long commentCount,
-        Instant creatAt
+        Instant createdAt
 ) {
 }
