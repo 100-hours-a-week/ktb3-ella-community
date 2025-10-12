@@ -21,9 +21,9 @@ public class CommentController {
     private final CommentService commentService;
 
     @Operation(summary = "댓글 생성")
-    @PostMapping("/posts/{postId}/comments")
-    public ResponseEntity<ApiResponse<CommentResponse>> createComment(@PathVariable Long postId, @Valid @RequestBody CreateCommentRequest createCommentRequest){
-        CommentResponse commentResponse = commentService.createComment(postId, createCommentRequest);
+    @PostMapping("/posts/{postId}/comments/{userId}")
+    public ResponseEntity<ApiResponse<CommentResponse>> createComment(@PathVariable Long postId, @PathVariable Long userId, @Valid @RequestBody CreateCommentRequest createCommentRequest){
+        CommentResponse commentResponse = commentService.createComment(postId, userId, createCommentRequest);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.ok(commentResponse));
@@ -35,5 +35,19 @@ public class CommentController {
         if(page < 1){throw new BusinessException(ErrorCode.INVALID_PAGE);}
         PageResponse<CommentResponse> comments = commentService.getCommentList(postId, page);
         return ResponseEntity.ok(ApiResponse.ok(comments));
+    }
+
+    @Operation(summary = "댓글 수정")
+    @PutMapping("comments/{commentId}/{userId}")
+    public ResponseEntity<ApiResponse<CommentResponse>> updateComment(@PathVariable Long commentId, @PathVariable Long userId, @Valid @RequestBody CreateCommentRequest createCommentRequest){
+        CommentResponse commentResponse = commentService.updateComment(commentId, userId, createCommentRequest);
+        return ResponseEntity.ok(ApiResponse.ok(commentResponse));
+    }
+
+    @Operation(summary = "댓글 삭제")
+    @DeleteMapping("comments/{commentId}/{userId}")
+    public ResponseEntity<Void> deleteComment(@PathVariable Long commentId, @PathVariable Long userId){
+        commentService.deleteComment(commentId, userId);
+        return ResponseEntity.noContent().build();
     }
 }

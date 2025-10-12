@@ -30,7 +30,7 @@ public class Comment {
         return new Comment(id, postId, userId, content, createdAt, updatedAt, deletedAt);
     }
     public void updateContent(String content, Instant now) {
-        if (content == null) { this.content = content; this.updatedAt = now; }
+        if (content != null && !content.isBlank()) { this.content = content; this.updatedAt = now; }
     }
     public void delete(Instant now) {
         if(this.deletedAt == null ) { deletedAt = now; }
