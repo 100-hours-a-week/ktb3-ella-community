@@ -13,7 +13,7 @@ public class InMemoryUserRepository {
     // 시작값을 1로 초기화
     private final AtomicLong seq = new AtomicLong(1);
     // 키가 long, 값이 User인 해시맵
-    private final ConcurrentHashMap<Long, User> db = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Long, User> users = new ConcurrentHashMap<>();
 
     public User save(User user) {
         if (user.getId() == null) {
@@ -22,12 +22,12 @@ public class InMemoryUserRepository {
                     user.getProfileImageUrl(), user.getCreatedAt(), user.getUpdatedAt(), user.getDeletedAt());
         }
         //키가 없으면 추가, 있으면 교체
-        db.put(user.getId(), user);
+        users.put(user.getId(), user);
         return user;
     }
 
     public Optional<User> findByEmail(String email) {
-        return db.values().stream().filter(u -> u.getEmail().equals(email)).findAny();
+        return users.values().stream().filter(u -> u.getEmail().equals(email)).findAny();
     }
 
     public boolean existsByEmail(String email) {
@@ -35,7 +35,7 @@ public class InMemoryUserRepository {
     }
 
     public Optional<User> findByNickname(String nickname) {
-        return db.values().stream().filter(u -> u.getNickname().equals(nickname)).findAny();
+        return users.values().stream().filter(u -> u.getNickname().equals(nickname)).findAny();
     }
 
     public boolean existsByNickname(String nickname) {
@@ -43,6 +43,6 @@ public class InMemoryUserRepository {
     }
 
     public Optional<User> findById(Long id) {
-        return db.values().stream().filter(u -> u.getId().equals(id)).findAny();
+        return users.values().stream().filter(u -> u.getId().equals(id)).findAny();
     }
 }
