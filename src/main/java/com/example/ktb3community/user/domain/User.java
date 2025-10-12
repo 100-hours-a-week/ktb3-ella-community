@@ -62,4 +62,9 @@ public class User {
             this.updatedAt = now;
         }
     }
+
+    public void updatePasswordHash(String passwordHash, Instant now) {
+        this.passwordHash = passwordHash;
+        this.updatedAt = now;
+    }
 }

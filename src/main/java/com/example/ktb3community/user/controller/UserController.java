@@ -6,6 +6,7 @@ import com.example.ktb3community.exception.BusinessException;
 import com.example.ktb3community.user.dto.AvailabilityResponse;
 import com.example.ktb3community.user.dto.MeResponse;
 import com.example.ktb3community.user.dto.UpdateMeRequest;
+import com.example.ktb3community.user.dto.UpdatePasswordRequest;
 import com.example.ktb3community.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
@@ -45,5 +46,18 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.ok(me));
     }
 
+    @Operation(summary = "비밀번호 수정")
+    @PostMapping("me/password/{userId}")
+    public ResponseEntity<Void> updatePassword(@PathVariable Long userId, @Valid @RequestBody UpdatePasswordRequest updatePasswordRequest) {
+        userService.updatePassword(userId, updatePasswordRequest);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "회원 탈퇴")
+    @DeleteMapping("/me/{userId}")
+    public ResponseEntity<Void> withdrawMe(@PathVariable Long userId) {
+        userService.withdrawMe(userId);
+        return ResponseEntity.noContent().build();
+    }
 
 }

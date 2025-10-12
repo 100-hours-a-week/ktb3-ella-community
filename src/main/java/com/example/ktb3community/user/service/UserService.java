@@ -6,6 +6,7 @@ import com.example.ktb3community.user.domain.User;
 import com.example.ktb3community.user.dto.AvailabilityResponse;
 import com.example.ktb3community.user.dto.MeResponse;
 import com.example.ktb3community.user.dto.UpdateMeRequest;
+import com.example.ktb3community.user.dto.UpdatePasswordRequest;
 import com.example.ktb3community.user.exception.UserNotFoundException;
 import com.example.ktb3community.user.repository.InMemoryUserRepository;
 import lombok.AllArgsConstructor;
@@ -51,5 +52,19 @@ public class UserService {
             user.updateProfileImageUrl(updateMeRequest.profileImageUrl(), Instant.now());
         }
         return new MeResponse(user.getEmail(), user.getNickname(), user.getProfileImageUrl());
+    }
+
+    public void updatePassword(Long userId, UpdatePasswordRequest updatePasswordRequest){
+        User user = inMemoryUserRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+        //TODO: 비밀번호 암호화 로직 추가
+        user.updatePasswordHash(updatePasswordRequest.newPassword(), Instant.now());
+    }
+
+    public void withdrawMe(Long userId){
+        User user = inMemoryUserRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+        //TODO: 쿠키 즉시 만료 로직 추가
+        user.delete(Instant.now());
     }
 }
