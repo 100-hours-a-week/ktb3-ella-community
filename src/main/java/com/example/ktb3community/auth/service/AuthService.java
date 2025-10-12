@@ -6,6 +6,7 @@ import com.example.ktb3community.common.error.ErrorCode;
 import com.example.ktb3community.exception.BusinessException;
 import com.example.ktb3community.user.domain.User;
 import com.example.ktb3community.user.dto.MeResponse;
+import com.example.ktb3community.user.exception.UserNotFoundException;
 import com.example.ktb3community.user.repository.InMemoryUserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -31,9 +32,9 @@ public class AuthService {
 
     public MeResponse login(LoginRequest loginRequest) {
         String email = loginRequest.email().trim().toLowerCase();
-        User user = inMemoryUserRepository.findByEmail(email).orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        User user = inMemoryUserRepository.findByEmail(email).orElseThrow(UserNotFoundException::new);
         if(!user.getPasswordHash().equals(loginRequest.password())) {
-            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+            throw new UserNotFoundException();
         }
         return new MeResponse(user.getEmail(), user.getNickname(), user.getProfileImageUrl());
     }

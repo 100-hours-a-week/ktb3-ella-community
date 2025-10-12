@@ -1,5 +1,7 @@
 package com.example.ktb3community.user.domain;
 
+import com.example.ktb3community.common.error.ErrorCode;
+import com.example.ktb3community.exception.BusinessException;
 import lombok.Getter;
 
 import java.time.Instant;
@@ -40,10 +42,18 @@ public class User {
         return new User(id, email, passwordHash, nickname, profileImageUrl, createdAt, updatedAt, deletedAt);
     }
 
-    public void updateProfile(String nickname, String profileImageUrl, Instant now) {
-        this.nickname = nickname;
-        this.profileImageUrl = profileImageUrl;
-        this.updatedAt = now;
+    public void updateNickname(String nickname, Instant now) {
+        String n = nickname.trim();
+        if (n.isBlank() || n.length() > 10 || n.chars().anyMatch(Character::isWhitespace)) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+        if (!n.equals(this.nickname)) { this.nickname = n; this.updatedAt = now; }
+    }
+
+    public void updateProfileImageUrl(String profileImageUrl, Instant now) {
+        String p = profileImageUrl.trim();
+        if (p.isBlank()) { throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE); }
+        if (!p.equals(this.profileImageUrl)) { this.profileImageUrl = p; this.updatedAt = now; }
     }
 
     public void delete(Instant now) {

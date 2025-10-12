@@ -4,14 +4,14 @@ import com.example.ktb3community.common.error.ErrorCode;
 import com.example.ktb3community.common.response.ApiResponse;
 import com.example.ktb3community.exception.BusinessException;
 import com.example.ktb3community.user.dto.AvailabilityResponse;
+import com.example.ktb3community.user.dto.MeResponse;
+import com.example.ktb3community.user.dto.UpdateMeRequest;
 import com.example.ktb3community.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -29,4 +29,21 @@ public class UserController {
         AvailabilityResponse availabilityResponse = userService.getAvailability(email, nickname);
         return ResponseEntity.ok(ApiResponse.ok(availabilityResponse));
     }
+
+    @Operation(summary = "내 정보 조회")
+    @GetMapping("/me/{userId}")
+    public ResponseEntity<ApiResponse<MeResponse>> getMyProfile(@PathVariable Long userId) {
+        MeResponse me = userService.getMyProfile(userId);
+        return ResponseEntity.ok(ApiResponse.ok(me));
+    }
+
+    @Operation(summary = "내 정보 수정")
+    @PatchMapping("me/{userId}")
+    public ResponseEntity<ApiResponse<MeResponse>> updateMyProfile(
+            @PathVariable Long userId, @Valid @RequestBody UpdateMeRequest updateMeRequest) {
+        MeResponse me = userService.updateMyProfile(userId, updateMeRequest);
+        return ResponseEntity.ok(ApiResponse.ok(me));
+    }
+
+
 }

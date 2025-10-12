@@ -41,4 +41,8 @@ public class InMemoryUserRepository {
     public boolean existsByNickname(String nickname) {
         return findByNickname(nickname).isPresent();
     }
+
+    public Optional<User> findById(Long id) {
+        return db.values().stream().filter(u -> u.getId().equals(id)).findAny();
+    }
 }
