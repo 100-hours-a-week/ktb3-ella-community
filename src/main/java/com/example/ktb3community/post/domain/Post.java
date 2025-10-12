@@ -23,8 +23,8 @@ public class Post {
         this.id = id;
         this.userId = userId;
         this.title = title.trim();
-        this.content = content.trim();
-        this.postImageUrl = postImageUrl.trim();
+        this.content = content;
+        this.postImageUrl = postImageUrl;
         this.likeCount = like;
         this.viewCount = view;
         this.commentCount = cmt;

@@ -45,4 +45,8 @@ public class InMemoryUserRepository {
     public Optional<User> findById(Long id) {
         return users.values().stream().filter(u -> u.getId().equals(id)).findAny();
     }
+
+    public boolean existsById(Long id) {
+        return findById(id).isPresent();
+    }
 }
