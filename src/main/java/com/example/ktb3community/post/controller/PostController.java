@@ -46,10 +46,10 @@ public class PostController {
     }
 
     @Operation(summary = "게시글 상세 조회")
-    @GetMapping("/{postId}")
+    @GetMapping("/{postId}/{userId}")
     public ResponseEntity<ApiResponse<PostDetailResponse>> getPostDetail(
-            @PathVariable Long postId) {
-        PostDetailResponse postDetailResponse = postService.getPostDetail(postId);
+            @PathVariable Long postId, @PathVariable Long userId) {
+        PostDetailResponse postDetailResponse = postService.getPostDetail(postId, userId);
         return ResponseEntity.ok(ApiResponse.ok(postDetailResponse));
     }
 

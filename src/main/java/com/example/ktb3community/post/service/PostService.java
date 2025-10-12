@@ -9,6 +9,7 @@ import com.example.ktb3community.post.PostSort;
 import com.example.ktb3community.post.domain.Post;
 import com.example.ktb3community.post.dto.*;
 import com.example.ktb3community.post.exception.PostNotFoundException;
+import com.example.ktb3community.post.repository.InMemoryPostLikeRepository;
 import com.example.ktb3community.post.repository.InMemoryPostRepository;
 import com.example.ktb3community.user.domain.User;
 import com.example.ktb3community.user.exception.UserNotFoundException;
@@ -25,6 +26,7 @@ import java.util.List;
 public class PostService {
     private final InMemoryPostRepository inMemoryPostRepository;
     private final InMemoryUserRepository inMemoryUserRepository;
+    private final InMemoryPostLikeRepository inMemoryPostLikeRepository;
     private final CommentService commentService;
 
     public CreatePostResponse createPost(Long userId, CreatePostRequest createPostRequest) {
@@ -70,7 +72,7 @@ public class PostService {
         return new PageResponse<>(content, page, pageSize, totalPages);
     }
 
-    public PostDetailResponse getPostDetail(long postId) {
+    public PostDetailResponse getPostDetail(long postId, long userId) {
         Post post = inMemoryPostRepository.findById(postId)
                 .orElseThrow(PostNotFoundException::new);
         User user = inMemoryUserRepository.findById(post.getUserId())
@@ -88,7 +90,7 @@ public class PostService {
                 post.getLikeCount(),
                 post.getViewCount(),
                 post.getCommentCount(),
-                post.isLiked(),
+                inMemoryPostLikeRepository.exists(postId, userId),
                 post.getCreatedAt(),
                 commentsPage
         );
@@ -117,5 +119,4 @@ public class PostService {
         }
         post.delete(Instant.now());
     }
-
 }
