@@ -42,16 +42,17 @@ public class UserService {
     public MeResponse updateMe(Long userId, UpdateMeRequest updateMeRequest){
         User user = inMemoryUserRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
-        if (!updateMeRequest.nickname().isBlank() && !updateMeRequest.nickname().equals(user.getNickname())) {
-            inMemoryUserRepository.findByNickname(updateMeRequest.nickname())
+        String nickname = updateMeRequest.nickname();
+        if (nickname != null && !nickname.isBlank() && !nickname.equals(user.getNickname())) {
+            inMemoryUserRepository.findByNickname(nickname)
                     .filter(u -> !u.getId().equals(user.getId()))
                     .ifPresent(u -> { throw new BusinessException(ErrorCode.NICKNAME_ALREADY_EXIST); });
-            user.updateNickname(updateMeRequest.nickname(), Instant.now());
+            user.updateNickname(nickname, Instant.now());
         }
         if(updateMeRequest.profileImageUrl() != null && !updateMeRequest.profileImageUrl().isBlank()){
             user.updateProfileImageUrl(updateMeRequest.profileImageUrl(), Instant.now());
         }
-        return new MeResponse(user.getEmail(), user.getNickname(), user.getProfileImageUrl());
+        return new MeResponse(user.getEmail(), nickname, user.getProfileImageUrl());
     }
 
     public void updatePassword(Long userId, UpdatePasswordRequest updatePasswordRequest){

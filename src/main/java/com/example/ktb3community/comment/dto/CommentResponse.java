@@ -8,5 +8,5 @@ public record CommentResponse(
     long commentId,
     String content,
     Author author,
-    Instant createAt
+    Instant createdAt
 ){ }
