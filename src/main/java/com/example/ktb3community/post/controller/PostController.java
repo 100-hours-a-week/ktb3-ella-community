@@ -7,6 +7,7 @@ import com.example.ktb3community.exception.BusinessException;
 import com.example.ktb3community.post.PostSort;
 import com.example.ktb3community.post.dto.CreatePostRequest;
 import com.example.ktb3community.post.dto.CreatePostResponse;
+import com.example.ktb3community.post.dto.PostDetailResponse;
 import com.example.ktb3community.post.dto.PostListResponse;
 import com.example.ktb3community.post.service.PostService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,7 +33,7 @@ public class PostController {
     @Operation(summary = "게시글 목록 조회")
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<PostListResponse>>> list(
-            @RequestParam(required = true) int page,
+            @RequestParam(defaultValue = "1") int page,
             @RequestParam(required = false, defaultValue = "10") int pageSize,
             @RequestParam(required = false, defaultValue = "new") PostSort sort
     ) {
@@ -42,5 +43,13 @@ public class PostController {
         }
         PageResponse<PostListResponse> pageResponse = postService.getPostList(page, pageSize, sort);
         return ResponseEntity.ok(ApiResponse.ok(pageResponse));
+    }
+
+    @Operation(summary = "게시글 상세 조회")
+    @GetMapping("/{postId}")
+    public ResponseEntity<ApiResponse<PostDetailResponse>> getPostDetail(
+            @PathVariable Long postId) {
+        PostDetailResponse postDetailResponse = postService.getPostDetail(postId);
+        return ResponseEntity.ok(ApiResponse.ok(postDetailResponse));
     }
 }

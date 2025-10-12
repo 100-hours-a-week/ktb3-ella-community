@@ -27,9 +27,9 @@ public class InMemoryCommentRepository {
                 .filter(comment -> comment.getDeletedAt() == null);
     }
 
-    public List<Comment> findAll() {
+    public List<Comment> findByPostId(Long postId) {
         return comments.values().stream()
-                .filter(p -> p.getDeletedAt() == null)
+                .filter(p -> p.getDeletedAt() == null && p.getPostId().equals(postId))
                 .toList();
     }
 }

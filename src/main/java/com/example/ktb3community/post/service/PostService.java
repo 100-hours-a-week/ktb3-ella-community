@@ -1,12 +1,12 @@
 package com.example.ktb3community.post.service;
 
+import com.example.ktb3community.comment.dto.CommentResponse;
+import com.example.ktb3community.comment.service.CommentService;
 import com.example.ktb3community.common.pagination.PageResponse;
 import com.example.ktb3community.post.PostSort;
 import com.example.ktb3community.post.domain.Post;
-import com.example.ktb3community.post.dto.Author;
-import com.example.ktb3community.post.dto.CreatePostRequest;
-import com.example.ktb3community.post.dto.CreatePostResponse;
-import com.example.ktb3community.post.dto.PostListResponse;
+import com.example.ktb3community.post.dto.*;
+import com.example.ktb3community.post.exception.PostNotFoundException;
 import com.example.ktb3community.post.repository.InMemoryPostRepository;
 import com.example.ktb3community.user.domain.User;
 import com.example.ktb3community.user.exception.UserNotFoundException;
@@ -23,6 +23,7 @@ import java.util.List;
 public class PostService {
     private final InMemoryPostRepository inMemoryPostRepository;
     private final InMemoryUserRepository inMemoryUserRepository;
+    private final CommentService commentService;
 
     public CreatePostResponse createPost(CreatePostRequest createPostRequest) {
         if(!inMemoryUserRepository.existsById(createPostRequest.userId())){
@@ -65,6 +66,28 @@ public class PostService {
             );
         }).toList();
         return new PageResponse<>(content, page, pageSize, totalPages);
+    }
+
+    public PostDetailResponse getPostDetail(long postId) {
+        Post post = inMemoryPostRepository.findById(postId)
+                .orElseThrow(PostNotFoundException::new);
+        User user = inMemoryUserRepository.findById(post.getUserId())
+                .orElseThrow(UserNotFoundException::new);
+        Author author = new Author(user.getNickname(), user.getProfileImageUrl());
+        PageResponse<CommentResponse> commentsPage =
+                commentService.getCommentList(postId, 1);
+        return new PostDetailResponse(
+                post.getId(),
+                post.getTitle(),
+                post.getContent(),
+                post.getPostImageUrl(),
+                author,
+                post.getLikeCount(),
+                post.getViewCount(),
+                post.getCommentCount(),
+                post.getCreatedAt(),
+                commentsPage
+        );
     }
 
 }
