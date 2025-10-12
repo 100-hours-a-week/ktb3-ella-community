@@ -2,7 +2,9 @@ package com.example.ktb3community.post.service;
 
 import com.example.ktb3community.comment.dto.CommentResponse;
 import com.example.ktb3community.comment.service.CommentService;
+import com.example.ktb3community.common.error.ErrorCode;
 import com.example.ktb3community.common.pagination.PageResponse;
+import com.example.ktb3community.exception.BusinessException;
 import com.example.ktb3community.post.PostSort;
 import com.example.ktb3community.post.domain.Post;
 import com.example.ktb3community.post.dto.*;
@@ -76,6 +78,7 @@ public class PostService {
         Author author = new Author(user.getNickname(), user.getProfileImageUrl());
         PageResponse<CommentResponse> commentsPage =
                 commentService.getCommentList(postId, 1);
+        post.increaseView();
         return new PostDetailResponse(
                 post.getId(),
                 post.getTitle(),
@@ -88,6 +91,30 @@ public class PostService {
                 post.getCreatedAt(),
                 commentsPage
         );
+    }
+
+    public CreatePostResponse updatePost(Long postId, Long userId, CreatePostRequest createPostRequest) {
+        if(!inMemoryUserRepository.existsById(userId)){
+            throw new UserNotFoundException();
+        }
+        Post post = inMemoryPostRepository.findById(postId)
+                .orElseThrow(PostNotFoundException::new);
+        if(!post.getUserId().equals(userId)){
+            throw new BusinessException(ErrorCode.AUTH_FORBIDDEN);
+        }
+        post.updatePost(createPostRequest.title(), createPostRequest.content(), createPostRequest.postImageUrl(), Instant.now());
+        return new CreatePostResponse(post.getId());
+    }
+
+    public void deletePost(Long postId, Long userId) {
+        if(!inMemoryUserRepository.existsById(userId)){
+            throw new UserNotFoundException();
+        }Post post = inMemoryPostRepository.findById(postId)
+                .orElseThrow(PostNotFoundException::new);
+        if(!post.getUserId().equals(userId)){
+            throw new BusinessException(ErrorCode.AUTH_FORBIDDEN);
+        }
+        post.delete(Instant.now());
     }
 
 }

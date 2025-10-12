@@ -42,8 +42,8 @@ public class Post {
     }
 
     public void updatePost(String title, String content, String postImageUrl, Instant now) {
-        this.title = title;
-        this.content = content;
+        if ( title != null && !title.isBlank() ){ this.title = title; }
+        if ( content != null && !content.isBlank() ) { this.content = content; }
         this.postImageUrl = postImageUrl;
         this.updatedAt = now;
     }

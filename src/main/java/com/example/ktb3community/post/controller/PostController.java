@@ -52,4 +52,22 @@ public class PostController {
         PostDetailResponse postDetailResponse = postService.getPostDetail(postId);
         return ResponseEntity.ok(ApiResponse.ok(postDetailResponse));
     }
+
+    @Operation(summary = "게시글 수정")
+    @PutMapping("/{postId}/{userId}")
+    public ResponseEntity<ApiResponse<CreatePostResponse>> updatePost(
+            @PathVariable Long postId, @PathVariable Long userId, @Valid @RequestBody CreatePostRequest createPostRequest
+    ) {
+        CreatePostResponse createPostResponse = postService.updatePost(postId, userId, createPostRequest);
+        return ResponseEntity.ok(ApiResponse.ok(createPostResponse));
+    }
+
+    @Operation(summary = "게시글 삭제")
+    @DeleteMapping("/{postId}/{userId}")
+    public ResponseEntity<Void> deletePost(
+            @PathVariable Long postId, @PathVariable Long userId
+    ) {
+        postService.deletePost(postId, userId);
+        return ResponseEntity.noContent().build();
+    }
 }
