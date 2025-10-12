@@ -30,7 +30,9 @@ public enum ErrorCode {
     //POST
     INVALID_SORT(HttpStatus.BAD_REQUEST, "INVALID_SORT", "sort는 new|view|like|cmt만 허용합니다."),
     INVALID_PAGE_SIZE(HttpStatus.BAD_REQUEST, "INVALID_PAGE_SIZE", "pageSize는 1~20 사이만 허용합니다."),
-    INVALID_PAGE(HttpStatus.BAD_REQUEST, "INVALID_PAGE", "page는 1부터 허용합니다.");
+    INVALID_PAGE(HttpStatus.BAD_REQUEST, "INVALID_PAGE", "page는 1부터 허용합니다."),
+    POST_NOT_FOUND(HttpStatus.NOT_FOUND, "POST_NOT_FOUND", "존재하지 않는 게시글입니다.");
+
     private final HttpStatus status;
     private final String code;
     private final String message;
