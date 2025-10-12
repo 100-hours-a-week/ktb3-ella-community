@@ -29,6 +29,10 @@ public class InMemoryPostRepository {
                 .filter(post -> post.getDeletedAt() == null);
     }
 
+    public boolean existsById(Long id) {
+        return findById(id).isPresent();
+    }
+
     public List<Post> findAll() {
         return posts.values().stream()
                 .filter(p -> p.getDeletedAt() == null)
