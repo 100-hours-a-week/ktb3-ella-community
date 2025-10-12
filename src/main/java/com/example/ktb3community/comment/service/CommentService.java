@@ -38,6 +38,9 @@ public class CommentService {
         }
         Comment saved = inMemoryCommentRepository.save(Comment.createNew(postId, userId,
                 createCommentRequest.content(), Instant.now()));
+        Post post = inMemoryPostRepository.findById(saved.getPostId())
+                .orElseThrow(PostNotFoundException::new);
+        post.increaseComment();
         Author author = new Author(user.getNickname(), user.getProfileImageUrl());
         return new CommentResponse(saved.getId(), saved.getContent(), author, saved.getCreatedAt());
     }
@@ -73,13 +76,10 @@ public class CommentService {
                 .orElseThrow(CommentNotFound::new);
         User user = inMemoryUserRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
-        Post post = inMemoryPostRepository.findById(comment.getPostId())
-                .orElseThrow(PostNotFoundException::new);
         if(!comment.getUserId().equals(user.getId())) {
             throw new BusinessException(ErrorCode.AUTH_FORBIDDEN);
         }
         comment.updateContent(createCommentRequest.content(), Instant.now());
-        post.increaseComment();
         Author author = new Author(user.getNickname(), user.getProfileImageUrl());
         return new CommentResponse(comment.getId(), comment.getContent(), author, comment.getCreatedAt());
     }
@@ -91,10 +91,10 @@ public class CommentService {
                 .orElseThrow(UserNotFoundException::new);
         Post post = inMemoryPostRepository.findById(comment.getPostId())
                 .orElseThrow(PostNotFoundException::new);
-        post.decreaseComment();
         if(!comment.getUserId().equals(user.getId())) {
             throw new BusinessException(ErrorCode.AUTH_FORBIDDEN);
         }
         comment.delete(Instant.now());
+        post.decreaseComment();
     }
 }
