@@ -42,10 +42,10 @@ public class UserService {
     public MeResponse updateMe(Long userId, UpdateMeRequest updateMeRequest){
         User user = inMemoryUserRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
-        if(updateMeRequest.nickname() != null && !updateMeRequest.nickname().isBlank()){
-            if(inMemoryUserRepository.existsByNickname(updateMeRequest.nickname())){
-                throw new BusinessException(ErrorCode.NICKNAME_ALREADY_EXIST);
-            }
+        if (!updateMeRequest.nickname().isBlank() && !updateMeRequest.nickname().equals(user.getNickname())) {
+            inMemoryUserRepository.findByNickname(updateMeRequest.nickname())
+                    .filter(u -> !u.getId().equals(user.getId()))
+                    .ifPresent(u -> { throw new BusinessException(ErrorCode.NICKNAME_ALREADY_EXIST); });
             user.updateNickname(updateMeRequest.nickname(), Instant.now());
         }
         if(updateMeRequest.profileImageUrl() != null && !updateMeRequest.profileImageUrl().isBlank()){

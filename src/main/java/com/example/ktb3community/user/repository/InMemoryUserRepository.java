@@ -27,7 +27,8 @@ public class InMemoryUserRepository {
     }
 
     public Optional<User> findByEmail(String email) {
-        return users.values().stream().filter(u -> u.getEmail().equals(email)).findAny();
+        return users.values().stream().filter(u -> u.getEmail().equals(email))
+                .filter(u -> u.getDeletedAt() == null).findAny();
     }
 
     public boolean existsByEmail(String email) {
@@ -35,7 +36,9 @@ public class InMemoryUserRepository {
     }
 
     public Optional<User> findByNickname(String nickname) {
-        return users.values().stream().filter(u -> u.getNickname().equals(nickname)).findAny();
+        return users.values().stream()
+                .filter(u -> u.getNickname().equals(nickname) )
+                .filter(u -> u.getDeletedAt() == null).findAny();
     }
 
     public boolean existsByNickname(String nickname) {
@@ -43,7 +46,8 @@ public class InMemoryUserRepository {
     }
 
     public Optional<User> findById(Long id) {
-        return users.values().stream().filter(u -> u.getId().equals(id)).findAny();
+        return users.values().stream().filter(u -> u.getId().equals(id))
+                .filter(u -> u.getDeletedAt() == null).findAny();
     }
 
     public boolean existsById(Long id) {
