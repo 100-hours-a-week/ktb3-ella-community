@@ -32,16 +32,16 @@ public class UserController {
 
     @Operation(summary = "내 정보 조회")
     @GetMapping("/me/{userId}")
-    public ResponseEntity<ApiResponse<MeResponse>> getMyProfile(@PathVariable Long userId) {
-        MeResponse me = userService.getMyProfile(userId);
+    public ResponseEntity<ApiResponse<MeResponse>> getMe(@PathVariable Long userId) {
+        MeResponse me = userService.getMe(userId);
         return ResponseEntity.ok(ApiResponse.ok(me));
     }
 
     @Operation(summary = "내 정보 수정")
     @PatchMapping("me/{userId}")
-    public ResponseEntity<ApiResponse<MeResponse>> updateMyProfile(
+    public ResponseEntity<ApiResponse<MeResponse>> updateMe(
             @PathVariable Long userId, @Valid @RequestBody UpdateMeRequest updateMeRequest) {
-        MeResponse me = userService.updateMyProfile(userId, updateMeRequest);
+        MeResponse me = userService.updateMe(userId, updateMeRequest);
         return ResponseEntity.ok(ApiResponse.ok(me));
     }
 

@@ -32,13 +32,13 @@ public class UserService {
         return new AvailabilityResponse(emailAvailable, nicknameAvailable);
     }
 
-    public MeResponse getMyProfile(Long userId){
+    public MeResponse getMe(Long userId){
         User user = inMemoryUserRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
         return new MeResponse(user.getEmail(), user.getNickname(), user.getProfileImageUrl());
     }
 
-    public MeResponse updateMyProfile(Long userId, UpdateMeRequest updateMeRequest){
+    public MeResponse updateMe(Long userId, UpdateMeRequest updateMeRequest){
         User user = inMemoryUserRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
         if(updateMeRequest.nickname() != null && !updateMeRequest.nickname().isBlank()){
