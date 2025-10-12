@@ -14,6 +14,7 @@ public record PostDetailResponse(
         long likeCount,
         long viewCount,
         long commentCount,
+        boolean liked,
         Instant createdAt,
         PageResponse<CommentResponse> comments
 ) {

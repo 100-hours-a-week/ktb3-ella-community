@@ -88,6 +88,7 @@ public class PostService {
                 post.getLikeCount(),
                 post.getViewCount(),
                 post.getCommentCount(),
+                post.isLiked(),
                 post.getCreatedAt(),
                 commentsPage
         );

@@ -17,7 +17,7 @@ public class InMemoryPostRepository {
         if (post.getId() == null) {
             long id = seq.getAndIncrement();
             post = Post.rehydrate(id, post.getUserId(), post.getTitle(), post.getContent(), post.getPostImageUrl(),
-                    post.getLikeCount(), post.getViewCount(), post.getCommentCount(),
+                    post.getLikeCount(), post.getViewCount(), post.getCommentCount(), post.isLiked(),
                     post.getCreatedAt(), post.getUpdatedAt(), post.getDeletedAt());
         }
         posts.put(post.getId(), post);
