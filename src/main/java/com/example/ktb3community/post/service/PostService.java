@@ -112,7 +112,8 @@ public class PostService {
     public void deletePost(Long postId, Long userId) {
         if(!inMemoryUserRepository.existsById(userId)){
             throw new UserNotFoundException();
-        }Post post = inMemoryPostRepository.findById(postId)
+        }
+        Post post = inMemoryPostRepository.findById(postId)
                 .orElseThrow(PostNotFoundException::new);
         if(!post.getUserId().equals(userId)){
             throw new BusinessException(ErrorCode.AUTH_FORBIDDEN);

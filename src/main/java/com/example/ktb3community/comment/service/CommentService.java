@@ -53,8 +53,7 @@ public class CommentService {
                 .toList();
 
         int from = Math.max(0, (page - 1) * PAGE_SIZE);
-        int to   = Math.min(comments.size(), from + PAGE_SIZE);
-        List<Comment> slice = (from >= comments.size()) ? List.of() : comments.subList(from, to);
+        List<Comment> slice = (from >= comments.size()) ? List.of() : comments.subList(from, Math.min(comments.size(), from + PAGE_SIZE));
         long total = comments.size();
         long totalPages = (total + PAGE_SIZE - 1L) / PAGE_SIZE;
         List<CommentResponse> content = slice.stream().map(c -> {
@@ -68,7 +67,7 @@ public class CommentService {
                     c.getCreatedAt()
             );
             }).toList();
-        return new PageResponse<>(content, page, to, totalPages);
+        return new PageResponse<>(content, page, PAGE_SIZE, totalPages);
     }
 
     public CommentResponse updateComment(Long commentId, Long userId, CreateCommentRequest createCommentRequest) {

@@ -52,7 +52,7 @@ public class UserService {
         if(updateMeRequest.profileImageUrl() != null && !updateMeRequest.profileImageUrl().isBlank()){
             user.updateProfileImageUrl(updateMeRequest.profileImageUrl(), Instant.now());
         }
-        return new MeResponse(user.getEmail(), nickname, user.getProfileImageUrl());
+        return new MeResponse(user.getEmail(), user.getNickname(), user.getProfileImageUrl());
     }
 
     public void updatePassword(Long userId, UpdatePasswordRequest updatePasswordRequest){
