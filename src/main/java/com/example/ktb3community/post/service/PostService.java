@@ -31,6 +31,8 @@ public class PostService {
     private final InMemoryPostLikeRepository inMemoryPostLikeRepository;
     private final CommentService commentService;
 
+    private static final int COMMENT_PAGE = 1;
+
     public CreatePostResponse createPost(Long userId, CreatePostRequest createPostRequest) {
         inMemoryUserRepository.findByIdOrThrow(userId);
         Post saved = inMemoryPostRepository.save(Post.createNew(userId, createPostRequest.title(),
@@ -86,7 +88,7 @@ public class PostService {
         Author author = new Author(user.getNickname(), user.getProfileImageUrl());
         inMemoryUserRepository.findByIdOrThrow(userId);
         PageResponse<CommentResponse> commentsPage =
-                commentService.getCommentList(postId, 1);
+                commentService.getCommentList(postId, COMMENT_PAGE);
         post.increaseViewCount();
         return new PostDetailResponse(
                 post.getId(),
