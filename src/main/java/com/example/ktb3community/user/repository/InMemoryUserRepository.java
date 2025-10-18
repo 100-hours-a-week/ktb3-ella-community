@@ -15,20 +15,35 @@ public class InMemoryUserRepository {
     // 키가 long, 값이 User인 해시맵
     private final ConcurrentHashMap<Long, User> users = new ConcurrentHashMap<>();
 
+    private final ConcurrentHashMap<String, Long> emailToUserId = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Long> nicknameToUserId = new ConcurrentHashMap<>();
+
     public User save(User user) {
-        if (user.getId() == null) {
+        User userToSave = user;
+        if (userToSave.getId() == null) {
             long id = seq.getAndIncrement();
-            user = User.rehydrate(id, user.getEmail(), user.getPasswordHash(), user.getNickname(),
+            userToSave = User.rehydrate(id, user.getEmail(), user.getPasswordHash(), user.getNickname(),
                     user.getProfileImageUrl(), user.getCreatedAt(), user.getUpdatedAt(), user.getDeletedAt());
+            emailToUserId.put(userToSave.getEmail(), id);
+            nicknameToUserId.put(userToSave.getNickname(), id);
+        } else {
+            User oldUser = users.get(userToSave.getId());
+            if (oldUser != null && !oldUser.getNickname().equals(userToSave.getNickname())) {
+                nicknameToUserId.remove(oldUser.getNickname());
+                nicknameToUserId.put(userToSave.getNickname(), userToSave.getId());
+            }
         }
-        //키가 없으면 추가, 있으면 교체
-        users.put(user.getId(), user);
-        return user;
+        users.put(userToSave.getId(), userToSave);
+        return userToSave;
     }
 
     public Optional<User> findByEmail(String email) {
-        return users.values().stream().filter(u -> u.getEmail().equals(email))
-                .filter(u -> u.getDeletedAt() == null).findAny();
+        Long userId = emailToUserId.get(email);
+        if (userId == null) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(users.get(userId))
+                .filter(u -> u.getDeletedAt() == null);
     }
 
     public boolean existsByEmail(String email) {
@@ -36,9 +51,12 @@ public class InMemoryUserRepository {
     }
 
     public Optional<User> findByNickname(String nickname) {
-        return users.values().stream()
-                .filter(u -> u.getNickname().equals(nickname) )
-                .filter(u -> u.getDeletedAt() == null).findAny();
+        Long userId = nicknameToUserId.get(nickname);
+        if (userId == null) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(users.get(nickname))
+                .filter(u -> u.getDeletedAt() == null);
     }
 
     public boolean existsByNickname(String nickname) {
@@ -46,8 +64,8 @@ public class InMemoryUserRepository {
     }
 
     public Optional<User> findById(Long id) {
-        return users.values().stream().filter(u -> u.getId().equals(id))
-                .filter(u -> u.getDeletedAt() == null).findAny();
+        return Optional.ofNullable(users.get(id))
+                .filter(u -> u.getDeletedAt() == null);
     }
 
     public boolean existsById(Long id) {

@@ -52,6 +52,7 @@ public class UserService {
         if(updateMeRequest.profileImageUrl() != null && !updateMeRequest.profileImageUrl().isBlank()){
             user.updateProfileImageUrl(updateMeRequest.profileImageUrl(), Instant.now());
         }
+        inMemoryUserRepository.save(user);
         return new MeResponse(user.getEmail(), user.getNickname(), user.getProfileImageUrl());
     }
 
@@ -60,6 +61,7 @@ public class UserService {
                 .orElseThrow(UserNotFoundException::new);
         //TODO: 비밀번호 암호화 로직 추가
         user.updatePasswordHash(updatePasswordRequest.newPassword(), Instant.now());
+        inMemoryUserRepository.save(user);
     }
 
     public void withdrawMe(Long userId){
@@ -67,5 +69,6 @@ public class UserService {
                 .orElseThrow(UserNotFoundException::new);
         //TODO: 쿠키 즉시 만료 로직 추가
         user.delete(Instant.now());
+        inMemoryUserRepository.save(user);
     }
 }
