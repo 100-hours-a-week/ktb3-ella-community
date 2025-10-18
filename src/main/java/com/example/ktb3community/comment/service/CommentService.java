@@ -3,14 +3,12 @@ package com.example.ktb3community.comment.service;
 import com.example.ktb3community.comment.domain.Comment;
 import com.example.ktb3community.comment.dto.CommentResponse;
 import com.example.ktb3community.comment.dto.CreateCommentRequest;
-import com.example.ktb3community.comment.exception.CommentNotFound;
 import com.example.ktb3community.comment.repository.InMemoryCommentRepository;
 import com.example.ktb3community.common.error.ErrorCode;
 import com.example.ktb3community.common.pagination.PageResponse;
 import com.example.ktb3community.exception.BusinessException;
 import com.example.ktb3community.post.domain.Post;
 import com.example.ktb3community.post.dto.Author;
-import com.example.ktb3community.post.exception.PostNotFoundException;
 import com.example.ktb3community.post.repository.InMemoryPostRepository;
 import com.example.ktb3community.user.domain.User;
 import com.example.ktb3community.user.exception.UserNotFoundException;
@@ -20,6 +18,9 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -28,7 +29,7 @@ public class CommentService {
     private final InMemoryCommentRepository inMemoryCommentRepository;
     private final InMemoryPostRepository inMemoryPostRepository;
 
-    private final int PAGE_SIZE = 10;
+    private static final int PAGE_SIZE = 10;
 
     public CommentResponse createComment(Long postId, Long userId, CreateCommentRequest createCommentRequest) {
         User user = inMemoryUserRepository.findByIdOrThrow(userId);
@@ -49,8 +50,19 @@ public class CommentService {
         List<Comment> slice = (from >= comments.size()) ? List.of() : comments.subList(from, Math.min(comments.size(), from + PAGE_SIZE));
         long total = comments.size();
         long totalPages = (total + PAGE_SIZE - 1L) / PAGE_SIZE;
+
+        Set<Long> authorIds = slice.stream()
+                .map(Comment::getUserId)
+                .collect(Collectors.toSet());
+
+        Map<Long, User> authorMap = inMemoryUserRepository.findAllByIdIn(authorIds).stream()
+                .collect(Collectors.toMap(User::getId, user -> user));
+
         List<CommentResponse> content = slice.stream().map(c -> {
-            User user = inMemoryUserRepository.findByIdOrThrow(c.getUserId());
+            User user = authorMap.get(c.getUserId());
+            if(user == null){
+                throw new UserNotFoundException();
+            }
             Author author = new Author(user.getNickname(), user.getProfileImageUrl());
             return new CommentResponse(
                     c.getId(),

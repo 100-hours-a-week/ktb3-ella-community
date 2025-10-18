@@ -73,4 +73,12 @@ public class InMemoryUserRepository {
         return findById(id)
                 .orElseThrow(UserNotFoundException::new);
     }
+
+    public List<User> findAllByIdIn(Collection<Long> ids) {
+        return ids.stream()
+                .map(this::findById)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .toList();
+    }
 }

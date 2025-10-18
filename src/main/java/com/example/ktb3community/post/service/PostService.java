@@ -11,6 +11,7 @@ import com.example.ktb3community.post.dto.*;
 import com.example.ktb3community.post.repository.InMemoryPostLikeRepository;
 import com.example.ktb3community.post.repository.InMemoryPostRepository;
 import com.example.ktb3community.user.domain.User;
+import com.example.ktb3community.user.exception.UserNotFoundException;
 import com.example.ktb3community.user.repository.InMemoryUserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,9 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -49,10 +53,19 @@ public class PostService {
         int to   = Math.min(posts.size(), from + pageSize);
         List<Post> slice = (from >= posts.size()) ? List.of() : posts.subList(from, to);
         long total = posts.size();
-
         long totalPages = (total + pageSize - 1L) / pageSize;
+
+        Set<Long> authorIds = slice.stream()
+                .map(Post::getUserId)
+                .collect(Collectors.toSet());
+
+        Map<Long, User> authorMap = inMemoryUserRepository.findAllByIdIn(authorIds).stream()
+                .collect(Collectors.toMap(User::getId, user -> user));
         List<PostListResponse> content = slice.stream().map(p -> {
-            User user = inMemoryUserRepository.findByIdOrThrow(p.getUserId());
+            User user = authorMap.get(p.getUserId());
+            if(user == null){
+                throw new UserNotFoundException();
+            }
             Author author = new Author(user.getNickname(), user.getProfileImageUrl());
             return new PostListResponse(
                     p.getId(),
