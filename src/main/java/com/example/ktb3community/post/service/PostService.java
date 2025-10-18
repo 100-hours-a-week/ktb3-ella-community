@@ -8,11 +8,9 @@ import com.example.ktb3community.exception.BusinessException;
 import com.example.ktb3community.post.PostSort;
 import com.example.ktb3community.post.domain.Post;
 import com.example.ktb3community.post.dto.*;
-import com.example.ktb3community.post.exception.PostNotFoundException;
 import com.example.ktb3community.post.repository.InMemoryPostLikeRepository;
 import com.example.ktb3community.post.repository.InMemoryPostRepository;
 import com.example.ktb3community.user.domain.User;
-import com.example.ktb3community.user.exception.UserNotFoundException;
 import com.example.ktb3community.user.repository.InMemoryUserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -30,9 +28,7 @@ public class PostService {
     private final CommentService commentService;
 
     public CreatePostResponse createPost(Long userId, CreatePostRequest createPostRequest) {
-        if(!inMemoryUserRepository.existsById(userId)){
-            throw new UserNotFoundException();
-        }
+        inMemoryUserRepository.findByIdOrThrow(userId);
         Post saved = inMemoryPostRepository.save(Post.createNew(userId, createPostRequest.title(),
                 createPostRequest.content(), createPostRequest.postImageUrl(), Instant.now()));
         return new CreatePostResponse(saved.getId());
@@ -56,9 +52,8 @@ public class PostService {
 
         long totalPages = (total + pageSize - 1L) / pageSize;
         List<PostListResponse> content = slice.stream().map(p -> {
-            User u = inMemoryUserRepository.findById(p.getUserId())
-                    .orElseThrow(UserNotFoundException::new);
-            Author author = new Author(u.getNickname(), u.getProfileImageUrl());
+            User user = inMemoryUserRepository.findByIdOrThrow(p.getUserId());
+            Author author = new Author(user.getNickname(), user.getProfileImageUrl());
             return new PostListResponse(
                     p.getId(),
                     p.getTitle(),
@@ -73,11 +68,10 @@ public class PostService {
     }
 
     public PostDetailResponse getPostDetail(long postId, long userId) {
-        Post post = inMemoryPostRepository.findById(postId)
-                .orElseThrow(PostNotFoundException::new);
-        User user = inMemoryUserRepository.findById(post.getUserId())
-                .orElseThrow(UserNotFoundException::new);
+        Post post = inMemoryPostRepository.findByIdOrThrow(postId);
+        User user = inMemoryUserRepository.findByIdOrThrow(post.getUserId());
         Author author = new Author(user.getNickname(), user.getProfileImageUrl());
+        inMemoryUserRepository.findByIdOrThrow(userId);
         PageResponse<CommentResponse> commentsPage =
                 commentService.getCommentList(postId, 1);
         post.increaseView();
@@ -97,11 +91,8 @@ public class PostService {
     }
 
     public CreatePostResponse updatePost(Long postId, Long userId, CreatePostRequest createPostRequest) {
-        if(!inMemoryUserRepository.existsById(userId)){
-            throw new UserNotFoundException();
-        }
-        Post post = inMemoryPostRepository.findById(postId)
-                .orElseThrow(PostNotFoundException::new);
+        inMemoryUserRepository.findByIdOrThrow(userId);
+        Post post = inMemoryPostRepository.findByIdOrThrow(postId);
         if(!post.getUserId().equals(userId)){
             throw new BusinessException(ErrorCode.AUTH_FORBIDDEN);
         }
@@ -110,11 +101,8 @@ public class PostService {
     }
 
     public void deletePost(Long postId, Long userId) {
-        if(!inMemoryUserRepository.existsById(userId)){
-            throw new UserNotFoundException();
-        }
-        Post post = inMemoryPostRepository.findById(postId)
-                .orElseThrow(PostNotFoundException::new);
+        inMemoryUserRepository.findByIdOrThrow(userId);
+        Post post = inMemoryPostRepository.findByIdOrThrow(postId);
         if(!post.getUserId().equals(userId)){
             throw new BusinessException(ErrorCode.AUTH_FORBIDDEN);
         }

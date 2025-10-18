@@ -1,6 +1,7 @@
 package com.example.ktb3community.post.repository;
 
 import com.example.ktb3community.post.domain.Post;
+import com.example.ktb3community.post.exception.PostNotFoundException;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -29,8 +30,9 @@ public class InMemoryPostRepository {
                 .filter(post -> post.getDeletedAt() == null);
     }
 
-    public boolean existsById(Long id) {
-        return findById(id).isPresent();
+    public Post findByIdOrThrow(Long id) {
+        return findById(id)
+                .orElseThrow(PostNotFoundException::new);
     }
 
     public List<Post> findAll() {

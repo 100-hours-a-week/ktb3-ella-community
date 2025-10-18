@@ -31,24 +31,17 @@ public class CommentService {
     private final int PAGE_SIZE = 10;
 
     public CommentResponse createComment(Long postId, Long userId, CreateCommentRequest createCommentRequest) {
-        User user = inMemoryUserRepository.findById(userId)
-                .orElseThrow(UserNotFoundException::new);
-        if(!inMemoryPostRepository.existsById(postId)) {
-            throw new PostNotFoundException();
-        }
+        User user = inMemoryUserRepository.findByIdOrThrow(userId);
+        Post post = inMemoryPostRepository.findByIdOrThrow(postId);
         Comment saved = inMemoryCommentRepository.save(Comment.createNew(postId, userId,
                 createCommentRequest.content(), Instant.now()));
-        Post post = inMemoryPostRepository.findById(saved.getPostId())
-                .orElseThrow(PostNotFoundException::new);
         post.increaseComment();
         Author author = new Author(user.getNickname(), user.getProfileImageUrl());
         return new CommentResponse(saved.getId(), saved.getContent(), author, saved.getCreatedAt());
     }
 
     public PageResponse<CommentResponse> getCommentList(long postId, int page){
-        if(!inMemoryPostRepository.existsById(postId)) {
-            throw new PostNotFoundException();
-        }
+        inMemoryPostRepository.findByIdOrThrow(postId);
         List<Comment> comments = inMemoryCommentRepository.findByPostId(postId).stream()
                 .toList();
 
@@ -57,9 +50,8 @@ public class CommentService {
         long total = comments.size();
         long totalPages = (total + PAGE_SIZE - 1L) / PAGE_SIZE;
         List<CommentResponse> content = slice.stream().map(c -> {
-            User u = inMemoryUserRepository.findById(c.getUserId())
-                    .orElseThrow(UserNotFoundException::new);
-            Author author = new Author(u.getNickname(), u.getProfileImageUrl());
+            User user = inMemoryUserRepository.findByIdOrThrow(c.getUserId());
+            Author author = new Author(user.getNickname(), user.getProfileImageUrl());
             return new CommentResponse(
                     c.getId(),
                     c.getContent(),
@@ -71,10 +63,8 @@ public class CommentService {
     }
 
     public CommentResponse updateComment(Long commentId, Long userId, CreateCommentRequest createCommentRequest) {
-        Comment comment =  inMemoryCommentRepository.findById(commentId)
-                .orElseThrow(CommentNotFound::new);
-        User user = inMemoryUserRepository.findById(userId)
-                .orElseThrow(UserNotFoundException::new);
+        Comment comment =  inMemoryCommentRepository.findByIdOrThrow(commentId);
+        User user = inMemoryUserRepository.findByIdOrThrow(userId);
         if(!comment.getUserId().equals(user.getId())) {
             throw new BusinessException(ErrorCode.AUTH_FORBIDDEN);
         }
@@ -84,12 +74,9 @@ public class CommentService {
     }
 
     public void deleteComment(Long commentId, Long userId) {
-        Comment comment =  inMemoryCommentRepository.findById(commentId)
-                .orElseThrow(CommentNotFound::new);
-        User user = inMemoryUserRepository.findById(userId)
-                .orElseThrow(UserNotFoundException::new);
-        Post post = inMemoryPostRepository.findById(comment.getPostId())
-                .orElseThrow(PostNotFoundException::new);
+        Comment comment =  inMemoryCommentRepository.findByIdOrThrow(commentId);
+        User user = inMemoryUserRepository.findByIdOrThrow(userId);
+        Post post = inMemoryPostRepository.findByIdOrThrow(comment.getPostId());
         if(!comment.getUserId().equals(user.getId())) {
             throw new BusinessException(ErrorCode.AUTH_FORBIDDEN);
         }

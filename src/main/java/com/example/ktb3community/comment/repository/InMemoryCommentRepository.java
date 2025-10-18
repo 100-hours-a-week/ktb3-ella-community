@@ -1,6 +1,7 @@
 package com.example.ktb3community.comment.repository;
 
 import com.example.ktb3community.comment.domain.Comment;
+import com.example.ktb3community.comment.exception.CommentNotFound;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -25,6 +26,11 @@ public class InMemoryCommentRepository {
     public Optional<Comment> findById(Long id) {
         return Optional.ofNullable(comments.get(id))
                 .filter(comment -> comment.getDeletedAt() == null);
+    }
+
+    public Comment findByIdOrThrow(Long id) {
+        return findById(id)
+                .orElseThrow(CommentNotFound::new);
     }
 
     public List<Comment> findByPostId(Long postId) {

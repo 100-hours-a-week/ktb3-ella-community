@@ -2,6 +2,7 @@ package com.example.ktb3community.user.repository;
 
 
 import com.example.ktb3community.user.domain.User;
+import com.example.ktb3community.user.exception.UserNotFoundException;
 import org.springframework.stereotype.Repository;
 
 import java.util.*;
@@ -68,7 +69,8 @@ public class InMemoryUserRepository {
                 .filter(u -> u.getDeletedAt() == null);
     }
 
-    public boolean existsById(Long id) {
-        return findById(id).isPresent();
+    public User findByIdOrThrow(Long id) {
+        return findById(id)
+                .orElseThrow(UserNotFoundException::new);
     }
 }
