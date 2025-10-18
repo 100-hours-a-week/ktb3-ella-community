@@ -1,5 +1,6 @@
 package com.example.ktb3community.user.domain;
 
+import com.example.ktb3community.common.constants.ValidationConstant;
 import com.example.ktb3community.common.error.ErrorCode;
 import com.example.ktb3community.exception.BusinessException;
 import lombok.Getter;
@@ -44,7 +45,7 @@ public class User {
 
     public void updateNickname(String nickname, Instant now) {
         String n = nickname.trim();
-        if (n.isBlank() || n.length() > 10 || n.chars().anyMatch(Character::isWhitespace)) {
+        if (n.isBlank() || n.length() > ValidationConstant.NICKNAME_MAX_LENGTH || n.chars().anyMatch(Character::isWhitespace)) {
             throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
         }
         if (!n.equals(this.nickname)) { this.nickname = n; this.updatedAt = now; }

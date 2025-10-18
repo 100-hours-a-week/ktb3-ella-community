@@ -1,16 +1,15 @@
 package com.example.ktb3community.user.dto;
 
+import com.example.ktb3community.common.constants.ValidationConstant;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
 
 public record UpdatePasswordRequest(
-        @Schema(description = "비밀번호", example = "Dbsdud1105!")
-        @NotBlank @Size(min = 8, max = 20)
+        @Schema(description = "새 비밀번호", example = "Dbsdud1234!")
+        @NotBlank
         @Pattern(
-                regexp = "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[~!@#$%^&*()_\\-+={}\\[\\]|\\\\:;\"'<>,.?/]).{8,20}$",
-                message = "비밀번호는 대문자, 소문자, 숫자, 특수문자를 각각 1개 이상 포함해야 합니다."
+                regexp = ValidationConstant.PASSWORD_PATTERN
         )
         String newPassword
 ) {
