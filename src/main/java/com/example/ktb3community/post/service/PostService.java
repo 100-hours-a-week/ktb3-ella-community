@@ -87,7 +87,7 @@ public class PostService {
         inMemoryUserRepository.findByIdOrThrow(userId);
         PageResponse<CommentResponse> commentsPage =
                 commentService.getCommentList(postId, 1);
-        post.increaseView();
+        post.increaseViewCount();
         return new PostDetailResponse(
                 post.getId(),
                 post.getTitle(),

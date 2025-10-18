@@ -48,19 +48,19 @@ public class Post {
         this.updatedAt = now;
     }
 
-    public void increaseView() {
+    public void increaseViewCount() {
         this.viewCount++;
     }
-    public void increaseLike() {
+    public void increaseLikeCount() {
         this.likeCount++;
     }
-    public void decreaseLike() {
+    public void decreaseLikeCount() {
         if (this.likeCount > 0 ) { this.likeCount--; }
     }
-    public void increaseComment() {
+    public void increaseCommentCount() {
         this.commentCount++;
     }
-    public void decreaseComment() {
+    public void decreaseCommentCount() {
         if (this.commentCount > 0) this.commentCount--;
     }
     public void delete(Instant now) {

@@ -36,7 +36,7 @@ public class CommentService {
         Post post = inMemoryPostRepository.findByIdOrThrow(postId);
         Comment saved = inMemoryCommentRepository.save(Comment.createNew(postId, userId,
                 createCommentRequest.content(), Instant.now()));
-        post.increaseComment();
+        post.increaseCommentCount();
         Author author = new Author(user.getNickname(), user.getProfileImageUrl());
         return new CommentResponse(saved.getId(), saved.getContent(), author, saved.getCreatedAt());
     }
@@ -93,6 +93,6 @@ public class CommentService {
             throw new BusinessException(ErrorCode.AUTH_FORBIDDEN);
         }
         comment.delete(Instant.now());
-        post.decreaseComment();
+        post.decreaseCommentCount();
     }
 }

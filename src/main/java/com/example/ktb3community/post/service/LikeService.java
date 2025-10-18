@@ -18,16 +18,23 @@ public class LikeService {
     public LikeResponse likePost(Long postId, Long userId){
         inMemoryUserRepository.findByIdOrThrow(userId);
         Post post = inMemoryPostRepository.findByIdOrThrow(postId);
-        boolean added = inMemoryPostLikeRepository.add(postId, userId);
-        if (added) post.increaseLike();
+        synchronized (post) {
+            boolean added = inMemoryPostLikeRepository.add(postId, userId);
+            if (added) {
+                post.increaseLikeCount();
+                inMemoryPostRepository.save(post);
+            }
+        }
         return new LikeResponse(post.getLikeCount(), post.getViewCount(), post.getCommentCount());
     }
 
     public LikeResponse unlikePost(Long postId, Long userId){
         inMemoryUserRepository.findByIdOrThrow(userId);
         Post post = inMemoryPostRepository.findByIdOrThrow(postId);
-        boolean removed = inMemoryPostLikeRepository.remove(postId, userId);
-        if (removed) post.decreaseLike();
+        synchronized (post) {
+            boolean removed = inMemoryPostLikeRepository.remove(postId, userId);
+            if (removed) post.decreaseLikeCount();
+        }
         return new LikeResponse(post.getLikeCount(), post.getViewCount(), post.getCommentCount());
     }
 }
