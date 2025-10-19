@@ -10,10 +10,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Repository
-public class InMemoryCommentRepository {
+public class InMemoryCommentRepository implements CommentRepository {
     private final AtomicLong seq = new AtomicLong(1);
     private final ConcurrentHashMap<Long, Comment> comments = new ConcurrentHashMap<>();
 
+    @Override
     public Comment save(Comment comment) {
         if (comment.getId() == null) {
             long id = seq.getAndIncrement();
@@ -23,16 +24,20 @@ public class InMemoryCommentRepository {
         comments.put(comment.getId(), comment);
         return comment;
     }
+
+    @Override
     public Optional<Comment> findById(Long id) {
         return Optional.ofNullable(comments.get(id))
                 .filter(comment -> comment.getDeletedAt() == null);
     }
 
+    @Override
     public Comment findByIdOrThrow(Long id) {
         return findById(id)
                 .orElseThrow(CommentNotFound::new);
     }
 
+    @Override
     public List<Comment> findByPostId(Long postId) {
         return comments.values().stream()
                 .filter(p -> p.getDeletedAt() == null && p.getPostId().equals(postId))

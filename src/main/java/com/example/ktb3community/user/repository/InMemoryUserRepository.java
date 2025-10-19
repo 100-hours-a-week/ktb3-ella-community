@@ -10,7 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Repository
-public class InMemoryUserRepository {
+public class InMemoryUserRepository implements UserRepository {
     // 시작값을 1로 초기화
     private final AtomicLong seq = new AtomicLong(1);
     // 키가 long, 값이 User인 해시맵
@@ -19,6 +19,7 @@ public class InMemoryUserRepository {
     private final ConcurrentHashMap<String, Long> emailToUserId = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Long> nicknameToUserId = new ConcurrentHashMap<>();
 
+    @Override
     public User save(User user) {
         User userToSave = user;
         if (userToSave.getId() == null) {
@@ -38,6 +39,7 @@ public class InMemoryUserRepository {
         return userToSave;
     }
 
+    @Override
     public Optional<User> findByEmail(String email) {
         Long userId = emailToUserId.get(email);
         if (userId == null) {
@@ -47,10 +49,12 @@ public class InMemoryUserRepository {
                 .filter(u -> u.getDeletedAt() == null);
     }
 
+    @Override
     public boolean existsByEmail(String email) {
         return findByEmail(email).isPresent();
     }
 
+    @Override
     public Optional<User> findByNickname(String nickname) {
         Long userId = nicknameToUserId.get(nickname);
         if (userId == null) {
@@ -60,20 +64,24 @@ public class InMemoryUserRepository {
                 .filter(u -> u.getDeletedAt() == null);
     }
 
+    @Override
     public boolean existsByNickname(String nickname) {
         return findByNickname(nickname).isPresent();
     }
 
+    @Override
     public Optional<User> findById(Long id) {
         return Optional.ofNullable(users.get(id))
                 .filter(u -> u.getDeletedAt() == null);
     }
 
+    @Override
     public User findByIdOrThrow(Long id) {
         return findById(id)
                 .orElseThrow(UserNotFoundException::new);
     }
 
+    @Override
     public List<User> findAllByIdIn(Collection<Long> ids) {
         return ids.stream()
                 .map(this::findById)

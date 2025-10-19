@@ -3,16 +3,16 @@ package com.example.ktb3community.comment.service;
 import com.example.ktb3community.comment.domain.Comment;
 import com.example.ktb3community.comment.dto.CommentResponse;
 import com.example.ktb3community.comment.dto.CreateCommentRequest;
-import com.example.ktb3community.comment.repository.InMemoryCommentRepository;
+import com.example.ktb3community.comment.repository.CommentRepository;
 import com.example.ktb3community.common.error.ErrorCode;
 import com.example.ktb3community.common.pagination.PageResponse;
 import com.example.ktb3community.exception.BusinessException;
 import com.example.ktb3community.post.dto.Author;
-import com.example.ktb3community.post.repository.InMemoryPostRepository;
+import com.example.ktb3community.post.repository.PostRepository;
 import com.example.ktb3community.post.service.PostCommentCounter;
 import com.example.ktb3community.user.domain.User;
 import com.example.ktb3community.user.exception.UserNotFoundException;
-import com.example.ktb3community.user.repository.InMemoryUserRepository;
+import com.example.ktb3community.user.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -25,17 +25,17 @@ import java.util.stream.Collectors;
 @Service
 @AllArgsConstructor
 public class CommentService {
-    private final InMemoryUserRepository inMemoryUserRepository;
-    private final InMemoryCommentRepository inMemoryCommentRepository;
-    private final InMemoryPostRepository inMemoryPostRepository;
+    private final UserRepository userRepository;
+    private final CommentRepository commentRepository;
+    private final PostRepository postRepository;
     private final PostCommentCounter postCommentCounter;
 
     private static final int PAGE_SIZE = 10;
 
     public CommentResponse createComment(Long postId, Long userId, CreateCommentRequest createCommentRequest) {
-        User user = inMemoryUserRepository.findByIdOrThrow(userId);
-        inMemoryPostRepository.findByIdOrThrow(postId);
-        Comment saved = inMemoryCommentRepository.save(Comment.createNew(postId, userId,
+        User user = userRepository.findByIdOrThrow(userId);
+        postRepository.findByIdOrThrow(postId);
+        Comment saved = commentRepository.save(Comment.createNew(postId, userId,
                 createCommentRequest.content(), Instant.now()));
         postCommentCounter.increaseCommentCount(postId);
         Author author = new Author(user.getNickname(), user.getProfileImageUrl());
@@ -43,8 +43,8 @@ public class CommentService {
     }
 
     public PageResponse<CommentResponse> getCommentList(long postId, int page){
-        inMemoryPostRepository.findByIdOrThrow(postId);
-        List<Comment> comments = inMemoryCommentRepository.findByPostId(postId).stream()
+        postRepository.findByIdOrThrow(postId);
+        List<Comment> comments = commentRepository.findByPostId(postId).stream()
                 .toList();
 
         int from = Math.max(0, (page - 1) * PAGE_SIZE);
@@ -56,7 +56,7 @@ public class CommentService {
                 .map(Comment::getUserId)
                 .collect(Collectors.toSet());
 
-        Map<Long, User> authorMap = inMemoryUserRepository.findAllByIdIn(authorIds).stream()
+        Map<Long, User> authorMap = userRepository.findAllByIdIn(authorIds).stream()
                 .collect(Collectors.toMap(User::getId, user -> user));
 
         List<CommentResponse> content = slice.stream().map(c -> {
@@ -76,8 +76,8 @@ public class CommentService {
     }
 
     public CommentResponse updateComment(Long commentId, Long userId, CreateCommentRequest createCommentRequest) {
-        Comment comment =  inMemoryCommentRepository.findByIdOrThrow(commentId);
-        User user = inMemoryUserRepository.findByIdOrThrow(userId);
+        Comment comment =  commentRepository.findByIdOrThrow(commentId);
+        User user = userRepository.findByIdOrThrow(userId);
         if(!comment.getUserId().equals(user.getId())) {
             throw new BusinessException(ErrorCode.AUTH_FORBIDDEN);
         }
@@ -87,9 +87,9 @@ public class CommentService {
     }
 
     public void deleteComment(Long commentId, Long userId) {
-        Comment comment =  inMemoryCommentRepository.findByIdOrThrow(commentId);
-        User user = inMemoryUserRepository.findByIdOrThrow(userId);
-        inMemoryPostRepository.findByIdOrThrow(comment.getPostId());
+        Comment comment =  commentRepository.findByIdOrThrow(commentId);
+        User user = userRepository.findByIdOrThrow(userId);
+        postRepository.findByIdOrThrow(comment.getPostId());
         if(!comment.getUserId().equals(user.getId())) {
             throw new BusinessException(ErrorCode.AUTH_FORBIDDEN);
         }
