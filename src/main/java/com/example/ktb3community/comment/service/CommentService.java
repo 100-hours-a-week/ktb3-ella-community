@@ -7,9 +7,9 @@ import com.example.ktb3community.comment.repository.InMemoryCommentRepository;
 import com.example.ktb3community.common.error.ErrorCode;
 import com.example.ktb3community.common.pagination.PageResponse;
 import com.example.ktb3community.exception.BusinessException;
-import com.example.ktb3community.post.domain.Post;
 import com.example.ktb3community.post.dto.Author;
 import com.example.ktb3community.post.repository.InMemoryPostRepository;
+import com.example.ktb3community.post.service.PostCommentCounter;
 import com.example.ktb3community.user.domain.User;
 import com.example.ktb3community.user.exception.UserNotFoundException;
 import com.example.ktb3community.user.repository.InMemoryUserRepository;
@@ -28,15 +28,16 @@ public class CommentService {
     private final InMemoryUserRepository inMemoryUserRepository;
     private final InMemoryCommentRepository inMemoryCommentRepository;
     private final InMemoryPostRepository inMemoryPostRepository;
+    private final PostCommentCounter postCommentCounter;
 
     private static final int PAGE_SIZE = 10;
 
     public CommentResponse createComment(Long postId, Long userId, CreateCommentRequest createCommentRequest) {
         User user = inMemoryUserRepository.findByIdOrThrow(userId);
-        Post post = inMemoryPostRepository.findByIdOrThrow(postId);
+        inMemoryPostRepository.findByIdOrThrow(postId);
         Comment saved = inMemoryCommentRepository.save(Comment.createNew(postId, userId,
                 createCommentRequest.content(), Instant.now()));
-        post.increaseCommentCount();
+        postCommentCounter.increaseCommentCount(postId);
         Author author = new Author(user.getNickname(), user.getProfileImageUrl());
         return new CommentResponse(saved.getId(), saved.getContent(), author, saved.getCreatedAt());
     }
@@ -88,11 +89,11 @@ public class CommentService {
     public void deleteComment(Long commentId, Long userId) {
         Comment comment =  inMemoryCommentRepository.findByIdOrThrow(commentId);
         User user = inMemoryUserRepository.findByIdOrThrow(userId);
-        Post post = inMemoryPostRepository.findByIdOrThrow(comment.getPostId());
+        inMemoryPostRepository.findByIdOrThrow(comment.getPostId());
         if(!comment.getUserId().equals(user.getId())) {
             throw new BusinessException(ErrorCode.AUTH_FORBIDDEN);
         }
         comment.delete(Instant.now());
-        post.decreaseCommentCount();
+        postCommentCounter.decreaseCommentCount(comment.getPostId());
     }
 }

@@ -11,6 +11,7 @@ import com.example.ktb3community.post.dto.CreatePostResponse;
 import com.example.ktb3community.post.dto.PostDetailResponse;
 import com.example.ktb3community.post.dto.PostListResponse;
 import com.example.ktb3community.post.service.PostService;
+import com.example.ktb3community.post.service.PostViewService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.*;
 public class PostController {
 
     private final PostService postService;
+    private final PostViewService postViewService;
 
     @Operation(summary = "게시글 생성", description = "사용자가 새 게시글을 생성합니다.")
     @ApiResponses(value = {
@@ -59,7 +61,7 @@ public class PostController {
         if (pageSize < 1 || pageSize > 20) {
             throw new BusinessException(ErrorCode.INVALID_PAGE_SIZE);
         }
-        PageResponse<PostListResponse> pageResponse = postService.getPostList(page, pageSize, sort);
+        PageResponse<PostListResponse> pageResponse = postViewService.getPostList(page, pageSize, sort);
         return ResponseEntity.ok(ApiResult.ok(pageResponse));
     }
 
@@ -73,7 +75,7 @@ public class PostController {
     public ResponseEntity<ApiResult<PostDetailResponse>> getPostDetail(
             @Parameter(description = "게시글 id", example = "1") @PathVariable Long postId,
             @Parameter(description = "사용자 id", example = "1") @PathVariable Long userId) {
-        PostDetailResponse postDetailResponse = postService.getPostDetail(postId, userId);
+        PostDetailResponse postDetailResponse = postViewService.getPostDetail(postId, userId);
         return ResponseEntity.ok(ApiResult.ok(postDetailResponse));
     }
 
