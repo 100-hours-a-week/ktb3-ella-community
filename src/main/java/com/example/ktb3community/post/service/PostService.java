@@ -43,12 +43,14 @@ public class PostService implements PostCommentCounter {
         post.delete(Instant.now());
     }
 
+    @Override
     public void increaseCommentCount(Long postId) {
         Post post = postRepository.findByIdOrThrow(postId);
         post.increaseCommentCount();
         postRepository.save(post);
     }
 
+    @Override
     public void decreaseCommentCount(Long postId) {
         Post post = postRepository.findByIdOrThrow(postId);
         post.decreaseCommentCount();
