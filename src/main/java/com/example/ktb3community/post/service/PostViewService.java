@@ -33,16 +33,10 @@ public class PostViewService {
     private static final int COMMENT_PAGE = 1;
 
     public PageResponse<PostListResponse> getPostList(int page, int pageSize, PostSort sort) {
-        Comparator<Post> postComparator = switch (sort) {
-            case VIEW -> Comparator.comparingLong(Post::getViewCount).reversed();
-            case LIKE -> Comparator.comparingLong(Post::getLikeCount).reversed();
-            case CMT  -> Comparator.comparingLong(Post::getCommentCount).reversed();
-            case NEW  -> Comparator.comparing(Post::getCreatedAt).reversed();
-        };
+        Comparator<Post> postComparator = sort.comparator();
         List<Post> posts = inMemoryPostRepository.findAll().stream()
                 .sorted(postComparator)
                 .toList();
-
         int from = Math.max(0, (page - 1) * pageSize);
         int to   = Math.min(posts.size(), from + pageSize);
         List<Post> slice = (from >= posts.size()) ? List.of() : posts.subList(from, to);
