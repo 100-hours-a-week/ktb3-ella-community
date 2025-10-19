@@ -1,5 +1,6 @@
 package com.example.ktb3community.post.controller;
 
+import com.example.ktb3community.common.doc.ApiCommonErrorResponses;
 import com.example.ktb3community.common.response.ApiResult;
 import com.example.ktb3community.post.dto.LikeResponse;
 import com.example.ktb3community.post.service.LikeService;
@@ -24,6 +25,7 @@ public class LikeController {
             @ApiResponse(responseCode = "404", description = "존재하지 않는 게시글입니다."),
             @ApiResponse(responseCode = "404", description = "존재하지 않는 사용자입니다.")
     })
+    @ApiCommonErrorResponses
     @PostMapping("/{postId}/likes/{userId}")
     public ResponseEntity<ApiResult<LikeResponse>> likePost(
             @Parameter(description = "게시글 id", example = "1") @PathVariable Long postId,
@@ -38,6 +40,7 @@ public class LikeController {
             @ApiResponse(responseCode = "404", description = "존재하지 않는 게시글입니다."),
             @ApiResponse(responseCode = "404", description = "존재하지 않는 사용자입니다.")
     })
+    @ApiCommonErrorResponses
     @DeleteMapping("/{postId}/likes/{userId}")
     public ResponseEntity<ApiResult<LikeResponse>> unlikePost(
             @Parameter(description = "게시글 id", example = "1") @PathVariable Long postId,

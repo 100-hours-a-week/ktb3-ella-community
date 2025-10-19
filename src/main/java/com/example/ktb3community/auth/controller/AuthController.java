@@ -3,6 +3,7 @@ package com.example.ktb3community.auth.controller;
 import com.example.ktb3community.auth.dto.LoginRequest;
 import com.example.ktb3community.auth.dto.SignUpRequest;
 import com.example.ktb3community.auth.service.AuthService;
+import com.example.ktb3community.common.doc.ApiCommonErrorResponses;
 import com.example.ktb3community.user.dto.MeResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -25,10 +26,10 @@ public class AuthController {
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "OK"),
             @ApiResponse(responseCode = "409", description = "이미 사용 중인 이메일입니다."),
-            @ApiResponse(responseCode = "409", description = "이미 사용 중인 닉네임입니다."),
-            @ApiResponse(responseCode = "422", description = "요청 값이 유효하지 않습니다.")
+            @ApiResponse(responseCode = "409", description = "이미 사용 중인 닉네임입니다.")
 
     })
+    @ApiCommonErrorResponses
     @PostMapping("/signup")
     public ResponseEntity<ApiResult<MeResponse>> signup(@Valid @RequestBody SignUpRequest signUpRequest) {
         MeResponse me = authService.signup(signUpRequest);
@@ -40,9 +41,9 @@ public class AuthController {
     @Operation(summary = "로그인", description = "사용자 로그인을 처리합니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "OK"),
-            @ApiResponse(responseCode = "404", description = "존재하지 않는 사용자입니다."),
-            @ApiResponse(responseCode = "422", description = "요청 값이 유효하지 않습니다.")
+            @ApiResponse(responseCode = "404", description = "존재하지 않는 사용자입니다.")
     })
+    @ApiCommonErrorResponses
     @PostMapping("/login")
     public ResponseEntity<ApiResult<MeResponse>> login(@Valid @RequestBody LoginRequest loginRequest) {
         MeResponse me = authService.login(loginRequest);
@@ -50,6 +51,7 @@ public class AuthController {
     }
 
     @Operation(summary = "로그아웃", description = "사용자 로그아웃을 처리합니다.")
+    @ApiCommonErrorResponses
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "No Content")
     })

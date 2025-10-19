@@ -3,6 +3,7 @@ package com.example.ktb3community.comment.controller;
 import com.example.ktb3community.comment.dto.CommentResponse;
 import com.example.ktb3community.comment.dto.CreateCommentRequest;
 import com.example.ktb3community.comment.service.CommentService;
+import com.example.ktb3community.common.doc.ApiCommonErrorResponses;
 import com.example.ktb3community.common.error.ErrorCode;
 import com.example.ktb3community.common.pagination.PageResponse;
 import com.example.ktb3community.common.response.ApiResult;
@@ -45,6 +46,7 @@ public class CommentController {
             @ApiResponse(responseCode = "400", description = "유효하지 않은 페이지 번호입니다."),
             @ApiResponse(responseCode = "404", description = "존재하지 않는 게시글입니다.")
     })
+    @ApiCommonErrorResponses
     @GetMapping("/posts/{postId}/comments")
     public ResponseEntity<ApiResult<PageResponse<CommentResponse>>> getComments(
             @Parameter(description = "게시글 id", example = "1") @PathVariable Long postId,
@@ -57,11 +59,10 @@ public class CommentController {
     @Operation(summary = "댓글 수정", description = "특정 댓글을 수정합니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "OK"),
-            @ApiResponse(responseCode = "403", description = "접근 권한이 없습니다."),
             @ApiResponse(responseCode = "404", description = "존재하지 않는 사용자입니다."),
             @ApiResponse(responseCode = "404", description = "존재하지 않는 댓글입니다."),
-
     })
+    @ApiCommonErrorResponses
     @PutMapping("comments/{commentId}/{userId}")
     public ResponseEntity<ApiResult<CommentResponse>> updateComment(
             @Parameter(description = "댓글 id", example = "1") @PathVariable Long commentId,
@@ -74,9 +75,9 @@ public class CommentController {
     @Operation(summary = "댓글 삭제", description = "특정 댓글을 삭제합니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "No Content"),
-            @ApiResponse(responseCode = "403", description = "접근 권한이 없습니다."),
             @ApiResponse(responseCode = "404", description = "존재하지 않는 댓글입니다."),
     })
+    @ApiCommonErrorResponses
     @DeleteMapping("comments/{commentId}/{userId}")
     public ResponseEntity<Void> deleteComment(
             @Parameter(description = "댓글 id", example = "1")  @PathVariable Long commentId,

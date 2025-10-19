@@ -1,5 +1,6 @@
 package com.example.ktb3community.user.controller;
 
+import com.example.ktb3community.common.doc.ApiCommonErrorResponses;
 import com.example.ktb3community.common.error.ErrorCode;
 import com.example.ktb3community.common.response.ApiResult;
 import com.example.ktb3community.exception.BusinessException;
@@ -28,6 +29,7 @@ public class UserController {
             @ApiResponse(responseCode = "200", description = "OK"),
             @ApiResponse(responseCode = "400", description = "필수 요청 파라미터가 누락되었습니다.")
     })
+    @ApiCommonErrorResponses
     @GetMapping("/availability")
     public ResponseEntity<ApiResult<AvailabilityResponse>> getAvailability(
             @Parameter(description = "이메일", example = "lydbsdud@gmail.com") @RequestParam(required = false) String email,
@@ -44,6 +46,7 @@ public class UserController {
             @ApiResponse(responseCode = "200", description = "OK"),
             @ApiResponse(responseCode = "404", description = "존재하지 않는 사용자입니다.")
     })
+    @ApiCommonErrorResponses
     @GetMapping("/me/{userId}")
     public ResponseEntity<ApiResult<MeResponse>> getMe(
             @Parameter(description = "사용자 id", example = "1") @PathVariable Long userId) {
@@ -56,6 +59,7 @@ public class UserController {
             @ApiResponse(responseCode = "200", description = "OK"),
             @ApiResponse(responseCode = "404", description = "존재하지 않는 사용자입니다.")
     })
+    @ApiCommonErrorResponses
     @PatchMapping("me/{userId}")
     public ResponseEntity<ApiResult<MeResponse>> updateMe(
             @Parameter(description = "사용자 id", example = "1") @PathVariable Long userId,
@@ -69,6 +73,7 @@ public class UserController {
             @ApiResponse(responseCode = "204", description = "No Content"),
             @ApiResponse(responseCode = "404", description = "존재하지 않는 사용자입니다.")
     })
+    @ApiCommonErrorResponses
     @PostMapping("me/password/{userId}")
     public ResponseEntity<Void> updatePassword(
             @Parameter(description = "사용자 id", example = "1") @PathVariable Long userId,
@@ -82,6 +87,7 @@ public class UserController {
             @ApiResponse(responseCode = "204", description = "No Content"),
             @ApiResponse(responseCode = "404", description = "존재하지 않는 사용자입니다.")
     })
+    @ApiCommonErrorResponses
     @DeleteMapping("/me/{userId}")
     public ResponseEntity<Void> withdrawMe(
             @Parameter(description = "사용자 id", example = "1") @PathVariable Long userId) {
