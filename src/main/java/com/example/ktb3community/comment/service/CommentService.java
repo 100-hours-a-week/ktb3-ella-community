@@ -3,11 +3,11 @@ package com.example.ktb3community.comment.service;
 import com.example.ktb3community.comment.domain.Comment;
 import com.example.ktb3community.comment.dto.CommentResponse;
 import com.example.ktb3community.comment.dto.CreateCommentRequest;
+import com.example.ktb3community.comment.mapper.CommentMapper;
 import com.example.ktb3community.comment.repository.CommentRepository;
 import com.example.ktb3community.common.error.ErrorCode;
 import com.example.ktb3community.common.pagination.PageResponse;
 import com.example.ktb3community.exception.BusinessException;
-import com.example.ktb3community.post.dto.Author;
 import com.example.ktb3community.post.repository.PostRepository;
 import com.example.ktb3community.post.service.PostCommentCounter;
 import com.example.ktb3community.user.domain.User;
@@ -29,6 +29,7 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
     private final PostCommentCounter postCommentCounter;
+    private final CommentMapper commentMapper;
 
     private static final int PAGE_SIZE = 10;
 
@@ -38,8 +39,7 @@ public class CommentService {
         Comment saved = commentRepository.save(Comment.createNew(postId, userId,
                 createCommentRequest.content(), Instant.now()));
         postCommentCounter.increaseCommentCount(postId);
-        Author author = new Author(user.getNickname(), user.getProfileImageUrl());
-        return new CommentResponse(saved.getId(), saved.getContent(), author, saved.getCreatedAt());
+        return commentMapper.toCommentResponse(saved, user);
     }
 
     public PageResponse<CommentResponse> getCommentList(long postId, int page){
@@ -64,13 +64,7 @@ public class CommentService {
             if(user == null){
                 throw new UserNotFoundException();
             }
-            Author author = new Author(user.getNickname(), user.getProfileImageUrl());
-            return new CommentResponse(
-                    c.getId(),
-                    c.getContent(),
-                    author,
-                    c.getCreatedAt()
-            );
+            return commentMapper.toCommentResponse(c, user);
             }).toList();
         return new PageResponse<>(content, page, PAGE_SIZE, totalPages);
     }
@@ -82,8 +76,7 @@ public class CommentService {
             throw new BusinessException(ErrorCode.AUTH_FORBIDDEN);
         }
         comment.updateContent(createCommentRequest.content(), Instant.now());
-        Author author = new Author(user.getNickname(), user.getProfileImageUrl());
-        return new CommentResponse(comment.getId(), comment.getContent(), author, comment.getCreatedAt());
+        return commentMapper.toCommentResponse(comment, user);
     }
 
     public void deleteComment(Long commentId, Long userId) {
