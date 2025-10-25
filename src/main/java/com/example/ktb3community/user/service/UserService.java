@@ -7,6 +7,7 @@ import com.example.ktb3community.user.dto.AvailabilityResponse;
 import com.example.ktb3community.user.dto.MeResponse;
 import com.example.ktb3community.user.dto.UpdateMeRequest;
 import com.example.ktb3community.user.dto.UpdatePasswordRequest;
+import com.example.ktb3community.user.mapper.UserMapper;
 import com.example.ktb3community.user.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,7 @@ import java.time.Instant;
 @AllArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
+    private final UserMapper userMapper;
 
     public AvailabilityResponse getAvailability(String email, String nickname) {
         Boolean emailAvailable = null;
@@ -34,7 +36,7 @@ public class UserService {
 
     public MeResponse getMe(Long userId){
         User user = userRepository.findByIdOrThrow(userId);
-        return new MeResponse(user.getEmail(), user.getNickname(), user.getProfileImageUrl());
+        return userMapper.userToMeResponse(user);
     }
 
     public MeResponse updateMe(Long userId, UpdateMeRequest updateMeRequest){
@@ -50,7 +52,7 @@ public class UserService {
             user.updateProfileImageUrl(updateMeRequest.profileImageUrl(), Instant.now());
         }
         userRepository.save(user);
-        return new MeResponse(user.getEmail(), user.getNickname(), user.getProfileImageUrl());
+        return userMapper.userToMeResponse(user);
     }
 
     public void updatePassword(Long userId, UpdatePasswordRequest updatePasswordRequest){
