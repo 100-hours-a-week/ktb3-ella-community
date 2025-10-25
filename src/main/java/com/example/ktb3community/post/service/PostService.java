@@ -1,111 +1,32 @@
 package com.example.ktb3community.post.service;
 
-import com.example.ktb3community.comment.dto.CommentResponse;
-import com.example.ktb3community.comment.service.CommentService;
 import com.example.ktb3community.common.error.ErrorCode;
-import com.example.ktb3community.common.pagination.PageResponse;
 import com.example.ktb3community.exception.BusinessException;
-import com.example.ktb3community.post.PostSort;
 import com.example.ktb3community.post.domain.Post;
 import com.example.ktb3community.post.dto.*;
-import com.example.ktb3community.post.repository.InMemoryPostLikeRepository;
-import com.example.ktb3community.post.repository.InMemoryPostRepository;
-import com.example.ktb3community.user.domain.User;
-import com.example.ktb3community.user.exception.UserNotFoundException;
-import com.example.ktb3community.user.repository.InMemoryUserRepository;
+import com.example.ktb3community.post.repository.PostRepository;
+import com.example.ktb3community.user.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
-public class PostService {
-    private final InMemoryPostRepository inMemoryPostRepository;
-    private final InMemoryUserRepository inMemoryUserRepository;
-    private final InMemoryPostLikeRepository inMemoryPostLikeRepository;
-    private final CommentService commentService;
+public class PostService implements PostCommentCounter {
+    private final UserRepository userRepository;
+    private final PostRepository postRepository;
 
     public CreatePostResponse createPost(Long userId, CreatePostRequest createPostRequest) {
-        inMemoryUserRepository.findByIdOrThrow(userId);
-        Post saved = inMemoryPostRepository.save(Post.createNew(userId, createPostRequest.title(),
+        userRepository.findByIdOrThrow(userId);
+        Post saved = postRepository.save(Post.createNew(userId, createPostRequest.title(),
                 createPostRequest.content(), createPostRequest.postImageUrl(), Instant.now()));
         return new CreatePostResponse(saved.getId());
     }
 
-    public PageResponse<PostListResponse> getPostList(int page, int pageSize, PostSort sort) {
-        Comparator<Post> postComparator = switch (sort) {
-            case VIEW -> Comparator.comparingLong(Post::getViewCount).reversed();
-            case LIKE -> Comparator.comparingLong(Post::getLikeCount).reversed();
-            case CMT  -> Comparator.comparingLong(Post::getCommentCount).reversed();
-            case NEW  -> Comparator.comparing(Post::getCreatedAt).reversed();
-        };
-        List<Post> posts = inMemoryPostRepository.findAll().stream()
-                .sorted(postComparator)
-                .toList();
-
-        int from = Math.max(0, (page - 1) * pageSize);
-        int to   = Math.min(posts.size(), from + pageSize);
-        List<Post> slice = (from >= posts.size()) ? List.of() : posts.subList(from, to);
-        long total = posts.size();
-        long totalPages = (total + pageSize - 1L) / pageSize;
-
-        Set<Long> authorIds = slice.stream()
-                .map(Post::getUserId)
-                .collect(Collectors.toSet());
-
-        Map<Long, User> authorMap = inMemoryUserRepository.findAllByIdIn(authorIds).stream()
-                .collect(Collectors.toMap(User::getId, user -> user));
-        List<PostListResponse> content = slice.stream().map(p -> {
-            User user = authorMap.get(p.getUserId());
-            if(user == null){
-                throw new UserNotFoundException();
-            }
-            Author author = new Author(user.getNickname(), user.getProfileImageUrl());
-            return new PostListResponse(
-                    p.getId(),
-                    p.getTitle(),
-                    author,
-                    p.getLikeCount(),
-                    p.getViewCount(),
-                    p.getCommentCount(),
-                    p.getCreatedAt()
-            );
-        }).toList();
-        return new PageResponse<>(content, page, pageSize, totalPages);
-    }
-
-    public PostDetailResponse getPostDetail(long postId, long userId) {
-        Post post = inMemoryPostRepository.findByIdOrThrow(postId);
-        User user = inMemoryUserRepository.findByIdOrThrow(post.getUserId());
-        Author author = new Author(user.getNickname(), user.getProfileImageUrl());
-        inMemoryUserRepository.findByIdOrThrow(userId);
-        PageResponse<CommentResponse> commentsPage =
-                commentService.getCommentList(postId, 1);
-        post.increaseViewCount();
-        return new PostDetailResponse(
-                post.getId(),
-                post.getTitle(),
-                post.getContent(),
-                post.getPostImageUrl(),
-                author,
-                post.getLikeCount(),
-                post.getViewCount(),
-                post.getCommentCount(),
-                inMemoryPostLikeRepository.exists(postId, userId),
-                post.getCreatedAt(),
-                commentsPage
-        );
-    }
-
     public CreatePostResponse updatePost(Long postId, Long userId, CreatePostRequest createPostRequest) {
-        inMemoryUserRepository.findByIdOrThrow(userId);
-        Post post = inMemoryPostRepository.findByIdOrThrow(postId);
+        userRepository.findByIdOrThrow(userId);
+        Post post = postRepository.findByIdOrThrow(postId);
         if(!post.getUserId().equals(userId)){
             throw new BusinessException(ErrorCode.AUTH_FORBIDDEN);
         }
@@ -114,11 +35,25 @@ public class PostService {
     }
 
     public void deletePost(Long postId, Long userId) {
-        inMemoryUserRepository.findByIdOrThrow(userId);
-        Post post = inMemoryPostRepository.findByIdOrThrow(postId);
+        userRepository.findByIdOrThrow(userId);
+        Post post = postRepository.findByIdOrThrow(postId);
         if(!post.getUserId().equals(userId)){
             throw new BusinessException(ErrorCode.AUTH_FORBIDDEN);
         }
         post.delete(Instant.now());
+    }
+
+    @Override
+    public void increaseCommentCount(Long postId) {
+        Post post = postRepository.findByIdOrThrow(postId);
+        post.increaseCommentCount();
+        postRepository.save(post);
+    }
+
+    @Override
+    public void decreaseCommentCount(Long postId) {
+        Post post = postRepository.findByIdOrThrow(postId);
+        post.decreaseCommentCount();
+        postRepository.save(post);
     }
 }

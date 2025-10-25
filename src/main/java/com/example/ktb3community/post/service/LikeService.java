@@ -33,7 +33,10 @@ public class LikeService {
         Post post = inMemoryPostRepository.findByIdOrThrow(postId);
         synchronized (post) {
             boolean removed = inMemoryPostLikeRepository.remove(postId, userId);
-            if (removed) post.decreaseLikeCount();
+            if (removed) {
+                post.decreaseLikeCount();
+                inMemoryPostRepository.save(post);
+            }
         }
         return new LikeResponse(post.getLikeCount(), post.getViewCount(), post.getCommentCount());
     }
