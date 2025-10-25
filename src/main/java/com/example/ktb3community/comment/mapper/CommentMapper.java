@@ -13,5 +13,6 @@ public interface CommentMapper {
 
     @Mapping(target = "commentId", source = "comment.id")
     @Mapping(target = "author", source = "user")
+    @Mapping(target = "createdAt", source = "comment.createdAt")
     CommentResponse toCommentResponse(Comment comment, User user);
 }
