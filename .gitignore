@@ -3,6 +3,7 @@
 
 ### Groovy ###
 # .gitignore created from Groovy contributors in https://github.com/apache/groovy/blob/master/.gitignore
+application-secret.yml
 
 user.gradle
 .gradle/
