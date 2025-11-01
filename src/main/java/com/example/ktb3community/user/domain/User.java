@@ -3,23 +3,50 @@ package com.example.ktb3community.user.domain;
 import com.example.ktb3community.common.constants.ValidationConstant;
 import com.example.ktb3community.common.error.ErrorCode;
 import com.example.ktb3community.exception.BusinessException;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.time.Instant;
 
+@Entity
+@Table(name = "users")
 @Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@SQLRestriction("deleted_at IS NULL")
 public class User {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(nullable = false, unique = true)
     private String email;
+
+    @Column(nullable = false)
     private String passwordHash;
+
+    @Column(nullable = false, unique = true)
     private String nickname;
+
+    @Column(nullable = false)
     private String profileImageUrl;
+
+    @Column(nullable = false)
     private Instant createdAt;
+
+    @Column(nullable = false)
     private Instant updatedAt;
+
     private Instant deletedAt;
 
-    private User(Long id, String email, String passwordHash,
-                 String nickname, String profileImageUrl,
+    private User(Long id, String email, String passwordHash, String nickname, String profileImageUrl,
                  Instant createdAt, Instant updatedAt, Instant deletedAt) {
         this.id = id;
         this.email = email.trim().toLowerCase();
@@ -36,7 +63,7 @@ public class User {
         // TODO: Spring Security 추가 시 비밀번호 암호화 추가
         return new User(null, email, password, nickname, profileImageUrl, now, now, null);
     }
-    // 인메모리용 임시 생성자
+
     public static User rehydrate(Long id, String email, String passwordHash,
                                  String nickname, String profileImageUrl,
                                  Instant createdAt, Instant updatedAt, Instant deletedAt) {

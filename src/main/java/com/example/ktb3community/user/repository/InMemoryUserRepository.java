@@ -60,7 +60,7 @@ public class InMemoryUserRepository implements UserRepository {
         if (userId == null) {
             return Optional.empty();
         }
-        return Optional.ofNullable(users.get(nickname))
+        return Optional.ofNullable(users.get(userId))
                 .filter(u -> u.getDeletedAt() == null);
     }
 
