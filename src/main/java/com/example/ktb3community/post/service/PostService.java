@@ -5,6 +5,7 @@ import com.example.ktb3community.exception.BusinessException;
 import com.example.ktb3community.post.domain.Post;
 import com.example.ktb3community.post.dto.*;
 import com.example.ktb3community.post.repository.PostRepository;
+import com.example.ktb3community.user.domain.User;
 import com.example.ktb3community.user.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,8 +19,8 @@ public class PostService implements PostCommentCounter {
     private final PostRepository postRepository;
 
     public CreatePostResponse createPost(Long userId, CreatePostRequest createPostRequest) {
-        userRepository.findByIdOrThrow(userId);
-        Post saved = postRepository.save(Post.createNew(userId, createPostRequest.title(),
+        User user = userRepository.findByIdOrThrow(userId);
+        Post saved = postRepository.save(Post.createNew(user, createPostRequest.title(),
                 createPostRequest.content(), createPostRequest.postImageUrl(), Instant.now()));
         return new CreatePostResponse(saved.getId());
     }

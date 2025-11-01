@@ -18,7 +18,7 @@ public class InMemoryPostRepository implements PostRepository {
     public Post save(Post post) {
         if (post.getId() == null) {
             long id = seq.getAndIncrement();
-            post = Post.rehydrate(id, post.getUserId(), post.getTitle(), post.getContent(), post.getPostImageUrl(),
+            post = Post.rehydrate(id, post.getUser(), post.getTitle(), post.getContent(), post.getPostImageUrl(),
                     post.getLikeCount(), post.getViewCount(), post.getCommentCount(),
                     post.getCreatedAt(), post.getUpdatedAt(), post.getDeletedAt());
         }

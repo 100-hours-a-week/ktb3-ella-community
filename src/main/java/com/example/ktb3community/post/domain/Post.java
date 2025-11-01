@@ -1,27 +1,69 @@
 package com.example.ktb3community.post.domain;
 
+import com.example.ktb3community.common.error.ErrorCode;
+import com.example.ktb3community.exception.BusinessException;
+import com.example.ktb3community.user.domain.User;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Lob;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.time.Instant;
 
+@Entity
+@Table(name = "posts")
 @Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@SQLRestriction("deleted_at IS NULL")
 public class Post {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private Long userId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
+    @Column(nullable = false)
     private String title;
+
+    @Lob
+    @Column(nullable = false)
     private String content;
+
     private String postImageUrl;
+
+    @Column(nullable = false)
     private long likeCount;
+
+    @Column(nullable = false)
     private long viewCount;
+
+    @Column(nullable = false)
     private long commentCount;
+
+    @Column(nullable = false)
     private Instant createdAt;
+
+    @Column(nullable = false)
     private Instant updatedAt;
+
     private Instant deletedAt;
 
-    private Post(Long id, Long userId, String title, String content, String postImageUrl, long like, long view, long cmt,
+    private Post(Long id, User user, String title, String content, String postImageUrl, long like, long view, long cmt,
                  Instant createdAt, Instant updatedAt, Instant deletedAt) {
         this.id = id;
-        this.userId = userId;
+        this.user = user;
         this.title = title.trim();
         this.content = content;
         this.postImageUrl = postImageUrl;
@@ -33,12 +75,12 @@ public class Post {
         this.deletedAt = deletedAt;
     }
 
-    public static Post createNew(Long userId, String title, String content, String postImageUrl, Instant now) {
-        return new Post(null, userId, title, content, postImageUrl, 0, 0, 0, now, now, null);
+    public static Post createNew(User user, String title, String content, String postImageUrl, Instant now) {
+        return new Post(null, user, title, content, postImageUrl, 0, 0, 0, now, now, null);
     }
-    public static Post rehydrate(Long id, Long userId, String title, String content, String postImageUrl, long like, long view, long cmt,
+    public static Post rehydrate(Long id, User user, String title, String content, String postImageUrl, long like, long view, long cmt,
                                  Instant createdAt, Instant updatedAt, Instant deletedAt) {
-        return new Post(id, userId, title, content, postImageUrl, like, view, cmt, createdAt, updatedAt, deletedAt);
+        return new Post(id, user, title, content, postImageUrl, like, view, cmt, createdAt, updatedAt, deletedAt);
     }
 
     public void updatePost(String title, String content, String postImageUrl, Instant now) {
@@ -51,20 +93,34 @@ public class Post {
     public void increaseViewCount() {
         this.viewCount++;
     }
+
     public void increaseLikeCount() {
         this.likeCount++;
     }
+
     public void decreaseLikeCount() {
         if (this.likeCount > 0 ) { this.likeCount--; }
     }
+
     public void increaseCommentCount() {
         this.commentCount++;
     }
+
     public void decreaseCommentCount() {
         if (this.commentCount > 0) this.commentCount--;
     }
+
     public void delete(Instant now) {
-        if (this.deletedAt == null) { this.deletedAt = now; this.updatedAt = now; }
+        if (this.deletedAt == null) {
+            this.deletedAt = now;
+            this.updatedAt = now;
+        }
+    }
+
+    public Long getUserId() {
+        if (user == null) {
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+        }
+        return user.getId();
     }
 }
-
