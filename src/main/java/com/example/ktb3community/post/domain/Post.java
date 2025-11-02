@@ -41,23 +41,25 @@ public class Post {
     @Column(nullable = false)
     private String content;
 
+    @Column(name = "post_image_url")
     private String postImageUrl;
 
-    @Column(nullable = false)
+    @Column(name = "like_count", nullable = false)
     private long likeCount;
 
-    @Column(nullable = false)
+    @Column(name = "view_count", nullable = false)
     private long viewCount;
 
-    @Column(nullable = false)
+    @Column(name = "comment_count", nullable = false)
     private long commentCount;
 
-    @Column(nullable = false)
+    @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
-    @Column(nullable = false)
+    @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
+    @Column(name = "deleted_at")
     private Instant deletedAt;
 
     private Post(Long id, User user, String title, String content, String postImageUrl, long like, long view, long cmt,
