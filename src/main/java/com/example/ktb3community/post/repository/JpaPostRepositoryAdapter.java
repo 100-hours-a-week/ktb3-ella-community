@@ -4,6 +4,8 @@ import com.example.ktb3community.post.domain.Post;
 import com.example.ktb3community.post.exception.PostNotFoundException;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Primary;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -32,7 +34,7 @@ public class JpaPostRepositoryAdapter implements PostRepository {
     }
 
     @Override
-    public List<Post> findAll() {
-        return jpaPostRepository.findAll();
+    public Page<Post> findAll(Pageable pageable) {
+        return jpaPostRepository.findAll(pageable);
     }
 }

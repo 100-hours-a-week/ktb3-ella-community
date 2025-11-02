@@ -2,8 +2,9 @@ package com.example.ktb3community.comment.repository;
 
 import com.example.ktb3community.comment.domain.Comment;
 import com.example.ktb3community.post.domain.Post;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
-import java.util.List;
 import java.util.Optional;
 
 public interface CommentRepository {
@@ -13,5 +14,6 @@ public interface CommentRepository {
 
     Comment findByIdOrThrow(Long id);
 
-    List<Comment> findByPost(Post post);
+
+    Page<Comment> findByPost(Post post, Pageable pageable);
 }

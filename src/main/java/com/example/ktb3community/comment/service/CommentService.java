@@ -15,6 +15,9 @@ import com.example.ktb3community.user.domain.User;
 import com.example.ktb3community.user.exception.UserNotFoundException;
 import com.example.ktb3community.user.repository.UserRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,29 +51,27 @@ public class CommentService {
     @Transactional(readOnly = true)
     public PageResponse<CommentResponse> getCommentList(long postId, int page){
         Post post = postRepository.findByIdOrThrow(postId);
-        List<Comment> comments = commentRepository.findByPost(post).stream()
-                .toList();
+        int requestedPage = Math.max(page, 1);
+        PageRequest pageRequest = PageRequest.of(requestedPage - 1, PAGE_SIZE,
+                Sort.by(Sort.Direction.DESC, "createdAt")
+                        .and(Sort.by(Sort.Direction.DESC, "id")));
+        Page<Comment> commentPage = commentRepository.findByPost(post, pageRequest);
 
-        int from = Math.max(0, (page - 1) * PAGE_SIZE);
-        List<Comment> slice = (from >= comments.size()) ? List.of() : comments.subList(from, Math.min(comments.size(), from + PAGE_SIZE));
-        long total = comments.size();
-        long totalPages = (total + PAGE_SIZE - 1L) / PAGE_SIZE;
-
-        Set<Long> authorIds = slice.stream()
+        Set<Long> authorIds = commentPage.getContent().stream()
                 .map(Comment::getUserId)
                 .collect(Collectors.toSet());
 
         Map<Long, User> authorMap = userRepository.findAllByIdIn(authorIds).stream()
                 .collect(Collectors.toMap(User::getId, user -> user));
 
-        List<CommentResponse> content = slice.stream().map(c -> {
+        List<CommentResponse> content = commentPage.getContent().stream().map(c -> {
             User user = authorMap.get(c.getUserId());
             if(user == null){
                 throw new UserNotFoundException();
             }
             return commentMapper.toCommentResponse(c, user);
-            }).toList();
-        return new PageResponse<>(content, page, PAGE_SIZE, totalPages);
+        }).toList();
+        return new PageResponse<>(content, commentPage.getNumber() + 1, commentPage.getSize(), commentPage.getTotalPages());
     }
 
     @Transactional

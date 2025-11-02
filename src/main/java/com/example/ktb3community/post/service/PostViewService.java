@@ -14,10 +14,11 @@ import com.example.ktb3community.user.domain.User;
 import com.example.ktb3community.user.exception.UserNotFoundException;
 import com.example.ktb3community.user.repository.UserRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -35,23 +36,17 @@ public class PostViewService {
 
     @Transactional(readOnly = true)
     public PageResponse<PostListResponse> getPostList(int page, int pageSize, PostSort sort) {
-        Comparator<Post> postComparator = sort.comparator();
-        List<Post> posts = postRepository.findAll().stream()
-                .sorted(postComparator)
-                .toList();
-        int from = Math.max(0, (page - 1) * pageSize);
-        int to   = Math.min(posts.size(), from + pageSize);
-        List<Post> slice = (from >= posts.size()) ? List.of() : posts.subList(from, to);
-        long total = posts.size();
-        long totalPages = (total + pageSize - 1L) / pageSize;
+        int requestedPage = Math.max(page, 1);
+        PageRequest pageRequest = PageRequest.of(requestedPage - 1, pageSize, sort.sort());
+        Page<Post> postPage = postRepository.findAll(pageRequest);
 
-        Set<Long> authorIds = slice.stream()
+        Set<Long> authorIds = postPage.getContent().stream()
                 .map(Post::getUserId)
                 .collect(Collectors.toSet());
 
         Map<Long, User> authorMap = userRepository.findAllByIdIn(authorIds).stream()
                 .collect(Collectors.toMap(User::getId, user -> user));
-        List<PostListResponse> content = slice.stream().map(p -> {
+        List<PostListResponse> content = postPage.getContent().stream().map(p -> {
             User user = authorMap.get(p.getUserId());
             if(user == null){
                 throw new UserNotFoundException();
@@ -67,7 +62,7 @@ public class PostViewService {
                     p.getCreatedAt()
             );
         }).toList();
-        return new PageResponse<>(content, page, pageSize, totalPages);
+        return new PageResponse<>(content, postPage.getNumber() + 1, postPage.getSize(), postPage.getTotalPages());
     }
 
     @Transactional
@@ -79,6 +74,7 @@ public class PostViewService {
         PageResponse<CommentResponse> commentsPage =
                 commentService.getCommentList(postId, COMMENT_PAGE);
         post.increaseViewCount();
+        postRepository.save(post);
         return new PostDetailResponse(
                 post.getId(),
                 post.getTitle(),

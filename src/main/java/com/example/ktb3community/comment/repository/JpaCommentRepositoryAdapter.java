@@ -5,6 +5,8 @@ import com.example.ktb3community.comment.exception.CommentNotFound;
 import com.example.ktb3community.post.domain.Post;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -33,7 +35,7 @@ public class JpaCommentRepositoryAdapter implements CommentRepository {
     }
 
     @Override
-    public List<Comment> findByPost(Post post) {
-        return jpaCommentRepository.findByPost(post);
+    public Page<Comment> findByPost(Post post, Pageable pageable) {
+        return jpaCommentRepository.findByPost(post, pageable);
     }
 }
