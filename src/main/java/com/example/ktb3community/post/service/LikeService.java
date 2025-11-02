@@ -24,7 +24,6 @@ public class LikeService {
         boolean added = postLikeRepository.add(post, user);
         if (added) {
             post.increaseLikeCount();
-            postRepository.save(post);
         }
         return new LikeResponse(post.getLikeCount(), post.getViewCount(), post.getCommentCount());
     }
@@ -36,7 +35,6 @@ public class LikeService {
         boolean removed = postLikeRepository.remove(post, user);
         if (removed) {
             post.decreaseLikeCount();
-            postRepository.save(post);
         }
         return new LikeResponse(post.getLikeCount(), post.getViewCount(), post.getCommentCount());
     }

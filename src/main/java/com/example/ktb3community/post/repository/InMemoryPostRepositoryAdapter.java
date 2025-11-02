@@ -25,16 +25,19 @@ public class InMemoryPostRepositoryAdapter implements PostRepository {
         posts.put(post.getId(), post);
         return post;
     }
+
     @Override
     public Optional<Post> findById(Long id) {
         return Optional.ofNullable(posts.get(id))
                 .filter(post -> post.getDeletedAt() == null);
     }
+
     @Override
     public Post findByIdOrThrow(Long id) {
         return findById(id)
                 .orElseThrow(PostNotFoundException::new);
     }
+
     @Override
     public List<Post> findAll() {
         return posts.values().stream()

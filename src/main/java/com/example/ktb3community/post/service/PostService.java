@@ -35,7 +35,6 @@ public class PostService implements PostCommentCounter {
             throw new BusinessException(ErrorCode.AUTH_FORBIDDEN);
         }
         post.updatePost(createPostRequest.title(), createPostRequest.content(), createPostRequest.postImageUrl(), Instant.now());
-        postRepository.save(post);
         return new CreatePostResponse(post.getId());
     }
 
@@ -47,7 +46,6 @@ public class PostService implements PostCommentCounter {
             throw new BusinessException(ErrorCode.AUTH_FORBIDDEN);
         }
         post.delete(Instant.now());
-        postRepository.save(post);
     }
 
     @Transactional
@@ -55,7 +53,6 @@ public class PostService implements PostCommentCounter {
     public void increaseCommentCount(Long postId) {
         Post post = postRepository.findByIdOrThrow(postId);
         post.increaseCommentCount();
-        postRepository.save(post);
     }
 
     @Transactional
@@ -63,6 +60,5 @@ public class PostService implements PostCommentCounter {
     public void decreaseCommentCount(Long postId) {
         Post post = postRepository.findByIdOrThrow(postId);
         post.decreaseCommentCount();
-        postRepository.save(post);
     }
 }

@@ -81,7 +81,6 @@ public class CommentService {
             throw new BusinessException(ErrorCode.AUTH_FORBIDDEN);
         }
         comment.updateContent(createCommentRequest.content(), Instant.now());
-        commentRepository.save(comment);
         return commentMapper.toCommentResponse(comment, user);
     }
 

@@ -55,7 +55,6 @@ public class UserService {
         if(updateMeRequest.profileImageUrl() != null && !updateMeRequest.profileImageUrl().isBlank()){
             user.updateProfileImageUrl(updateMeRequest.profileImageUrl(), Instant.now());
         }
-        userRepository.save(user);
         return userMapper.userToMeResponse(user);
     }
 
@@ -63,7 +62,6 @@ public class UserService {
     public void updatePassword(Long userId, UpdatePasswordRequest updatePasswordRequest){
         User user = userRepository.findByIdOrThrow(userId);
         user.updatePasswordHash(updatePasswordRequest.newPassword(), Instant.now());
-        userRepository.save(user);
     }
 
     @Transactional
@@ -71,6 +69,5 @@ public class UserService {
         User user = userRepository.findByIdOrThrow(userId);
         //TODO: 쿠키 즉시 만료 로직 추가
         user.delete(Instant.now());
-        userRepository.save(user);
     }
 }
