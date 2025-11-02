@@ -70,9 +70,9 @@ public class PostViewService {
 
     public PostDetailResponse getPostDetail(long postId, long userId) {
         Post post = postRepository.findByIdOrThrow(postId);
-        User user = userRepository.findByIdOrThrow(post.getUserId());
-        Author author = new Author(user.getNickname(), user.getProfileImageUrl());
-        userRepository.findByIdOrThrow(userId);
+        User authorUser = userRepository.findByIdOrThrow(post.getUserId());
+        Author author = new Author(authorUser.getNickname(), authorUser.getProfileImageUrl());
+        User viewer = userRepository.findByIdOrThrow(userId);
         PageResponse<CommentResponse> commentsPage =
                 commentService.getCommentList(postId, COMMENT_PAGE);
         post.increaseViewCount();
@@ -86,7 +86,7 @@ public class PostViewService {
                 post.getLikeCount(),
                 post.getViewCount(),
                 post.getCommentCount(),
-                postLikeRepository.exists(postId, userId),
+                postLikeRepository.exists(post, viewer),
                 post.getCreatedAt(),
                 commentsPage
         );

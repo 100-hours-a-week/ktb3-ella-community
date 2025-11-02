@@ -2,41 +2,38 @@ package com.example.ktb3community.post.service;
 
 import com.example.ktb3community.post.domain.Post;
 import com.example.ktb3community.post.dto.LikeResponse;
-import com.example.ktb3community.post.repository.InMemoryPostLikeRepository;
-import com.example.ktb3community.post.repository.InMemoryPostRepository;
-import com.example.ktb3community.user.repository.InMemoryUserRepository;
+import com.example.ktb3community.post.repository.PostLikeRepository;
+import com.example.ktb3community.post.repository.PostRepository;
+import com.example.ktb3community.user.domain.User;
+import com.example.ktb3community.user.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
 @AllArgsConstructor
 public class LikeService {
-    private final InMemoryUserRepository inMemoryUserRepository;
-    private final InMemoryPostRepository inMemoryPostRepository;
-    private final InMemoryPostLikeRepository inMemoryPostLikeRepository;
+    private final UserRepository userRepository;
+    private final PostRepository postRepository;
+    private final PostLikeRepository postLikeRepository;
 
     public LikeResponse likePost(Long postId, Long userId){
-        inMemoryUserRepository.findByIdOrThrow(userId);
-        Post post = inMemoryPostRepository.findByIdOrThrow(postId);
-        synchronized (post) {
-            boolean added = inMemoryPostLikeRepository.add(postId, userId);
-            if (added) {
-                post.increaseLikeCount();
-                inMemoryPostRepository.save(post);
-            }
+        User user = userRepository.findByIdOrThrow(userId);
+        Post post = postRepository.findByIdOrThrow(postId);
+        boolean added = postLikeRepository.add(post, user);
+        if (added) {
+            post.increaseLikeCount();
+            postRepository.save(post);
         }
         return new LikeResponse(post.getLikeCount(), post.getViewCount(), post.getCommentCount());
     }
 
     public LikeResponse unlikePost(Long postId, Long userId){
-        inMemoryUserRepository.findByIdOrThrow(userId);
-        Post post = inMemoryPostRepository.findByIdOrThrow(postId);
-        synchronized (post) {
-            boolean removed = inMemoryPostLikeRepository.remove(postId, userId);
-            if (removed) {
-                post.decreaseLikeCount();
-                inMemoryPostRepository.save(post);
-            }
+        User user = userRepository.findByIdOrThrow(userId);
+        Post post = postRepository.findByIdOrThrow(postId);
+        boolean removed = postLikeRepository.remove(post, user);
+        if (removed) {
+            post.decreaseLikeCount();
+            postRepository.save(post);
         }
         return new LikeResponse(post.getLikeCount(), post.getViewCount(), post.getCommentCount());
     }
