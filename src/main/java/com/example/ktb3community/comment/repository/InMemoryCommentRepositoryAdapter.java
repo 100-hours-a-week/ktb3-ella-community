@@ -2,6 +2,7 @@ package com.example.ktb3community.comment.repository;
 
 import com.example.ktb3community.comment.domain.Comment;
 import com.example.ktb3community.comment.exception.CommentNotFound;
+import com.example.ktb3community.post.domain.Post;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -10,7 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Repository
-public class InMemoryCommentRepository implements CommentRepository {
+public class InMemoryCommentRepositoryAdapter implements CommentRepository {
     private final AtomicLong seq = new AtomicLong(1);
     private final ConcurrentHashMap<Long, Comment> comments = new ConcurrentHashMap<>();
 
@@ -18,7 +19,7 @@ public class InMemoryCommentRepository implements CommentRepository {
     public Comment save(Comment comment) {
         if (comment.getId() == null) {
             long id = seq.getAndIncrement();
-            comment = Comment.rehydrate(id, comment.getPostId(), comment.getUserId(), comment.getContent(),
+            comment = Comment.rehydrate(id, comment.getPost(), comment.getUser(), comment.getContent(),
                     comment.getCreatedAt(), comment.getUpdatedAt(), comment.getDeletedAt());
         }
         comments.put(comment.getId(), comment);
@@ -38,9 +39,10 @@ public class InMemoryCommentRepository implements CommentRepository {
     }
 
     @Override
-    public List<Comment> findByPostId(Long postId) {
+    public List<Comment> findByPost(Post post) {
+        Long postId = post.getId();
         return comments.values().stream()
-                .filter(p -> p.getDeletedAt() == null && p.getPostId().equals(postId))
+                .filter(comment -> comment.getDeletedAt() == null && comment.getPostId().equals(postId))
                 .toList();
     }
 }

@@ -8,6 +8,7 @@ import com.example.ktb3community.comment.repository.CommentRepository;
 import com.example.ktb3community.common.error.ErrorCode;
 import com.example.ktb3community.common.pagination.PageResponse;
 import com.example.ktb3community.exception.BusinessException;
+import com.example.ktb3community.post.domain.Post;
 import com.example.ktb3community.post.repository.PostRepository;
 import com.example.ktb3community.post.service.PostCommentCounter;
 import com.example.ktb3community.user.domain.User;
@@ -35,16 +36,16 @@ public class CommentService {
 
     public CommentResponse createComment(Long postId, Long userId, CreateCommentRequest createCommentRequest) {
         User user = userRepository.findByIdOrThrow(userId);
-        postRepository.findByIdOrThrow(postId);
-        Comment saved = commentRepository.save(Comment.createNew(postId, userId,
+        Post post = postRepository.findByIdOrThrow(postId);
+        Comment saved = commentRepository.save(Comment.createNew(post, user,
                 createCommentRequest.content(), Instant.now()));
         postCommentCounter.increaseCommentCount(postId);
         return commentMapper.toCommentResponse(saved, user);
     }
 
     public PageResponse<CommentResponse> getCommentList(long postId, int page){
-        postRepository.findByIdOrThrow(postId);
-        List<Comment> comments = commentRepository.findByPostId(postId).stream()
+        Post post = postRepository.findByIdOrThrow(postId);
+        List<Comment> comments = commentRepository.findByPost(post).stream()
                 .toList();
 
         int from = Math.max(0, (page - 1) * PAGE_SIZE);
@@ -76,17 +77,18 @@ public class CommentService {
             throw new BusinessException(ErrorCode.AUTH_FORBIDDEN);
         }
         comment.updateContent(createCommentRequest.content(), Instant.now());
+        commentRepository.save(comment);
         return commentMapper.toCommentResponse(comment, user);
     }
 
     public void deleteComment(Long commentId, Long userId) {
         Comment comment =  commentRepository.findByIdOrThrow(commentId);
         User user = userRepository.findByIdOrThrow(userId);
-        postRepository.findByIdOrThrow(comment.getPostId());
+        Post post = postRepository.findByIdOrThrow(comment.getPostId());
         if(!comment.getUserId().equals(user.getId())) {
             throw new BusinessException(ErrorCode.AUTH_FORBIDDEN);
         }
         comment.delete(Instant.now());
-        postCommentCounter.decreaseCommentCount(comment.getPostId());
+        postCommentCounter.decreaseCommentCount(post.getId());
     }
 }
