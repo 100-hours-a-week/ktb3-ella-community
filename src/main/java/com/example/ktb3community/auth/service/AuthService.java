@@ -11,6 +11,7 @@ import com.example.ktb3community.user.mapper.UserMapper;
 import com.example.ktb3community.user.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 
@@ -20,6 +21,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
 
+    @Transactional
     public MeResponse signup(SignUpRequest signUpRequest) {
         String email = signUpRequest.email().trim().toLowerCase();
         if (userRepository.existsByEmail(email)) {
@@ -32,6 +34,7 @@ public class AuthService {
         return userMapper.userToMeResponse(saved);
     }
 
+    @Transactional
     public MeResponse login(LoginRequest loginRequest) {
         String email = loginRequest.email().trim().toLowerCase();
         User user = userRepository.findByEmail(email).orElseThrow(UserNotFoundException::new);

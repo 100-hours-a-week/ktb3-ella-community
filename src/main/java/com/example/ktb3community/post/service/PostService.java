@@ -9,6 +9,7 @@ import com.example.ktb3community.user.domain.User;
 import com.example.ktb3community.user.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 
@@ -18,6 +19,7 @@ public class PostService implements PostCommentCounter {
     private final UserRepository userRepository;
     private final PostRepository postRepository;
 
+    @Transactional
     public CreatePostResponse createPost(Long userId, CreatePostRequest createPostRequest) {
         User user = userRepository.findByIdOrThrow(userId);
         Post saved = postRepository.save(Post.createNew(user, createPostRequest.title(),
@@ -25,6 +27,7 @@ public class PostService implements PostCommentCounter {
         return new CreatePostResponse(saved.getId());
     }
 
+    @Transactional
     public CreatePostResponse updatePost(Long postId, Long userId, CreatePostRequest createPostRequest) {
         userRepository.findByIdOrThrow(userId);
         Post post = postRepository.findByIdOrThrow(postId);
@@ -36,6 +39,7 @@ public class PostService implements PostCommentCounter {
         return new CreatePostResponse(post.getId());
     }
 
+    @Transactional
     public void deletePost(Long postId, Long userId) {
         userRepository.findByIdOrThrow(userId);
         Post post = postRepository.findByIdOrThrow(postId);
@@ -46,6 +50,7 @@ public class PostService implements PostCommentCounter {
         postRepository.save(post);
     }
 
+    @Transactional
     @Override
     public void increaseCommentCount(Long postId) {
         Post post = postRepository.findByIdOrThrow(postId);
@@ -53,6 +58,7 @@ public class PostService implements PostCommentCounter {
         postRepository.save(post);
     }
 
+    @Transactional
     @Override
     public void decreaseCommentCount(Long postId) {
         Post post = postRepository.findByIdOrThrow(postId);

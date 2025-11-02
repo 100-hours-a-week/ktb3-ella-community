@@ -11,6 +11,7 @@ import com.example.ktb3community.user.mapper.UserMapper;
 import com.example.ktb3community.user.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 
@@ -20,6 +21,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
 
+    @Transactional(readOnly = true)
     public AvailabilityResponse getAvailability(String email, String nickname) {
         Boolean emailAvailable = null;
         Boolean nicknameAvailable = null;
@@ -34,11 +36,13 @@ public class UserService {
         return new AvailabilityResponse(emailAvailable, nicknameAvailable);
     }
 
+    @Transactional(readOnly = true)
     public MeResponse getMe(Long userId){
         User user = userRepository.findByIdOrThrow(userId);
         return userMapper.userToMeResponse(user);
     }
 
+    @Transactional
     public MeResponse updateMe(Long userId, UpdateMeRequest updateMeRequest){
         User user = userRepository.findByIdOrThrow(userId);
         String nickname = updateMeRequest.nickname();
@@ -55,12 +59,14 @@ public class UserService {
         return userMapper.userToMeResponse(user);
     }
 
+    @Transactional
     public void updatePassword(Long userId, UpdatePasswordRequest updatePasswordRequest){
         User user = userRepository.findByIdOrThrow(userId);
         user.updatePasswordHash(updatePasswordRequest.newPassword(), Instant.now());
         userRepository.save(user);
     }
 
+    @Transactional
     public void withdrawMe(Long userId){
         User user = userRepository.findByIdOrThrow(userId);
         //TODO: 쿠키 즉시 만료 로직 추가

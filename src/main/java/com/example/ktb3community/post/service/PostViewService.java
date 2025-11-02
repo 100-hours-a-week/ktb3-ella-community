@@ -15,6 +15,7 @@ import com.example.ktb3community.user.exception.UserNotFoundException;
 import com.example.ktb3community.user.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
 import java.util.List;
@@ -32,6 +33,7 @@ public class PostViewService {
 
     private static final int COMMENT_PAGE = 1;
 
+    @Transactional(readOnly = true)
     public PageResponse<PostListResponse> getPostList(int page, int pageSize, PostSort sort) {
         Comparator<Post> postComparator = sort.comparator();
         List<Post> posts = postRepository.findAll().stream()
@@ -68,6 +70,7 @@ public class PostViewService {
         return new PageResponse<>(content, page, pageSize, totalPages);
     }
 
+    @Transactional(readOnly = true)
     public PostDetailResponse getPostDetail(long postId, long userId) {
         Post post = postRepository.findByIdOrThrow(postId);
         User authorUser = userRepository.findByIdOrThrow(post.getUserId());

@@ -16,6 +16,7 @@ import com.example.ktb3community.user.exception.UserNotFoundException;
 import com.example.ktb3community.user.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
@@ -34,6 +35,7 @@ public class CommentService {
 
     private static final int PAGE_SIZE = 10;
 
+    @Transactional
     public CommentResponse createComment(Long postId, Long userId, CreateCommentRequest createCommentRequest) {
         User user = userRepository.findByIdOrThrow(userId);
         Post post = postRepository.findByIdOrThrow(postId);
@@ -43,6 +45,7 @@ public class CommentService {
         return commentMapper.toCommentResponse(saved, user);
     }
 
+    @Transactional(readOnly = true)
     public PageResponse<CommentResponse> getCommentList(long postId, int page){
         Post post = postRepository.findByIdOrThrow(postId);
         List<Comment> comments = commentRepository.findByPost(post).stream()
@@ -70,6 +73,7 @@ public class CommentService {
         return new PageResponse<>(content, page, PAGE_SIZE, totalPages);
     }
 
+    @Transactional
     public CommentResponse updateComment(Long commentId, Long userId, CreateCommentRequest createCommentRequest) {
         Comment comment =  commentRepository.findByIdOrThrow(commentId);
         User user = userRepository.findByIdOrThrow(userId);
@@ -81,6 +85,7 @@ public class CommentService {
         return commentMapper.toCommentResponse(comment, user);
     }
 
+    @Transactional
     public void deleteComment(Long commentId, Long userId) {
         Comment comment =  commentRepository.findByIdOrThrow(commentId);
         User user = userRepository.findByIdOrThrow(userId);
