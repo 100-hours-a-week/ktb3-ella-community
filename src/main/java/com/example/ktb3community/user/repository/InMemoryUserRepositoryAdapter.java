@@ -10,7 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Repository
-public class InMemoryUserRepository implements UserRepository {
+public class InMemoryUserRepositoryAdapter implements UserRepository {
     // 시작값을 1로 초기화
     private final AtomicLong seq = new AtomicLong(1);
     // 키가 long, 값이 User인 해시맵

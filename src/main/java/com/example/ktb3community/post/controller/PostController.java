@@ -18,6 +18,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -41,7 +42,9 @@ public class PostController {
             @Parameter(description = "사용자 id", example = "1") @PathVariable Long userId,
             @Valid @RequestBody CreatePostRequest createPostRequest) {
         CreatePostResponse createPostResponse = postService.createPost(userId, createPostRequest);
-        return ResponseEntity.ok(ApiResult.ok(createPostResponse));
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(ApiResult.ok(createPostResponse));
     }
 
     @Operation(summary = "게시글 목록 조회", description = "페이지네이션과 정렬 옵션을 사용하여 게시글 목록을 조회합니다.")
@@ -55,7 +58,7 @@ public class PostController {
     public ResponseEntity<ApiResult<PageResponse<PostListResponse>>> list(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(required = false, defaultValue = "10") int pageSize,
-            @RequestParam(required = false, defaultValue = "new") PostSort sort
+            @RequestParam(required = false, defaultValue = "NEW") PostSort sort
     ) {
         if (page < 1) throw new BusinessException(ErrorCode.INVALID_PAGE);
         if (pageSize < 1 || pageSize > 20) {

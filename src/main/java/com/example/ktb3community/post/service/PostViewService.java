@@ -76,6 +76,7 @@ public class PostViewService {
         PageResponse<CommentResponse> commentsPage =
                 commentService.getCommentList(postId, COMMENT_PAGE);
         post.increaseViewCount();
+        postRepository.save(post);
         return new PostDetailResponse(
                 post.getId(),
                 post.getTitle(),

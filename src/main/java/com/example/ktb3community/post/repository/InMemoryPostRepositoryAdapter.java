@@ -10,7 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Repository
-public class InMemoryPostRepository implements PostRepository {
+public class InMemoryPostRepositoryAdapter implements PostRepository {
     private final AtomicLong seq = new AtomicLong(1);
     private final ConcurrentHashMap<Long, Post> posts = new ConcurrentHashMap<>();
 
