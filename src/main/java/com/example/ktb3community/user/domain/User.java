@@ -35,7 +35,7 @@ public class User {
     @Column(nullable = false, unique = true)
     private String nickname;
 
-    @Column(name = "pofile_image_url" ,nullable = false)
+    @Column(name = "profile_image_url" ,nullable = false)
     private String profileImageUrl;
 
     @Column(name = "created_at", nullable = false)

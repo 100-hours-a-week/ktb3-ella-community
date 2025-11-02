@@ -70,7 +70,7 @@ public class PostViewService {
         return new PageResponse<>(content, page, pageSize, totalPages);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public PostDetailResponse getPostDetail(long postId, long userId) {
         Post post = postRepository.findByIdOrThrow(postId);
         User authorUser = userRepository.findByIdOrThrow(post.getUserId());
@@ -79,7 +79,6 @@ public class PostViewService {
         PageResponse<CommentResponse> commentsPage =
                 commentService.getCommentList(postId, COMMENT_PAGE);
         post.increaseViewCount();
-        postRepository.save(post);
         return new PostDetailResponse(
                 post.getId(),
                 post.getTitle(),
