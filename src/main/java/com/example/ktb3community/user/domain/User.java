@@ -3,6 +3,7 @@ package com.example.ktb3community.user.domain;
 import com.example.ktb3community.common.constants.ValidationConstant;
 import com.example.ktb3community.common.error.ErrorCode;
 import com.example.ktb3community.exception.BusinessException;
+import com.example.ktb3community.post.domain.Post;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -93,5 +94,23 @@ public class User {
     public void updatePasswordHash(String passwordHash, Instant now) {
         this.passwordHash = passwordHash;
         this.updatedAt = now;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if(this == o) return true;
+        if(o == null || getClass() != o.getClass()) return false;
+
+        User other = (User) o;
+        if(this.id == null || other.id == null ) return false;
+        return this.id.equals(other.id);
+    }
+
+    @Override
+    public int hashCode() {
+        if (id != null) {
+            return id.hashCode();
+        }
+        return System.identityHashCode(this);
     }
 }

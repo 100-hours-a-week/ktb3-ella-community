@@ -80,4 +80,22 @@ public class Comment {
         }
         return post.getId();
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if(this == o) return true;
+        if(o == null || getClass() != o.getClass()) return false;
+
+        Comment other = (Comment) o;
+        if(this.id == null || other.id == null ) return false;
+        return this.id.equals(other.id);
+    }
+
+    @Override
+    public int hashCode() {
+        if (id != null) {
+            return id.hashCode();
+        }
+        return System.identityHashCode(this);
+    }
 }
