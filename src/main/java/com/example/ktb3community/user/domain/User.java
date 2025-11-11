@@ -12,7 +12,6 @@ import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.SQLRestriction;
 
 import java.time.Instant;
 
@@ -20,7 +19,6 @@ import java.time.Instant;
 @Table(name = "users")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@SQLRestriction("deleted_at IS NULL")
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
