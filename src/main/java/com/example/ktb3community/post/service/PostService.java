@@ -1,5 +1,6 @@
 package com.example.ktb3community.post.service;
 
+import com.example.ktb3community.comment.repository.CommentRepository;
 import com.example.ktb3community.common.error.ErrorCode;
 import com.example.ktb3community.exception.BusinessException;
 import com.example.ktb3community.post.domain.Post;
@@ -18,6 +19,7 @@ import java.time.Instant;
 public class PostService implements PostCommentCounter {
     private final UserRepository userRepository;
     private final PostRepository postRepository;
+    private final CommentRepository commentRepository;
 
     @Transactional
     public CreatePostResponse createPost(Long userId, CreatePostRequest createPostRequest) {
@@ -45,7 +47,9 @@ public class PostService implements PostCommentCounter {
         if(!post.getUserId().equals(userId)){
             throw new BusinessException(ErrorCode.AUTH_FORBIDDEN);
         }
-        post.delete(Instant.now());
+        Instant now = Instant.now();
+        commentRepository.softDeleteByPostId(postId, now);
+        post.delete(now);
     }
 
     @Transactional

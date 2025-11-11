@@ -5,6 +5,7 @@ import com.example.ktb3community.user.domain.User;
 import com.example.ktb3community.user.exception.UserNotFoundException;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -88,5 +89,13 @@ public class InMemoryUserRepositoryAdapter implements UserRepository {
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .toList();
+    }
+
+    @Override
+    public void softDeleteById(Long id, Instant now) {
+        User user = users.get(id);
+        if (user != null && user.getDeletedAt() == null) {
+            user.delete(now);
+        }
     }
 }

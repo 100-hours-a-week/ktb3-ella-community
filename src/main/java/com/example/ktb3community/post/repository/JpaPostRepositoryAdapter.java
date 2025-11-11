@@ -8,7 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
+import java.time.Instant;
 import java.util.Optional;
 
 @Repository
@@ -25,7 +25,7 @@ public class JpaPostRepositoryAdapter implements PostRepository {
 
     @Override
     public Optional<Post> findById(Long id) {
-        return jpaPostRepository.findById(id);
+        return jpaPostRepository.findByIdAndDeletedAtIsNull(id);
     }
 
     @Override
@@ -35,6 +35,11 @@ public class JpaPostRepositoryAdapter implements PostRepository {
 
     @Override
     public Page<Post> findAll(Pageable pageable) {
-        return jpaPostRepository.findAll(pageable);
+        return jpaPostRepository.findByDeletedAtIsNull(pageable);
+    }
+
+    @Override
+    public int softDeleteByUserId(Long userId, Instant now) {
+        return jpaPostRepository.softDeleteByUserId(userId, now);
     }
 }

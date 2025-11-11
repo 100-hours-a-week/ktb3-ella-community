@@ -7,7 +7,6 @@ import com.example.ktb3community.user.exception.UserNotFoundException;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.SQLRestriction;
 
 import java.time.Instant;
 
@@ -15,7 +14,6 @@ import java.time.Instant;
 @Table(name = "comments")
 @Getter
 @NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
-@SQLRestriction("deleted_at IS NULL")
 public class Comment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -83,4 +81,3 @@ public class Comment {
         return post.getId();
     }
 }
-

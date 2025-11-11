@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -84,4 +85,15 @@ public class InMemoryPostRepositoryAdapter implements PostRepository {
             "commentCount", Comparator.comparingLong(Post::getCommentCount),
             "id", Comparator.comparing(Post::getId)
     );
+
+    @Override
+    public int softDeleteByUserId(Long userId, Instant now) {
+        return posts.values().stream()
+                .filter(post -> post.getDeletedAt() == null && post.getUserId().equals(userId))
+                .mapToInt(post -> {
+                    post.delete(now);
+                    return 1;
+                })
+                .sum();
+    }
 }

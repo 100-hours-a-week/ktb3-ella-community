@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -24,27 +25,27 @@ public class JpaUserRepositoryAdapter implements UserRepository {
 
     @Override
     public Optional<User> findByEmail(String email) {
-        return jpaUserRepository.findByEmail(email);
+        return jpaUserRepository.findByEmailAndDeletedAtIsNull(email);
     }
 
     @Override
     public boolean existsByEmail(String email) {
-        return jpaUserRepository.existsByEmail(email);
+        return jpaUserRepository.existsByEmailAndDeletedAtIsNull(email);
     }
 
     @Override
     public Optional<User> findByNickname(String nickname) {
-        return jpaUserRepository.findByNickname(nickname);
+        return jpaUserRepository.findByNicknameAndDeletedAtIsNull(nickname);
     }
 
     @Override
     public boolean existsByNickname(String nickname) {
-        return jpaUserRepository.existsByNickname(nickname);
+        return jpaUserRepository.existsByNicknameAndDeletedAtIsNull(nickname);
     }
 
     @Override
     public Optional<User> findById(Long id) {
-        return jpaUserRepository.findById(id);
+        return jpaUserRepository.findByIdAndDeletedAtIsNull(id);
     }
 
     @Override
@@ -54,6 +55,11 @@ public class JpaUserRepositoryAdapter implements UserRepository {
 
     @Override
     public List<User> findAllByIdIn(Collection<Long> ids) {
-        return jpaUserRepository.findAllByIdIn(ids);
+        return jpaUserRepository.findAllByIdInAndDeletedAtIsNull(ids);
+    }
+
+    @Override
+    public void softDeleteById(Long id, Instant now) {
+        jpaUserRepository.softDeleteById(id, now);
     }
 }

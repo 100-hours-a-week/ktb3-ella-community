@@ -5,6 +5,7 @@ import com.example.ktb3community.post.domain.Post;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.time.Instant;
 import java.util.Optional;
 
 public interface CommentRepository {
@@ -16,4 +17,8 @@ public interface CommentRepository {
 
 
     Page<Comment> findByPost(Post post, Pageable pageable);
+
+    int softDeleteByUserId(Long userId, Instant now);
+
+    int softDeleteByPostId(Long postId, Instant now);
 }

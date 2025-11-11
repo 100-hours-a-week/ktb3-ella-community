@@ -1,7 +1,9 @@
 package com.example.ktb3community.user.service;
 
+import com.example.ktb3community.comment.repository.CommentRepository;
 import com.example.ktb3community.common.error.ErrorCode;
 import com.example.ktb3community.exception.BusinessException;
+import com.example.ktb3community.post.repository.PostRepository;
 import com.example.ktb3community.user.domain.User;
 import com.example.ktb3community.user.dto.AvailabilityResponse;
 import com.example.ktb3community.user.dto.MeResponse;
@@ -19,6 +21,8 @@ import java.time.Instant;
 @AllArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
+    private final PostRepository postRepository;
+    private final CommentRepository commentRepository;
     private final UserMapper userMapper;
 
     @Transactional(readOnly = true)
@@ -66,8 +70,11 @@ public class UserService {
 
     @Transactional
     public void withdrawMe(Long userId){
-        User user = userRepository.findByIdOrThrow(userId);
+        userRepository.findByIdOrThrow(userId);
+        Instant now = Instant.now();
+        postRepository.softDeleteByUserId(userId, now);
+        commentRepository.softDeleteByUserId(userId, now);
         //TODO: 쿠키 즉시 만료 로직 추가
-        user.delete(Instant.now());
+        userRepository.softDeleteById(userId, now);
     }
 }

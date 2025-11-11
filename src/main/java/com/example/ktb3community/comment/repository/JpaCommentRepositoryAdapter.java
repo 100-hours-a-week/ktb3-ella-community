@@ -9,7 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
+import java.time.Instant;
 import java.util.Optional;
 
 @Repository
@@ -26,7 +26,7 @@ public class JpaCommentRepositoryAdapter implements CommentRepository {
 
     @Override
     public Optional<Comment> findById(Long id) {
-        return jpaCommentRepository.findById(id);
+        return jpaCommentRepository.findByIdAndDeletedAtIsNull(id);
     }
 
     @Override
@@ -36,6 +36,16 @@ public class JpaCommentRepositoryAdapter implements CommentRepository {
 
     @Override
     public Page<Comment> findByPost(Post post, Pageable pageable) {
-        return jpaCommentRepository.findByPost(post, pageable);
+        return jpaCommentRepository.findByPostAndDeletedAtIsNull(post, pageable);
+    }
+
+    @Override
+    public int softDeleteByUserId(Long userId, Instant now) {
+        return jpaCommentRepository.softDeleteByUserId(userId, now);
+    }
+
+    @Override
+    public int softDeleteByPostId(Long postId, Instant now) {
+        return jpaCommentRepository.softDeleteByPostId(postId, now);
     }
 }
