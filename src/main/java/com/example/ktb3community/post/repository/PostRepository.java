@@ -2,12 +2,20 @@ package com.example.ktb3community.post.repository;
 
 import com.example.ktb3community.post.domain.Post;
 
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+import java.time.Instant;
 import java.util.Optional;
 
 public interface PostRepository {
     Post save(Post post);
+
     Optional<Post> findById(Long id);
+
     Post findByIdOrThrow(Long id);
-    List<Post> findAll();
+
+    Page<Post> findAll(Pageable pageable);
+
+    int softDeleteByUserId(Long userId, Instant now);
 }

@@ -5,12 +5,13 @@ import com.example.ktb3community.user.domain.User;
 import com.example.ktb3community.user.exception.UserNotFoundException;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Repository
-public class InMemoryUserRepository implements UserRepository {
+public class InMemoryUserRepositoryAdapter implements UserRepository {
     // 시작값을 1로 초기화
     private final AtomicLong seq = new AtomicLong(1);
     // 키가 long, 값이 User인 해시맵
@@ -60,7 +61,7 @@ public class InMemoryUserRepository implements UserRepository {
         if (userId == null) {
             return Optional.empty();
         }
-        return Optional.ofNullable(users.get(nickname))
+        return Optional.ofNullable(users.get(userId))
                 .filter(u -> u.getDeletedAt() == null);
     }
 
@@ -88,5 +89,13 @@ public class InMemoryUserRepository implements UserRepository {
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .toList();
+    }
+
+    @Override
+    public void softDeleteById(Long id, Instant now) {
+        User user = users.get(id);
+        if (user != null && user.getDeletedAt() == null) {
+            user.delete(now);
+        }
     }
 }

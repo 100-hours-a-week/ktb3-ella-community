@@ -1,0 +1,25 @@
+spring:
+  profiles:
+    include: secret
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+server:
+  servlet:
+    context-path: /api
+logging:
+  level:
+    org.hibernate.SQL: debug
+
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v1/api-docs
+  swagger-ui:
+    path: /swagger-ui/index.html
+    display-request-duration: true  # 요청 실행 시간 표시 여부
+    doc-expansion: list  # Swagger UI에서 API 설명의 기본 펼침 상태 (none: 닫힘, list: 펼침, full: 전체 펼침)
+    persistAuthorization: true  # 페이지 새로고침 후에도 Authorization 헤더 유지 여부\

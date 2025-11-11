@@ -8,13 +8,18 @@ import com.example.ktb3community.comment.repository.CommentRepository;
 import com.example.ktb3community.common.error.ErrorCode;
 import com.example.ktb3community.common.pagination.PageResponse;
 import com.example.ktb3community.exception.BusinessException;
+import com.example.ktb3community.post.domain.Post;
 import com.example.ktb3community.post.repository.PostRepository;
 import com.example.ktb3community.post.service.PostCommentCounter;
 import com.example.ktb3community.user.domain.User;
 import com.example.ktb3community.user.exception.UserNotFoundException;
 import com.example.ktb3community.user.repository.UserRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
@@ -33,60 +38,62 @@ public class CommentService {
 
     private static final int PAGE_SIZE = 10;
 
+    @Transactional
     public CommentResponse createComment(Long postId, Long userId, CreateCommentRequest createCommentRequest) {
         User user = userRepository.findByIdOrThrow(userId);
-        postRepository.findByIdOrThrow(postId);
-        Comment saved = commentRepository.save(Comment.createNew(postId, userId,
-                createCommentRequest.content(), Instant.now()));
+        Post post = postRepository.findByIdOrThrow(postId);
+        Comment saved = commentRepository.save(Comment.createNew(post, user,
+                createCommentRequest.content()));
         postCommentCounter.increaseCommentCount(postId);
         return commentMapper.toCommentResponse(saved, user);
     }
 
+    @Transactional(readOnly = true)
     public PageResponse<CommentResponse> getCommentList(long postId, int page){
-        postRepository.findByIdOrThrow(postId);
-        List<Comment> comments = commentRepository.findByPostId(postId).stream()
-                .toList();
+        Post post = postRepository.findByIdOrThrow(postId);
+        int requestedPage = Math.max(page, 1);
+        PageRequest pageRequest = PageRequest.of(requestedPage - 1, PAGE_SIZE,
+                Sort.by(Sort.Direction.DESC, "createdAt")
+                        .and(Sort.by(Sort.Direction.DESC, "id")));
+        Page<Comment> commentPage = commentRepository.findByPost(post, pageRequest);
 
-        int from = Math.max(0, (page - 1) * PAGE_SIZE);
-        List<Comment> slice = (from >= comments.size()) ? List.of() : comments.subList(from, Math.min(comments.size(), from + PAGE_SIZE));
-        long total = comments.size();
-        long totalPages = (total + PAGE_SIZE - 1L) / PAGE_SIZE;
-
-        Set<Long> authorIds = slice.stream()
+        Set<Long> authorIds = commentPage.getContent().stream()
                 .map(Comment::getUserId)
                 .collect(Collectors.toSet());
 
         Map<Long, User> authorMap = userRepository.findAllByIdIn(authorIds).stream()
                 .collect(Collectors.toMap(User::getId, user -> user));
 
-        List<CommentResponse> content = slice.stream().map(c -> {
+        List<CommentResponse> content = commentPage.getContent().stream().map(c -> {
             User user = authorMap.get(c.getUserId());
             if(user == null){
                 throw new UserNotFoundException();
             }
             return commentMapper.toCommentResponse(c, user);
-            }).toList();
-        return new PageResponse<>(content, page, PAGE_SIZE, totalPages);
+        }).toList();
+        return new PageResponse<>(content, commentPage.getNumber() + 1, commentPage.getSize(), commentPage.getTotalPages());
     }
 
+    @Transactional
     public CommentResponse updateComment(Long commentId, Long userId, CreateCommentRequest createCommentRequest) {
         Comment comment =  commentRepository.findByIdOrThrow(commentId);
         User user = userRepository.findByIdOrThrow(userId);
         if(!comment.getUserId().equals(user.getId())) {
             throw new BusinessException(ErrorCode.AUTH_FORBIDDEN);
         }
-        comment.updateContent(createCommentRequest.content(), Instant.now());
+        comment.updateContent(createCommentRequest.content());
         return commentMapper.toCommentResponse(comment, user);
     }
 
+    @Transactional
     public void deleteComment(Long commentId, Long userId) {
         Comment comment =  commentRepository.findByIdOrThrow(commentId);
         User user = userRepository.findByIdOrThrow(userId);
-        postRepository.findByIdOrThrow(comment.getPostId());
+        Post post = postRepository.findByIdOrThrow(comment.getPostId());
         if(!comment.getUserId().equals(user.getId())) {
             throw new BusinessException(ErrorCode.AUTH_FORBIDDEN);
         }
         comment.delete(Instant.now());
-        postCommentCounter.decreaseCommentCount(comment.getPostId());
+        postCommentCounter.decreaseCommentCount(post.getId());
     }
 }
