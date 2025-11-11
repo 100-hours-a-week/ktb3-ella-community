@@ -1,5 +1,6 @@
 package com.example.ktb3community.comment.domain;
 
+import com.example.ktb3community.common.domain.BaseTimeEntity;
 import com.example.ktb3community.post.domain.Post;
 import com.example.ktb3community.post.exception.PostNotFoundException;
 import com.example.ktb3community.user.domain.User;
@@ -14,7 +15,7 @@ import java.time.Instant;
 @Table(name = "comments")
 @Getter
 @NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
-public class Comment {
+public class Comment extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -30,35 +31,30 @@ public class Comment {
     @Column(nullable = false)
     private String content;
 
-    @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
-
-    @Column(name = "updated_at", nullable = false)
-    private Instant updatedAt;
-
     @Column(name = "deleted_at")
     private Instant deletedAt;
 
-    private Comment(Long id, Post post, User user, String content, Instant createdAt, Instant updatedAt, Instant deletedAt) {
+    private Comment(Long id, Post post, User user, String content, Instant deletedAt) {
         this.id = id;
         this.post = post;
         this.user = user;
         this.content = content;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
         this.deletedAt = deletedAt;
     }
 
-    public static Comment createNew(Post post, User user, String content, Instant now) {
-        return new Comment(null, post, user, content, now, now, null);
+    public static Comment createNew(Post post, User user, String content) {
+        return new Comment(null, post, user, content, null);
     }
 
     public static Comment rehydrate(Long id, Post post, User user, String content, Instant createdAt, Instant updatedAt, Instant deletedAt) {
-        return new Comment(id, post, user, content, createdAt, updatedAt, deletedAt);
+        Comment comment = new Comment(id, post, user, content, deletedAt);
+        comment.createdAt = createdAt;
+        comment.updatedAt = updatedAt;
+        return comment;
     }
 
-    public void updateContent(String content, Instant now) {
-        if (content != null && !content.isBlank()) { this.content = content; this.updatedAt = now; }
+    public void updateContent(String content) {
+        if (content != null && !content.isBlank()) { this.content = content; }
     }
 
     public void delete(Instant now) {

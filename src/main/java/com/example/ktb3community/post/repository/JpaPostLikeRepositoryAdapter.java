@@ -26,17 +26,16 @@ public class JpaPostLikeRepositoryAdapter implements PostLikeRepository {
     @Override
     @Transactional
     public boolean add(Post post, User user) {
-        Instant now = Instant.now();
         return jpaPostLikeRepository.findByPostAndUser(post, user)
                 .map(existing -> {
                     if (!existing.isDeleted()) {
                         return false;
                     }
-                    existing.restore(now);
+                    existing.restore();
                     return true;
                 })
                 .orElseGet(() -> {
-                    Like like = Like.createNew(post, user, now);
+                    Like like = Like.createNew(post, user);
                     jpaPostLikeRepository.save(like);
                     return true;
                 });

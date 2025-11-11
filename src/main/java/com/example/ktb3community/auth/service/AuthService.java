@@ -30,7 +30,7 @@ public class AuthService {
         if (userRepository.existsByNickname(signUpRequest.nickname())) {
             throw new BusinessException(ErrorCode.NICKNAME_ALREADY_EXIST);
         }
-        User saved = userRepository.save(User.createNew(email, signUpRequest.password(), signUpRequest.nickname(), signUpRequest.profileImageUrl(), Instant.now()));
+        User saved = userRepository.save(User.createNew(email, signUpRequest.password(), signUpRequest.nickname(), signUpRequest.profileImageUrl()));
         return userMapper.userToMeResponse(saved);
     }
 

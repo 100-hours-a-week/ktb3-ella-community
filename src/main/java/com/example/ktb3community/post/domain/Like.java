@@ -1,5 +1,6 @@
 package com.example.ktb3community.post.domain;
 
+import com.example.ktb3community.common.domain.BaseTimeEntity;
 import com.example.ktb3community.user.domain.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -23,7 +24,7 @@ import java.time.Instant;
 @Table(name = "likes", uniqueConstraints = {
         @UniqueConstraint(name = "uq_like_post_user", columnNames = {"post_id", "user_id"})
 })
-public class Like {
+public class Like extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -36,26 +37,18 @@ public class Like {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
-
-    @Column(name = "updated_at", nullable = false)
-    private Instant updatedAt;
-
     @Column(name = "deleted_at")
     private Instant deletedAt;
 
-    private Like(Long id, Post post, User user, Instant createdAt, Instant updatedAt, Instant deletedAt) {
+    private Like(Long id, Post post, User user, Instant deletedAt) {
         this.id = id;
         this.post = post;
         this.user = user;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
         this.deletedAt = deletedAt;
     }
 
-    public static Like createNew(Post post, User user, Instant now) {
-        return new Like(null, post, user, now, now, null);
+    public static Like createNew(Post post, User user) {
+        return new Like(null, post, user,null);
     }
 
     public boolean isDeleted() {
@@ -65,15 +58,13 @@ public class Like {
     public void delete(Instant now) {
         if (deletedAt == null) {
             this.deletedAt = now;
-            this.updatedAt = now;
         }
     }
 
     // 좋아요 복구
-    public void restore(Instant now) {
+    public void restore() {
         if (deletedAt != null) {
             this.deletedAt = null;
-            this.updatedAt = now;
         }
     }
 }

@@ -1,9 +1,10 @@
 package com.example.ktb3community.user.domain;
 
+import com.example.ktb3community.comment.domain.Comment;
 import com.example.ktb3community.common.constants.ValidationConstant;
+import com.example.ktb3community.common.domain.BaseTimeEntity;
 import com.example.ktb3community.common.error.ErrorCode;
 import com.example.ktb3community.exception.BusinessException;
-import com.example.ktb3community.post.domain.Post;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -20,7 +21,7 @@ import java.time.Instant;
 @Table(name = "users")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class User {
+public class User extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -37,63 +38,54 @@ public class User {
     @Column(name = "profile_image_url" ,nullable = false)
     private String profileImageUrl;
 
-    @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
-
-    @Column(name = "updated_at", nullable = false)
-    private Instant updatedAt;
-
     @Column(name = "deleted_at")
     private Instant deletedAt;
 
-    private User(Long id, String email, String passwordHash, String nickname, String profileImageUrl,
-                 Instant createdAt, Instant updatedAt, Instant deletedAt) {
+    private User(Long id, String email, String passwordHash, String nickname, String profileImageUrl, Instant deletedAt) {
         this.id = id;
         this.email = email.trim().toLowerCase();
         this.passwordHash = passwordHash;
         this.nickname = nickname.trim();
         this.profileImageUrl = profileImageUrl;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
         this.deletedAt = deletedAt;
     }
 
     public static User createNew(String email, String password,
-                                 String nickname, String profileImageUrl, Instant now) {
+                                 String nickname, String profileImageUrl) {
         // TODO: Spring Security 추가 시 비밀번호 암호화 추가
-        return new User(null, email, password, nickname, profileImageUrl, now, now, null);
+        return new User(null, email, password, nickname, profileImageUrl, null);
     }
 
     public static User rehydrate(Long id, String email, String passwordHash,
-                                 String nickname, String profileImageUrl,
-                                 Instant createdAt, Instant updatedAt, Instant deletedAt) {
-        return new User(id, email, passwordHash, nickname, profileImageUrl, createdAt, updatedAt, deletedAt);
+                                 String nickname, String profileImageUrl, Instant createdAt, Instant updatedAt, Instant deletedAt) {
+        User user = new User(id, email, passwordHash, nickname, profileImageUrl, deletedAt);
+        user.createdAt = createdAt;
+        user.updatedAt = updatedAt;
+        return user;
     }
 
-    public void updateNickname(String nickname, Instant now) {
+    public void updateNickname(String nickname) {
         String n = nickname.trim();
         if (n.isBlank() || n.length() > ValidationConstant.NICKNAME_MAX_LENGTH || n.chars().anyMatch(Character::isWhitespace)) {
             throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
         }
-        if (!n.equals(this.nickname)) { this.nickname = n; this.updatedAt = now; }
+        if (!n.equals(this.nickname)) { this.nickname = n; }
     }
 
-    public void updateProfileImageUrl(String profileImageUrl, Instant now) {
+    public void updateProfileImageUrl(String profileImageUrl) {
         String p = profileImageUrl.trim();
         if (p.isBlank()) { throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE); }
-        if (!p.equals(this.profileImageUrl)) { this.profileImageUrl = p; this.updatedAt = now; }
+        if (!p.equals(this.profileImageUrl)) { this.profileImageUrl = p; }
     }
 
     public void delete(Instant now) {
         if (this.deletedAt == null) {
             this.deletedAt = now;
-            this.updatedAt = now;
         }
     }
 
-    public void updatePasswordHash(String passwordHash, Instant now) {
+    public void updatePasswordHash(String passwordHash) {
         this.passwordHash = passwordHash;
-        this.updatedAt = now;
     }
 
     @Override

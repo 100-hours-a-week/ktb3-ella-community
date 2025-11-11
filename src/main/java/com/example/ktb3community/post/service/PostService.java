@@ -25,7 +25,7 @@ public class PostService implements PostCommentCounter {
     public CreatePostResponse createPost(Long userId, CreatePostRequest createPostRequest) {
         User user = userRepository.findByIdOrThrow(userId);
         Post saved = postRepository.save(Post.createNew(user, createPostRequest.title(),
-                createPostRequest.content(), createPostRequest.postImageUrl(), Instant.now()));
+                createPostRequest.content(), createPostRequest.postImageUrl()));
         return new CreatePostResponse(saved.getId());
     }
 
@@ -36,7 +36,7 @@ public class PostService implements PostCommentCounter {
         if(!post.getUserId().equals(userId)){
             throw new BusinessException(ErrorCode.AUTH_FORBIDDEN);
         }
-        post.updatePost(createPostRequest.title(), createPostRequest.content(), createPostRequest.postImageUrl(), Instant.now());
+        post.updatePost(createPostRequest.title(), createPostRequest.content(), createPostRequest.postImageUrl());
         return new CreatePostResponse(post.getId());
     }
 

@@ -43,7 +43,7 @@ public class CommentService {
         User user = userRepository.findByIdOrThrow(userId);
         Post post = postRepository.findByIdOrThrow(postId);
         Comment saved = commentRepository.save(Comment.createNew(post, user,
-                createCommentRequest.content(), Instant.now()));
+                createCommentRequest.content()));
         postCommentCounter.increaseCommentCount(postId);
         return commentMapper.toCommentResponse(saved, user);
     }
@@ -81,7 +81,7 @@ public class CommentService {
         if(!comment.getUserId().equals(user.getId())) {
             throw new BusinessException(ErrorCode.AUTH_FORBIDDEN);
         }
-        comment.updateContent(createCommentRequest.content(), Instant.now());
+        comment.updateContent(createCommentRequest.content());
         return commentMapper.toCommentResponse(comment, user);
     }
 

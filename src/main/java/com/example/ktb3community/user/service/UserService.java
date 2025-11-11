@@ -54,10 +54,10 @@ public class UserService {
             userRepository.findByNickname(nickname)
                     .filter(u -> !u.getId().equals(user.getId()))
                     .ifPresent(u -> { throw new BusinessException(ErrorCode.NICKNAME_ALREADY_EXIST); });
-            user.updateNickname(nickname, Instant.now());
+            user.updateNickname(nickname);
         }
         if(updateMeRequest.profileImageUrl() != null && !updateMeRequest.profileImageUrl().isBlank()){
-            user.updateProfileImageUrl(updateMeRequest.profileImageUrl(), Instant.now());
+            user.updateProfileImageUrl(updateMeRequest.profileImageUrl());
         }
         return userMapper.userToMeResponse(user);
     }
@@ -65,7 +65,7 @@ public class UserService {
     @Transactional
     public void updatePassword(Long userId, UpdatePasswordRequest updatePasswordRequest){
         User user = userRepository.findByIdOrThrow(userId);
-        user.updatePasswordHash(updatePasswordRequest.newPassword(), Instant.now());
+        user.updatePasswordHash(updatePasswordRequest.newPassword());
     }
 
     @Transactional

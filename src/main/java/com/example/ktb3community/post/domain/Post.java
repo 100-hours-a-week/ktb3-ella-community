@@ -1,5 +1,6 @@
 package com.example.ktb3community.post.domain;
 
+import com.example.ktb3community.common.domain.BaseTimeEntity;
 import com.example.ktb3community.common.error.ErrorCode;
 import com.example.ktb3community.exception.BusinessException;
 import com.example.ktb3community.user.domain.User;
@@ -23,7 +24,7 @@ import java.time.Instant;
 @Table(name = "posts")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Post {
+public class Post extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -51,17 +52,11 @@ public class Post {
     @Column(name = "comment_count", nullable = false)
     private long commentCount;
 
-    @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
-
-    @Column(name = "updated_at", nullable = false)
-    private Instant updatedAt;
-
     @Column(name = "deleted_at")
     private Instant deletedAt;
 
     private Post(Long id, User user, String title, String content, String postImageUrl, long like, long view, long cmt,
-                 Instant createdAt, Instant updatedAt, Instant deletedAt) {
+                 Instant deletedAt) {
         this.id = id;
         this.user = user;
         this.title = title.trim();
@@ -70,24 +65,23 @@ public class Post {
         this.likeCount = like;
         this.viewCount = view;
         this.commentCount = cmt;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
         this.deletedAt = deletedAt;
     }
 
-    public static Post createNew(User user, String title, String content, String postImageUrl, Instant now) {
-        return new Post(null, user, title, content, postImageUrl, 0, 0, 0, now, now, null);
+    public static Post createNew(User user, String title, String content, String postImageUrl) {
+        return new Post(null, user, title, content, postImageUrl, 0, 0, 0, null);
     }
-    public static Post rehydrate(Long id, User user, String title, String content, String postImageUrl, long like, long view, long cmt,
-                                 Instant createdAt, Instant updatedAt, Instant deletedAt) {
-        return new Post(id, user, title, content, postImageUrl, like, view, cmt, createdAt, updatedAt, deletedAt);
+    public static Post rehydrate(Long id, User user, String title, String content, String postImageUrl, long like, long view, long cmt, Instant createdAt, Instant updatedAt, Instant deletedAt) {
+        Post post =  new Post(id, user, title, content, postImageUrl, like, view, cmt, deletedAt);
+        post.createdAt = createdAt;
+        post.updatedAt = updatedAt;
+        return post;
     }
 
-    public void updatePost(String title, String content, String postImageUrl, Instant now) {
+    public void updatePost(String title, String content, String postImageUrl) {
         if ( title != null && !title.isBlank() ){ this.title = title; }
         if ( content != null && !content.isBlank() ) { this.content = content; }
         this.postImageUrl = postImageUrl;
-        this.updatedAt = now;
     }
 
     public void increaseViewCount() {
@@ -113,7 +107,6 @@ public class Post {
     public void delete(Instant now) {
         if (this.deletedAt == null) {
             this.deletedAt = now;
-            this.updatedAt = now;
         }
     }
 
