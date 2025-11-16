@@ -4,6 +4,7 @@ import com.example.ktb3community.comment.repository.CommentRepository;
 import com.example.ktb3community.common.error.ErrorCode;
 import com.example.ktb3community.exception.BusinessException;
 import com.example.ktb3community.post.repository.PostRepository;
+import com.example.ktb3community.s3.service.FileService;
 import com.example.ktb3community.user.domain.User;
 import com.example.ktb3community.user.dto.AvailabilityResponse;
 import com.example.ktb3community.user.dto.MeResponse;
@@ -24,6 +25,7 @@ public class UserService {
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
     private final UserMapper userMapper;
+    private final FileService fileService;
 
     @Transactional(readOnly = true)
     public AvailabilityResponse getAvailability(String email, String nickname) {
@@ -49,6 +51,7 @@ public class UserService {
     @Transactional
     public MeResponse updateMe(Long userId, UpdateMeRequest updateMeRequest){
         User user = userRepository.findByIdOrThrow(userId);
+        String previousImageUrl = user.getProfileImageUrl();
         String nickname = updateMeRequest.nickname();
         if (nickname != null && !nickname.isBlank() && !nickname.equals(user.getNickname())) {
             userRepository.findByNickname(nickname)
@@ -59,6 +62,7 @@ public class UserService {
         if(updateMeRequest.profileImageUrl() != null && !updateMeRequest.profileImageUrl().isBlank()){
             user.updateProfileImageUrl(updateMeRequest.profileImageUrl());
         }
+        fileService.deleteImageIfChanged(previousImageUrl, user.getProfileImageUrl());
         return userMapper.userToMeResponse(user);
     }
 

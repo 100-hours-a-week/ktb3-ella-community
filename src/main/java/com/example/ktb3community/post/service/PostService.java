@@ -6,6 +6,7 @@ import com.example.ktb3community.exception.BusinessException;
 import com.example.ktb3community.post.domain.Post;
 import com.example.ktb3community.post.dto.*;
 import com.example.ktb3community.post.repository.PostRepository;
+import com.example.ktb3community.s3.service.FileService;
 import com.example.ktb3community.user.domain.User;
 import com.example.ktb3community.user.repository.UserRepository;
 import lombok.AllArgsConstructor;
@@ -20,6 +21,7 @@ public class PostService implements PostCommentCounter {
     private final UserRepository userRepository;
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
+    private final FileService fileService;
 
     @Transactional
     public CreatePostResponse createPost(Long userId, CreatePostRequest createPostRequest) {
@@ -36,7 +38,9 @@ public class PostService implements PostCommentCounter {
         if(!post.getUserId().equals(userId)){
             throw new BusinessException(ErrorCode.AUTH_FORBIDDEN);
         }
+        String previousImageUrl = post.getPostImageUrl();
         post.updatePost(createPostRequest.title(), createPostRequest.content(), createPostRequest.postImageUrl());
+        fileService.deleteImageIfChanged(previousImageUrl, post.getPostImageUrl());
         return new CreatePostResponse(post.getId());
     }
 
@@ -49,7 +53,8 @@ public class PostService implements PostCommentCounter {
         }
         Instant now = Instant.now();
         commentRepository.softDeleteByPostId(postId, now);
-        post.delete(now);
+        Post postToDelete = postRepository.findByIdOrThrow(postId);
+        postToDelete.delete(now);
     }
 
     @Transactional
