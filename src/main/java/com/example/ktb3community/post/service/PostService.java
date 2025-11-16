@@ -49,7 +49,8 @@ public class PostService implements PostCommentCounter {
         }
         Instant now = Instant.now();
         commentRepository.softDeleteByPostId(postId, now);
-        post.delete(now);
+        Post postToDelete = postRepository.findByIdOrThrow(postId);
+        postToDelete.delete(now);
     }
 
     @Transactional
