@@ -39,6 +39,8 @@ public enum ErrorCode {
 
     //S3
     S3_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "S3_UPLOAD_FAILED", "파일 업로드에 실패했습니다."),
+    S3_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "S3_DELETE_FAILED", "파일 삭제에 실패했습니다."),
+    INVALID_IMG_URL(HttpStatus.INTERNAL_SERVER_ERROR, "INVALID_IMG_URL", "이미지 url이 올바르지 않습니다."),
     S3_DOWNLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "S3_DOWNLOAD_FAILED", "파일 다운로드에 실패했습니다."),
     FILE_NAME_IS_NOT_BLANK(HttpStatus.BAD_REQUEST, "FILE_NAME_IS_NOT_BLANK", "파일 이름은 공백일 수 없습니다.");
 
