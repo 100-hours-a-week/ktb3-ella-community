@@ -19,11 +19,11 @@ import java.net.URI;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class FileService {
 
     private final S3Presigner s3Presigner;
@@ -35,15 +35,25 @@ public class FileService {
     @Value("${app.s3.upload-exp-minutes:10}")
     private long uploadExpMinutes;
 
+    private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(
+            "image/png", "image/jpeg", "image/webp"
+    );
+
     public PresignUploadResponse presignUpload(String originalFileName, String contentType) {
+
+        // 파일명 추출
         String safeName = Paths.get(originalFileName == null ? "" : originalFileName).getFileName().toString();
         if (safeName.isBlank()) throw new BusinessException(ErrorCode.FILE_NAME_IS_NOT_BLANK);
         String key = "images/" + UUID.randomUUID() + "_" + safeName;
 
+        if (!ALLOWED_CONTENT_TYPES.contains(contentType)) {
+            throw new BusinessException(ErrorCode.CONTENT_TYPE_NOT_ALLOWED);
+        }
+
         PutObjectRequest put = PutObjectRequest.builder()
                 .bucket(bucketName)
                 .key(key)
-                .contentType(contentType == null || contentType.isBlank() ? "image/png" : contentType)
+                .contentType(contentType)
                 .cacheControl("public, max-age=31536000, immutable")
                 .build();
 
@@ -62,9 +72,13 @@ public class FileService {
     }
 
     public void deleteImageIfChanged(String previousImageUrl, String updatedImageUrl) {
+
+        // 기존 이미지 없을 경우
         if (previousImageUrl == null || previousImageUrl.isBlank()) {
             return;
         }
+
+        // 변경되지 않았을 경우
         if (Objects.equals(previousImageUrl, updatedImageUrl)) {
             return;
         }
@@ -74,7 +88,7 @@ public class FileService {
     public void deleteImage(String imageUrl) {
         String key = extractKey(imageUrl);
         if (key == null) {
-            return;
+            throw new BusinessException(ErrorCode.INVALID_S3_KEY);
         }
         try {
             s3Client.deleteObject(DeleteObjectRequest.builder()
@@ -87,22 +101,18 @@ public class FileService {
     }
 
     private String extractKey(String imageUrl) {
-        if (imageUrl == null) {
-            return null;
+        if (imageUrl == null || imageUrl.isBlank()) {
+            throw new BusinessException(ErrorCode.INVALID_IMG_URL);
         }
         String candidate = imageUrl.trim();
-        if (candidate.isBlank()) {
-            return null;
-        }
+
+        // 전체 URL일 경우 경로 부분만 추출
         if (candidate.contains("://")) {
             try {
                 candidate = URI.create(candidate).getPath();
             } catch (IllegalArgumentException e) {
                 throw new BusinessException(ErrorCode.INVALID_IMG_URL);
             }
-        }
-        if (candidate == null || candidate.isBlank()) {
-            return null;
         }
         if (candidate.startsWith("/")) {
             candidate = candidate.substring(1);
