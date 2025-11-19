@@ -2,6 +2,7 @@ package com.example.ktb3community.auth.service;
 
 import com.example.ktb3community.auth.dto.LoginRequest;
 import com.example.ktb3community.auth.dto.SignUpRequest;
+import com.example.ktb3community.common.Role;
 import com.example.ktb3community.common.error.ErrorCode;
 import com.example.ktb3community.exception.BusinessException;
 import com.example.ktb3community.user.domain.User;
@@ -30,7 +31,7 @@ public class AuthService {
         if (userRepository.existsByNickname(signUpRequest.nickname())) {
             throw new BusinessException(ErrorCode.NICKNAME_ALREADY_EXIST);
         }
-        User saved = userRepository.save(User.createNew(email, signUpRequest.password(), signUpRequest.nickname(), signUpRequest.profileImageUrl()));
+        User saved = userRepository.save(User.createNew(email, signUpRequest.password(), signUpRequest.nickname(), signUpRequest.profileImageUrl(), Role.USER));
         return userMapper.userToMeResponse(saved);
     }
 
