@@ -10,6 +10,12 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
+@Table(
+        name = "refresh_token",
+        indexes = {
+                @Index(name = "idx_refresh_token_user_revoked", columnList = "user_id, revoked")
+        }
+)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class RefreshToken {

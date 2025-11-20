@@ -66,4 +66,8 @@ public class RefreshTokenService {
         refreshTokenRepository.save(token);
     }
 
+    @Transactional
+    public void revokeAllByUser(User user) {
+        refreshTokenRepository.revokeAllByUser(user);
+    }
 }
