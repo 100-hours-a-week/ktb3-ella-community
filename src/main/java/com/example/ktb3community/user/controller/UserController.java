@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -95,9 +96,10 @@ public class UserController {
     @ApiCommonErrorResponses
     @DeleteMapping("/me")
     public ResponseEntity<Void> withdrawMe(
-            @AuthenticationPrincipal CustomUserDetails customUserDetails) {
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            HttpServletResponse response) {
         Long userId = customUserDetails.getId();
-        userService.withdrawMe(userId);
+        userService.withdrawMe(userId, response);
         return ResponseEntity.noContent().build();
     }
 }

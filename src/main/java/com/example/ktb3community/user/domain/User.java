@@ -50,10 +50,9 @@ public class User extends BaseTimeEntity {
         this.role = role;
     }
 
-    public static User createNew(String email, String password,
+    public static User createNew(String email, String passwordHash,
                                  String nickname, String profileImageUrl, Role role) {
-        // TODO: Spring Security 추가 시 비밀번호 암호화 추가
-        return new User(null, email, password, nickname, profileImageUrl, null, role);
+        return new User(null, email, passwordHash, nickname, profileImageUrl, null, role);
     }
 
     public static User rehydrate(Long id, String email, String passwordHash,

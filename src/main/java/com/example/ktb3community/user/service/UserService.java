@@ -1,8 +1,11 @@
 package com.example.ktb3community.user.service;
 
+import com.example.ktb3community.auth.service.RefreshTokenService;
 import com.example.ktb3community.comment.repository.CommentRepository;
 import com.example.ktb3community.common.error.ErrorCode;
+import com.example.ktb3community.common.util.CookieUtil;
 import com.example.ktb3community.exception.BusinessException;
+import com.example.ktb3community.jwt.JwtTokenProvider;
 import com.example.ktb3community.post.repository.PostRepository;
 import com.example.ktb3community.s3.service.FileService;
 import com.example.ktb3community.user.domain.User;
@@ -12,7 +15,9 @@ import com.example.ktb3community.user.dto.UpdateMeRequest;
 import com.example.ktb3community.user.dto.UpdatePasswordRequest;
 import com.example.ktb3community.user.mapper.UserMapper;
 import com.example.ktb3community.user.repository.UserRepository;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +31,8 @@ public class UserService {
     private final CommentRepository commentRepository;
     private final UserMapper userMapper;
     private final FileService fileService;
+    private final PasswordEncoder passwordEncoder;
+    private final RefreshTokenService refreshTokenService;
 
     @Transactional(readOnly = true)
     public AvailabilityResponse getAvailability(String email, String nickname) {
@@ -69,16 +76,18 @@ public class UserService {
     @Transactional
     public void updatePassword(Long userId, UpdatePasswordRequest updatePasswordRequest){
         User user = userRepository.findByIdOrThrow(userId);
-        user.updatePasswordHash(updatePasswordRequest.newPassword());
+        String hashedPassword = passwordEncoder.encode(updatePasswordRequest.newPassword());
+        user.updatePasswordHash(hashedPassword);
     }
 
     @Transactional
-    public void withdrawMe(Long userId){
-        userRepository.findByIdOrThrow(userId);
+    public void withdrawMe(Long userId, HttpServletResponse response){
+        User user = userRepository.findByIdOrThrow(userId);
         Instant now = Instant.now();
         postRepository.softDeleteByUserId(userId, now);
         commentRepository.softDeleteByUserId(userId, now);
-        //TODO: 쿠키 즉시 만료 로직 추가
         userRepository.softDeleteById(userId, now);
+        refreshTokenService.revokeAllByUser(user);
+        CookieUtil.removeRefreshTokenCookie(response);
     }
 }
