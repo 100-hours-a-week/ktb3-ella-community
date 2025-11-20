@@ -18,14 +18,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
-
 @Service
 @AllArgsConstructor
 public class AuthService {
-
-    private static final Duration REFRESH_COOKIE_MAX_AGE = Duration.ofDays(7);
-    private static final String REFRESH_COOKIE_PATH = "/api/auth";
 
     private final UserRepository userRepository;
     private final JwtTokenProvider jwtTokenProvider;
@@ -67,21 +62,17 @@ public class AuthService {
 
         CookieUtil.addRefreshTokenCookie(
                 response,
-                newRefreshToken,
-                REFRESH_COOKIE_MAX_AGE,
-                REFRESH_COOKIE_PATH
+                newRefreshToken
         );
         return new AuthResponse(accessToken);
     }
 
     @Transactional
     public void logout(String refreshToken, HttpServletResponse response) {
-        if(refreshToken == null || refreshToken.isBlank()) {
-            throw new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN);
-        }
+
         refreshTokenService.revoke(refreshToken);
 
-        CookieUtil.removeRefreshTokenCookie(response, REFRESH_COOKIE_PATH);
+        CookieUtil.removeRefreshTokenCookie(response);
     }
 
     private AuthResponse issueTokens(User user, HttpServletResponse response) {
@@ -90,9 +81,7 @@ public class AuthService {
 
         CookieUtil.addRefreshTokenCookie(
                 response,
-                refreshToken,
-                REFRESH_COOKIE_MAX_AGE,
-                REFRESH_COOKIE_PATH
+                refreshToken
         );
         return new AuthResponse(accessToken);
     }
