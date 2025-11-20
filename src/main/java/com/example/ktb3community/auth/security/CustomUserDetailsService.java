@@ -21,7 +21,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     // username 파라미터에는 JWT에서 추출한 userId가 문자열로 들어옴
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        Long userId;
+        long userId;
         try {
             userId = Long.parseLong(username);
         } catch (NumberFormatException e) {

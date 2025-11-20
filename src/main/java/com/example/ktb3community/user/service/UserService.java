@@ -5,7 +5,6 @@ import com.example.ktb3community.comment.repository.CommentRepository;
 import com.example.ktb3community.common.error.ErrorCode;
 import com.example.ktb3community.common.util.CookieUtil;
 import com.example.ktb3community.exception.BusinessException;
-import com.example.ktb3community.jwt.JwtTokenProvider;
 import com.example.ktb3community.post.repository.PostRepository;
 import com.example.ktb3community.s3.service.FileService;
 import com.example.ktb3community.user.domain.User;
