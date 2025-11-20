@@ -27,7 +27,7 @@ public class InMemoryUserRepositoryAdapter implements UserRepository {
         if (userToSave.getId() == null) {
             long id = seq.getAndIncrement();
             userToSave = User.rehydrate(id, user.getEmail(), user.getPasswordHash(), user.getNickname(),
-                    user.getProfileImageUrl(), user.getCreatedAt(), user.getUpdatedAt(), user.getDeletedAt(), Role.USER);
+                    user.getProfileImageUrl(), user.getCreatedAt(), user.getUpdatedAt(), user.getDeletedAt(), Role.ROLE_USER);
             emailToUserId.put(userToSave.getEmail(), id);
             nicknameToUserId.put(userToSave.getNickname(), id);
         } else {

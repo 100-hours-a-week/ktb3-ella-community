@@ -3,9 +3,12 @@ package com.example.ktb3community.exception;
 import com.example.ktb3community.common.error.ErrorCode;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.BindException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -80,22 +83,22 @@ public class GlobalExceptionHandler {
     }
 
     // === 401/403 ===
-//    @ExceptionHandler(AuthenticationException.class)
-//    public ResponseEntity<ErrorResponseDto> handleAuthentication(AuthenticationException ex) {
-//        return ResponseEntity
-//                log.info("[401] Authentication failure: {}", ex.getMessage());
-//                .status(HttpStatus.UNAUTHORIZED)
-//                .body(ErrorResponseDto.of(ErrorCode.AUTH_UNAUTHORIZED.getCode(),
-//                        ErrorCode.AUTH_UNAUTHORIZED.getMessage()));
-//    }
-//
-//    @ExceptionHandler(AccessDeniedException.class)
-//    public ResponseEntity<ErrorResponseDto> handleAccessDenied(AccessDeniedException ex) {
-//        log.info("[403] Access denied: {}", ex.getMessage());
-//        return ResponseEntity
-//                .status(HttpStatus.FORBIDDEN)
-//                .body(ErrorResponseDto.of(ErrorCode.AUTH_FORBIDDEN.getCode(),
-//    }
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ErrorResponseDto> handleAuthentication(AuthenticationException ex) {
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(ErrorResponseDto.of(ErrorCode.AUTH_UNAUTHORIZED.getCode(),
+                        ErrorCode.AUTH_UNAUTHORIZED.getMessage()));
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponseDto> handleAccessDenied(AccessDeniedException ex) {
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(ErrorResponseDto.of(ErrorCode.AUTH_FORBIDDEN.getCode(),
+                        ErrorCode.AUTH_FORBIDDEN.getMessage()));
+
+    }
 
     // === 404 경로 없음 ===
     @ExceptionHandler(NoHandlerFoundException.class)
@@ -106,14 +109,14 @@ public class GlobalExceptionHandler {
     }
 
     // === 409 무결성/충돌 ===
-//    @ExceptionHandler(DataIntegrityViolationException.class)
-//    public ResponseEntity<ErrorResponseDto> handleDataIntegrity(DataIntegrityViolationException ex) {
-//        Throwable root = rootCause(ex);
-//        log.warn("[409] Data integrity violation: {} - {}", root.getClass().getSimpleName(), root.getMessage());
-//        return ResponseEntity.status(HttpStatus.CONFLICT)
-//                .body(ErrorResponseDto.of(ErrorCode.CONFLICT.getCode(),
-//                        ErrorCode.CONFLICT.getMessage()));
-//    }
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponseDto> handleDataIntegrity(DataIntegrityViolationException ex) {
+        Throwable root = rootCause(ex);
+        log.warn("[409] Data integrity violation: {} - {}", root.getClass().getSimpleName(), root.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ErrorResponseDto.of(ErrorCode.CONFLICT.getCode(),
+                        ErrorCode.CONFLICT.getMessage()));
+    }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponseDto> handleUnknown(Exception ex) {
@@ -124,9 +127,9 @@ public class GlobalExceptionHandler {
                         ErrorCode.INTERNAL_SERVER_ERROR.getMessage()));
     }
 
-//    private Throwable rootCause(Throwable t) {
-//        Throwable cur = t;
-//        while (cur.getCause() != null && cur.getCause() != cur) cur = cur.getCause();
-//        return cur;
-//    }
+    private Throwable rootCause(Throwable t) {
+        Throwable cur = t;
+        while (cur.getCause() != null && cur.getCause() != cur) cur = cur.getCause();
+        return cur;
+    }
 }
