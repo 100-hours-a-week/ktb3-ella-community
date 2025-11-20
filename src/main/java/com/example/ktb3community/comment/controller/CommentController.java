@@ -1,5 +1,6 @@
 package com.example.ktb3community.comment.controller;
 
+import com.example.ktb3community.auth.security.CustomUserDetails;
 import com.example.ktb3community.comment.dto.CommentResponse;
 import com.example.ktb3community.comment.dto.CreateCommentRequest;
 import com.example.ktb3community.comment.service.CommentService;
@@ -16,6 +17,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -29,11 +31,12 @@ public class CommentController {
             @ApiResponse(responseCode = "201", description = "OK"),
             @ApiResponse(responseCode = "404", description = "존재하지 않는 게시글입니다.")
     })
-    @PostMapping("/posts/{postId}/comments/{userId}")
+    @PostMapping("/posts/{postId}/comments")
     public ResponseEntity<ApiResult<CommentResponse>> createComment(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @Parameter(description = "게시글 id", example = "1") @PathVariable Long postId,
-            @Parameter(description = "사용자 id", example = "1") @PathVariable Long userId,
             @Valid @RequestBody CreateCommentRequest createCommentRequest){
+        Long userId = customUserDetails.getId();
         CommentResponse commentResponse = commentService.createComment(postId, userId, createCommentRequest);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -63,11 +66,12 @@ public class CommentController {
             @ApiResponse(responseCode = "404", description = "존재하지 않는 댓글입니다."),
     })
     @ApiCommonErrorResponses
-    @PutMapping("comments/{commentId}/{userId}")
+    @PutMapping("comments/{commentId}")
     public ResponseEntity<ApiResult<CommentResponse>> updateComment(
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @Parameter(description = "댓글 id", example = "1") @PathVariable Long commentId,
-            @Parameter(description = "사용자 id", example = "1") @PathVariable Long userId,
             @Valid @RequestBody CreateCommentRequest createCommentRequest){
+        Long userId = customUserDetails.getId();
         CommentResponse commentResponse = commentService.updateComment(commentId, userId, createCommentRequest);
         return ResponseEntity.ok(ApiResult.ok(commentResponse));
     }
@@ -78,10 +82,11 @@ public class CommentController {
             @ApiResponse(responseCode = "404", description = "존재하지 않는 댓글입니다."),
     })
     @ApiCommonErrorResponses
-    @DeleteMapping("comments/{commentId}/{userId}")
+    @DeleteMapping("comments/{commentId}")
     public ResponseEntity<Void> deleteComment(
-            @Parameter(description = "댓글 id", example = "1")  @PathVariable Long commentId,
-            @Parameter(description = "사용자 id", example = "1") @PathVariable Long userId){
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @Parameter(description = "댓글 id", example = "1")  @PathVariable Long commentId){
+        Long userId = customUserDetails.getId();
         commentService.deleteComment(commentId, userId);
         return ResponseEntity.noContent().build();
     }

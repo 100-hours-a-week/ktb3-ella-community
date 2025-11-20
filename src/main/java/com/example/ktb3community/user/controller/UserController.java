@@ -1,5 +1,6 @@
 package com.example.ktb3community.user.controller;
 
+import com.example.ktb3community.auth.security.CustomUserDetails;
 import com.example.ktb3community.common.doc.ApiCommonErrorResponses;
 import com.example.ktb3community.common.error.ErrorCode;
 import com.example.ktb3community.common.response.ApiResult;
@@ -16,6 +17,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -47,9 +49,10 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "존재하지 않는 사용자입니다.")
     })
     @ApiCommonErrorResponses
-    @GetMapping("/me/{userId}")
+    @GetMapping("/me")
     public ResponseEntity<ApiResult<MeResponse>> getMe(
-            @Parameter(description = "사용자 id", example = "1") @PathVariable Long userId) {
+            @AuthenticationPrincipal CustomUserDetails customUserDetails) {
+        Long userId = customUserDetails.getId();
         MeResponse me = userService.getMe(userId);
         return ResponseEntity.ok(ApiResult.ok(me));
     }
@@ -60,10 +63,11 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "존재하지 않는 사용자입니다.")
     })
     @ApiCommonErrorResponses
-    @PatchMapping("me/{userId}")
+    @PatchMapping("me")
     public ResponseEntity<ApiResult<MeResponse>> updateMe(
-            @Parameter(description = "사용자 id", example = "1") @PathVariable Long userId,
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @Valid @RequestBody UpdateMeRequest updateMeRequest) {
+        Long userId = customUserDetails.getId();
         MeResponse me = userService.updateMe(userId, updateMeRequest);
         return ResponseEntity.ok(ApiResult.ok(me));
     }
@@ -74,10 +78,11 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "존재하지 않는 사용자입니다.")
     })
     @ApiCommonErrorResponses
-    @PostMapping("me/password/{userId}")
+    @PostMapping("me/password")
     public ResponseEntity<Void> updatePassword(
-            @Parameter(description = "사용자 id", example = "1") @PathVariable Long userId,
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
             @Valid @RequestBody UpdatePasswordRequest updatePasswordRequest) {
+        Long userId = customUserDetails.getId();
         userService.updatePassword(userId, updatePasswordRequest);
         return ResponseEntity.noContent().build();
     }
@@ -88,9 +93,10 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "존재하지 않는 사용자입니다.")
     })
     @ApiCommonErrorResponses
-    @DeleteMapping("/me/{userId}")
+    @DeleteMapping("/me")
     public ResponseEntity<Void> withdrawMe(
-            @Parameter(description = "사용자 id", example = "1") @PathVariable Long userId) {
+            @AuthenticationPrincipal CustomUserDetails customUserDetails) {
+        Long userId = customUserDetails.getId();
         userService.withdrawMe(userId);
         return ResponseEntity.noContent().build();
     }

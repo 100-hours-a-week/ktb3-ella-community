@@ -1,5 +1,6 @@
 package com.example.ktb3community.post.controller;
 
+import com.example.ktb3community.auth.security.CustomUserDetails;
 import com.example.ktb3community.common.doc.ApiCommonErrorResponses;
 import com.example.ktb3community.common.response.ApiResult;
 import com.example.ktb3community.post.dto.LikeResponse;
@@ -10,6 +11,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -26,10 +28,11 @@ public class LikeController {
             @ApiResponse(responseCode = "404", description = "존재하지 않는 사용자입니다.")
     })
     @ApiCommonErrorResponses
-    @PostMapping("/{postId}/likes/{userId}")
+    @PostMapping("/{postId}/likes")
     public ResponseEntity<ApiResult<LikeResponse>> likePost(
-            @Parameter(description = "게시글 id", example = "1") @PathVariable Long postId,
-            @Parameter(description = "사용자 id", example = "1") @PathVariable Long userId) {
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @Parameter(description = "게시글 id", example = "1") @PathVariable Long postId) {
+        Long userId = customUserDetails.getId();
         LikeResponse likeResponse = likeService.likePost(postId, userId);
         return ResponseEntity.ok(ApiResult.ok(likeResponse));
     }
@@ -41,10 +44,11 @@ public class LikeController {
             @ApiResponse(responseCode = "404", description = "존재하지 않는 사용자입니다.")
     })
     @ApiCommonErrorResponses
-    @DeleteMapping("/{postId}/likes/{userId}")
+    @DeleteMapping("/{postId}/likes")
     public ResponseEntity<ApiResult<LikeResponse>> unlikePost(
-            @Parameter(description = "게시글 id", example = "1") @PathVariable Long postId,
-            @Parameter(description = "사용자 id", example = "1") @PathVariable Long userId) {
+            @AuthenticationPrincipal CustomUserDetails customUserDetails,
+            @Parameter(description = "게시글 id", example = "1") @PathVariable Long postId) {
+        Long userId = customUserDetails.getId();
         LikeResponse likeResponse = likeService.unlikePost(postId, userId);
         return ResponseEntity.ok(ApiResult.ok(likeResponse));
     }

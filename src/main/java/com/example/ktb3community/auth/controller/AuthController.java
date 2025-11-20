@@ -57,6 +57,9 @@ public class AuthController {
     }
 
     @Operation(summary = "토큰 갱신", description = "액세스 토큰, 리프레시 토큰을 갱신합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "OK")
+    })
     @PostMapping("/refresh")
     public ResponseEntity<ApiResult<AuthResponse>> refresh(
             @CookieValue(name = "refresh_token", required=false) String refreshJwt,
@@ -70,16 +73,18 @@ public class AuthController {
     }
 
     @Operation(summary = "로그아웃", description = "사용자 로그아웃을 처리합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "OK")
+    })
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(
             @CookieValue(name = "refresh_token", required=false) String refreshJwt,
             HttpServletResponse response
     ) {
-        if (refreshJwt != null && !refreshJwt.isBlank()) {
-            authService.logout(refreshJwt, response);
-        } else {
-            authService.logout(null, response);
+        if (refreshJwt == null || refreshJwt.isBlank()) {
+            throw new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN);
         }
+        authService.logout(refreshJwt, response);
         return ResponseEntity.noContent().build();
     }
 }
