@@ -35,7 +35,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                        .ignoringRequestMatchers("/api/auth/login", "/api/auth/signup")
+                        .ignoringRequestMatchers("/auth/login", "/auth/signup", "/auth/refresh", "/uploads/presigned-url", "/users/availability/**")
                 )
                 .formLogin(form -> form.disable())
                 // 헤더로 아이디/비번 보내는 방식 비활성화
@@ -44,7 +44,7 @@ public class SecurityConfig {
                         sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/signup", "/api/auth/login", "/api/auth/refresh").permitAll()
+                        .requestMatchers("/auth/signup", "/auth/login", "/auth/refresh", "/uploads/presigned-url", "/users/availability/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .userDetailsService(customUserDetailsService)

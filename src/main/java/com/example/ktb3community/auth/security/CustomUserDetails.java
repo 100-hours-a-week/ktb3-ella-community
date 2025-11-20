@@ -16,14 +16,12 @@ public class CustomUserDetails implements UserDetails {
     private final String email;
     private final String password;
     private final Collection<? extends GrantedAuthority> authorities;
-    private final User user;
 
     private CustomUserDetails(User user, Collection<? extends GrantedAuthority> authorities) {
         this.id = user.getId();
         this.email = user.getEmail();
         this.password = user.getPasswordHash();
         this.authorities = authorities;
-        this.user = user;
     }
 
     public static CustomUserDetails from(User user) {
@@ -45,10 +43,5 @@ public class CustomUserDetails implements UserDetails {
     @Override
     public String getPassword() {
         return password;
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return user.getDeletedAt() == null;
     }
 }
