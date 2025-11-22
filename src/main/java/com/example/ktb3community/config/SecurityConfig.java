@@ -15,6 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -31,12 +32,24 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        CookieCsrfTokenRepository csrfTokenRepository =
+                CookieCsrfTokenRepository.withHttpOnlyFalse();
+        csrfTokenRepository.setCookiePath("/");
+        CsrfTokenRequestAttributeHandler requestHandler = new CsrfTokenRequestAttributeHandler();
+        requestHandler.setCsrfRequestAttributeName(null);
 
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf
-                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                        .ignoringRequestMatchers("/auth/login", "/auth/signup", "/auth/refresh", "/uploads/presigned-url", "/users/availability/**")
+                        .csrfTokenRepository(csrfTokenRepository)
+                        .csrfTokenRequestHandler(requestHandler)
+                        .ignoringRequestMatchers(
+                                "/auth/login",
+                                "/auth/signup",
+                                "/auth/refresh",
+                                "/uploads/presigned-url",
+                                "/users/availability/**"
+                        )
                 )
                 .formLogin(AbstractHttpConfigurer::disable)
                 // 헤더로 아이디/비번 보내는 방식 비활성화
@@ -50,10 +63,9 @@ public class SecurityConfig {
                 )
                 .userDetailsService(customUserDetailsService)
                 // JWT 인증 필터 추가
-                .addFilterBefore(
-                        new JwtAuthenticationFilter(jwtTokenProvider, customUserDetailsService),
-                        UsernamePasswordAuthenticationFilter.class
-                );
+                .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider, customUserDetailsService),
+                        UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 
