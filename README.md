@@ -36,7 +36,7 @@
 
 <br>
 
-## 아키텍처 
+## 🌐 아키텍처 
 <div align="center">
   <img width="392" height="506" alt="image" src="https://github.com/user-attachments/assets/b9735631-32c0-4ec7-a0b2-08857c943341" />
 </div>
