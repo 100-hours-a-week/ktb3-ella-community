@@ -99,6 +99,3 @@ cloud:
 ./gradlew clean build
 ./gradlew bootRun
 ```
-
-```
-```
