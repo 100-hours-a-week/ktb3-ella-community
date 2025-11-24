@@ -37,7 +37,7 @@ public class Post extends BaseTimeEntity {
     private String title;
 
     @Lob
-    @Column(nullable = false)
+    @Column(columnDefinition = "LONGTEXT", nullable = false)
     private String content;
 
     @Column(name = "post_image_url")
