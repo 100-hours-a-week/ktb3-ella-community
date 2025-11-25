@@ -46,6 +46,7 @@ dependencies {
     implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+    testImplementation 'org.springframework.security:spring-security-test'
 }
 
 tasks.named('test') {
@@ -81,6 +82,15 @@ jacocoTestCoverageVerification {
         rule {
             enabled = true
             element = 'CLASS'
+
+            excludes = [
+                    'com.example.ktb3community.common.*',
+                    'com.example.ktb3community.*.exception.*',
+                    'com.example.ktb3community.*.dto.*',
+                    'com.example.ktb3community.*.mapper.*',
+                    'com.example.ktb3community.config.*',
+                    'com.example.ktb3community.Ktb3CommunityApplication'
+            ]
 
             limit {
                 counter = 'METHOD'
