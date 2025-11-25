@@ -84,6 +84,7 @@ public class User extends BaseTimeEntity {
     }
 
     public void updatePasswordHash(String passwordHash) {
+        if (passwordHash == null || passwordHash.isBlank()) { throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE); }
         this.passwordHash = passwordHash;
     }
 
