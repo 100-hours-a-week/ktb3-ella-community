@@ -25,12 +25,12 @@ class UserTest {
     }
 
     @Test
-    @DisplayName("createNew는 email/nickname/profile을 trim하고 email은 소문자로 변환한다")
-    void createNew_normalizesFields() {
-        String email = "TEST@Email.Com";
+    @DisplayName("createNew는 email/nickname/profileUrl을 trim하고 email은 소문자로 변환한다")
+    void createNew_success() {
+        String email = "  TEST@Email.Com  ";
         String passwordHash = "hash";
-        String nickname = "Nick";
-        String profileImageUrl = "http://image";
+        String nickname = "  Nick  ";
+        String profileImageUrl = "  http://image  ";
 
         User user = User.createNew(email, passwordHash, nickname, profileImageUrl, Role.ROLE_USER);
 

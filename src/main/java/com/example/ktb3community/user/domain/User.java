@@ -45,7 +45,7 @@ public class User extends BaseTimeEntity {
         this.email = email.trim().toLowerCase();
         this.passwordHash = passwordHash;
         this.nickname = nickname.trim();
-        this.profileImageUrl = profileImageUrl;
+        this.profileImageUrl = profileImageUrl.trim();
         this.deletedAt = deletedAt;
         this.role = role;
     }

@@ -57,18 +57,23 @@ public class UserService {
     @Transactional
     public MeResponse updateMe(Long userId, UpdateMeRequest updateMeRequest){
         User user = userRepository.findByIdOrThrow(userId);
-        String previousImageUrl = user.getProfileImageUrl();
         String nickname = updateMeRequest.nickname();
+        String profileImageUrl = updateMeRequest.profileImageUrl();
+
         if (nickname != null && !nickname.isBlank() && !nickname.equals(user.getNickname())) {
-            userRepository.findByNickname(nickname)
-                    .filter(u -> !u.getId().equals(user.getId()))
-                    .ifPresent(u -> { throw new BusinessException(ErrorCode.NICKNAME_ALREADY_EXIST); });
+            boolean isDuplicate = userRepository.existsByNickname(nickname);
+
+            if (isDuplicate) {
+                throw new BusinessException(ErrorCode.NICKNAME_ALREADY_EXIST);
+            }
+
             user.updateNickname(nickname);
         }
-        if(updateMeRequest.profileImageUrl() != null && !updateMeRequest.profileImageUrl().isBlank()){
-            user.updateProfileImageUrl(updateMeRequest.profileImageUrl());
+        if (profileImageUrl != null && !profileImageUrl.isBlank()){
+            String previousImageUrl = user.getProfileImageUrl();
+            user.updateProfileImageUrl(profileImageUrl);
+            fileService.deleteImageIfChanged(previousImageUrl, profileImageUrl);
         }
-        fileService.deleteImageIfChanged(previousImageUrl, user.getProfileImageUrl());
         return userMapper.userToMeResponse(user);
     }
 
@@ -83,8 +88,8 @@ public class UserService {
     public void withdrawMe(Long userId, HttpServletResponse response){
         User user = userRepository.findByIdOrThrow(userId);
         Instant now = Instant.now();
-        postRepository.softDeleteByUserId(userId, now);
         commentRepository.softDeleteByUserId(userId, now);
+        postRepository.softDeleteByUserId(userId, now);
         userRepository.softDeleteById(userId, now);
         refreshTokenService.revokeAllByUser(user);
         CookieUtil.removeRefreshTokenCookie(response);
