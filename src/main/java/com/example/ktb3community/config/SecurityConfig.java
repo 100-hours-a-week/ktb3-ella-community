@@ -22,6 +22,8 @@ import org.springframework.web.cors.CorsConfigurationSource;
 
 import java.nio.charset.StandardCharsets;
 
+import static com.example.ktb3community.auth.security.SecurityPaths.*;
+
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -30,30 +32,6 @@ public class SecurityConfig {
     private final JwtTokenProvider jwtTokenProvider;
     private final CustomUserDetailsService customUserDetailsService;
     private final CorsConfigurationSource corsConfigurationSource;
-
-    private static final String[] PUBLIC_AUTH_ENDPOINTS = {
-            "/auth/signup",
-            "/auth/login",
-            "/auth/refresh",
-            "/users/availability/**"
-    };
-
-    private static final String[] PUBLIC_DOCS_ENDPOINTS = {
-            "/v1/api-docs/**",
-            "/swagger-ui/**",
-            "/swagger-ui.html"
-    };
-
-    private static final String[] CSRF_IGNORED_ENDPOINTS = {
-            "/auth/login",
-            "/auth/signup",
-            "/uploads/presigned-url",
-            "/users/availability/**",
-            "/v3/api-docs/**",
-            "/swagger-ui/**",
-            "/swagger-ui.html"
-    };
-
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -68,7 +46,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(csrfTokenRepository)
                         .csrfTokenRequestHandler(requestHandler)
-                        .ignoringRequestMatchers(CSRF_IGNORED_ENDPOINTS)
+                        .ignoringRequestMatchers(CSRF_IGNORED)
                 )
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, authException) -> {
@@ -99,8 +77,8 @@ public class SecurityConfig {
                         sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(PUBLIC_AUTH_ENDPOINTS).permitAll()
-                        .requestMatchers(PUBLIC_DOCS_ENDPOINTS).permitAll()
+                        .requestMatchers(PUBLIC_AUTH).permitAll()
+                        .requestMatchers(PUBLIC_DOCS).permitAll()
                         .anyRequest().authenticated()
                 )
                 .userDetailsService(customUserDetailsService)
