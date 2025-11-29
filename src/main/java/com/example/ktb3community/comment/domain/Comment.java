@@ -70,19 +70,14 @@ public class Comment extends BaseTimeEntity {
 
     @Override
     public boolean equals(Object o) {
-        if(this == o) return true;
-        if(o == null || getClass() != o.getClass()) return false;
+        if (this == o) return true;
+        if (!(o instanceof Comment comment)) return false;
 
-        Comment other = (Comment) o;
-        if(this.id == null || other.id == null ) return false;
-        return this.id.equals(other.id);
+        return id != null && id.equals(comment.getId());
     }
 
     @Override
     public int hashCode() {
-        if (id != null) {
-            return id.hashCode();
-        }
-        return System.identityHashCode(this);
+        return getClass().hashCode();
     }
 }

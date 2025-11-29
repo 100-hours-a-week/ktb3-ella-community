@@ -186,7 +186,7 @@ class UserTest {
     }
 
     @Test
-    @DisplayName("equals: ID가 null인 비영속 객체는 필드 값이 같아도 동등하지 않다(각각 다른 인스턴스)")
+    @DisplayName("equals: ID가 null인 비영속 객체는 필드 값이 같아도 동등하지 않다")
     void equals_nullId_isNotEqual() {
         User user1 = newUser();
         User user2 = newUser();
