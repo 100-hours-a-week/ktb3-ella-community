@@ -90,7 +90,7 @@ class PostViewServiceTest {
 
         assertThat(response.content()).hasSize(2);
 
-        PostListResponse res1 = response.content().get(0);
+        PostListResponse res1 = response.content().getFirst();
         assertThat(res1.title()).isEqualTo("Title1");
         assertThat(res1.author().nickname()).isEqualTo("user1");
 
@@ -144,7 +144,7 @@ class PostViewServiceTest {
         assertThat(response.postId()).isEqualTo(postId);
         assertThat(response.title()).isEqualTo("Detail Title");
         assertThat(response.author().nickname()).isEqualTo("author");
-        assertThat(response.liked()).isTrue(); 
+        assertThat(response.liked()).isTrue();
         assertThat(response.comments()).isSameAs(emptyComments);
     }
 }

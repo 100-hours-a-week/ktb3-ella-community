@@ -1,7 +1,6 @@
 package com.example.ktb3community.user.repository;
 
 
-import com.example.ktb3community.common.Role;
 import com.example.ktb3community.user.domain.User;
 import com.example.ktb3community.user.exception.UserNotFoundException;
 import org.springframework.stereotype.Repository;
