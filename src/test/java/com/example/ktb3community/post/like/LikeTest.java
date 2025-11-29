@@ -1,4 +1,4 @@
-package com.example.ktb3community.post;
+package com.example.ktb3community.post.like;
 
 import com.example.ktb3community.post.domain.Like;
 import com.example.ktb3community.post.domain.Post;
