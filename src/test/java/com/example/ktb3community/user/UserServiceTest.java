@@ -32,6 +32,7 @@ import java.time.Instant;
 import static com.example.ktb3community.TestFixtures.USER_ID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.AssertionsForClassTypes.catchThrowable;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.*;
@@ -165,9 +166,13 @@ class UserServiceTest {
         given(userRepository.findByIdOrThrow(USER_ID)).willReturn(user);
         given(userRepository.existsByNickname("existingNick")).willReturn(true);
 
-        assertThatThrownBy(() -> userService.updateMe(USER_ID, request))
+
+        Throwable thrown = catchThrowable(() -> userService.updateMe(USER_ID, request));
+
+        assertThat(thrown)
                 .isInstanceOf(BusinessException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NICKNAME_ALREADY_EXIST);
+                .extracting(ex -> ((BusinessException) ex).getErrorCode())
+                .isEqualTo(ErrorCode.NICKNAME_ALREADY_EXIST);
 
         assertThat(user.getNickname()).isEqualTo("oldNick");
     }

@@ -5,6 +5,7 @@ import com.example.ktb3community.common.constants.ValidationConstant;
 import com.example.ktb3community.common.error.ErrorCode;
 import com.example.ktb3community.exception.BusinessException;
 import com.example.ktb3community.user.domain.User;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -12,6 +13,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.time.Instant;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.catchThrowable;
 import static org.junit.jupiter.api.Assertions.*;
 
 class UserTest {
@@ -110,12 +112,12 @@ class UserTest {
     void updateProfileImageUrl_blank_throws() {
         User user = newUser();
 
-        BusinessException ex = assertThrows(
-                BusinessException.class,
-                () -> user.updateProfileImageUrl("   ")
-        );
+        Throwable thrown = catchThrowable(() -> user.updateProfileImageUrl("   "));
 
-        assertEquals(ErrorCode.INVALID_INPUT_VALUE, ex.getErrorCode());
+        Assertions.assertThat(thrown)
+                .isInstanceOf(BusinessException.class)
+                .extracting(ex -> ((BusinessException) ex).getErrorCode())
+                .isEqualTo(ErrorCode.INVALID_INPUT_VALUE);
     }
 
     @Test

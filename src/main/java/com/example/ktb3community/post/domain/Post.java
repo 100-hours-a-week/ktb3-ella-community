@@ -69,7 +69,7 @@ public class Post extends BaseTimeEntity {
     }
 
     public void updatePost(String title, String content, String postImageUrl) {
-        if ( title != null && !title.isBlank() ){ this.title = title; }
+        if ( title != null && !title.isBlank() ){ this.title = title.trim(); }
         if ( content != null && !content.isBlank() ) { this.content = content; }
         this.postImageUrl = postImageUrl;
     }
@@ -109,19 +109,14 @@ public class Post extends BaseTimeEntity {
 
     @Override
     public boolean equals(Object o) {
-        if(this == o) return true;
-        if(o == null || getClass() != o.getClass()) return false;
+        if (this == o) return true;
+        if (!(o instanceof Post post)) return false;
 
-        Post other = (Post) o;
-        if(this.id == null || other.id == null ) return false;
-        return this.id.equals(other.id);
+        return id != null && id.equals(post.getId());
     }
 
     @Override
     public int hashCode() {
-        if (id != null) {
-            return id.hashCode();
-        }
-        return System.identityHashCode(this);
+        return getClass().hashCode();
     }
 }
