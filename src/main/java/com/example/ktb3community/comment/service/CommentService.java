@@ -89,11 +89,11 @@ public class CommentService {
     public void deleteComment(Long commentId, Long userId) {
         Comment comment =  commentRepository.findByIdOrThrow(commentId);
         User user = userRepository.findByIdOrThrow(userId);
-        Post post = postRepository.findByIdOrThrow(comment.getPostId());
         if(!comment.getUserId().equals(user.getId())) {
             throw new BusinessException(ErrorCode.AUTH_FORBIDDEN);
         }
         comment.delete(Instant.now());
+        Post post = postRepository.findByIdOrThrow(comment.getPostId());
         postCommentCounter.decreaseCommentCount(post.getId());
     }
 }
