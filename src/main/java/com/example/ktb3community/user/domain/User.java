@@ -6,9 +6,7 @@ import com.example.ktb3community.common.domain.BaseTimeEntity;
 import com.example.ktb3community.common.error.ErrorCode;
 import com.example.ktb3community.exception.BusinessException;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.Instant;
 
@@ -16,6 +14,8 @@ import java.time.Instant;
 @Table(name = "users")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Builder
 public class User extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,28 +39,15 @@ public class User extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     private Role role;
 
-
-    private User(Long id, String email, String passwordHash, String nickname, String profileImageUrl, Instant deletedAt, Role role) {
-        this.id = id;
-        this.email = email.trim().toLowerCase();
-        this.passwordHash = passwordHash;
-        this.nickname = nickname.trim();
-        this.profileImageUrl = profileImageUrl.trim();
-        this.deletedAt = deletedAt;
-        this.role = role;
-    }
-
     public static User createNew(String email, String passwordHash,
                                  String nickname, String profileImageUrl, Role role) {
-        return new User(null, email, passwordHash, nickname, profileImageUrl, null, role);
-    }
-
-    public static User rehydrate(Long id, String email, String passwordHash,
-                                 String nickname, String profileImageUrl, Instant createdAt, Instant updatedAt, Instant deletedAt, Role role) {
-        User user = new User(id, email, passwordHash, nickname, profileImageUrl, deletedAt, role);
-        user.createdAt = createdAt;
-        user.updatedAt = updatedAt;
-        return user;
+        return User.builder()
+                .email(email.toLowerCase().trim())
+                .passwordHash(passwordHash)
+                .nickname(nickname.trim())
+                .profileImageUrl(profileImageUrl.trim())
+                .role(role)
+                .build();
     }
 
     public void updateNickname(String nickname) {

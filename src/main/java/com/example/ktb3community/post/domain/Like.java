@@ -12,15 +12,15 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.Instant;
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Builder
 @Table(name = "likes", uniqueConstraints = {
         @UniqueConstraint(name = "uq_like_post_user", columnNames = {"post_id", "user_id"})
 })
@@ -40,15 +40,13 @@ public class Like extends BaseTimeEntity {
     @Column(name = "deleted_at")
     private Instant deletedAt;
 
-    private Like(Long id, Post post, User user, Instant deletedAt) {
-        this.id = id;
-        this.post = post;
-        this.user = user;
-        this.deletedAt = deletedAt;
-    }
 
     public static Like createNew(Post post, User user) {
-        return new Like(null, post, user,null);
+        return Like.builder()
+                .post(post)
+                .user(user)
+                .deletedAt(null)
+                .build();
     }
 
     public boolean isDeleted() {

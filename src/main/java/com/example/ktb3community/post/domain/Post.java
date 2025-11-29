@@ -14,9 +14,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.Instant;
 
@@ -24,6 +22,8 @@ import java.time.Instant;
 @Table(name = "posts")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Builder
 public class Post extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -55,27 +55,17 @@ public class Post extends BaseTimeEntity {
     @Column(name = "deleted_at")
     private Instant deletedAt;
 
-    private Post(Long id, User user, String title, String content, String postImageUrl, long like, long view, long cmt,
-                 Instant deletedAt) {
-        this.id = id;
-        this.user = user;
-        this.title = title.trim();
-        this.content = content;
-        this.postImageUrl = postImageUrl;
-        this.likeCount = like;
-        this.viewCount = view;
-        this.commentCount = cmt;
-        this.deletedAt = deletedAt;
-    }
-
     public static Post createNew(User user, String title, String content, String postImageUrl) {
-        return new Post(null, user, title, content, postImageUrl, 0, 0, 0, null);
-    }
-    public static Post rehydrate(Long id, User user, String title, String content, String postImageUrl, long like, long view, long cmt, Instant createdAt, Instant updatedAt, Instant deletedAt) {
-        Post post =  new Post(id, user, title, content, postImageUrl, like, view, cmt, deletedAt);
-        post.createdAt = createdAt;
-        post.updatedAt = updatedAt;
-        return post;
+        return Post.builder()
+                .user(user)
+                .title(title.trim())
+                .content(content)
+                .postImageUrl(postImageUrl)
+                .likeCount(0)
+                .viewCount(0)
+                .commentCount(0)
+                .deletedAt(null)
+                .build();
     }
 
     public void updatePost(String title, String content, String postImageUrl) {

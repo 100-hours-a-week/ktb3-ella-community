@@ -2,9 +2,7 @@ package com.example.ktb3community.auth.domain;
 
 import com.example.ktb3community.user.domain.User;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -18,6 +16,8 @@ import java.util.UUID;
 )
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Builder
 public class RefreshToken {
     @Id
     private String id;
@@ -32,19 +32,18 @@ public class RefreshToken {
     @Column(nullable = false)
     private boolean revoked;
 
-    private RefreshToken(String id, User user, Instant expiresAt, boolean revoked) {
-        this.id = id;
-        this.user = user;
-        this.expiresAt = expiresAt;
-        this.revoked = revoked;
-    }
-
     public static RefreshToken createNew(User user, Instant expiresAt) {
         String id = UUID.randomUUID().toString();
-        return new RefreshToken(id, user, expiresAt, false);
+        return RefreshToken.builder()
+                .id(id)
+                .user(user)
+                .expiresAt(expiresAt)
+                .revoked(false)
+                .build();
     }
 
     public void revoke() {
+        if(this.revoked) return;
         this.revoked = true;
     }
 
