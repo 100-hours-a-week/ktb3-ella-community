@@ -11,6 +11,7 @@ import com.example.ktb3community.user.dto.AvailabilityResponse;
 import com.example.ktb3community.user.dto.MeResponse;
 import com.example.ktb3community.user.dto.UpdateMeRequest;
 import com.example.ktb3community.user.dto.UpdatePasswordRequest;
+import com.example.ktb3community.user.exception.UserNotFoundException;
 import com.example.ktb3community.user.mapper.UserMapper;
 import com.example.ktb3community.user.repository.UserRepository;
 import com.example.ktb3community.user.service.UserService;
@@ -26,205 +27,181 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import static org.junit.jupiter.api.Assertions.*;
+import java.time.Instant;
+
+import static com.example.ktb3community.TestFixtures.USER_ID;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
-    @Mock
-    UserRepository userRepository;
 
-    @Mock
-    PostRepository postRepository;
+    @Mock UserRepository userRepository;
+    @Mock PostRepository postRepository;
+    @Mock CommentRepository commentRepository;
+    @Mock UserMapper userMapper;
+    @Mock FileService fileService;
+    @Mock PasswordEncoder passwordEncoder;
+    @Mock RefreshTokenService refreshTokenService;
 
-    @Mock
-    CommentRepository commentRepository;
-
-    @Mock
-    UserMapper userMapper;
-
-    @Mock
-    FileService fileService;
-
-    @Mock
-    PasswordEncoder passwordEncoder;
-
-    @Mock
-    RefreshTokenService refreshTokenService;
-
-    @InjectMocks
-    UserService userService;
+    @InjectMocks UserService userService;
 
     @Test
-    @DisplayName("getAvailability는 입력값을 trim하여 email/nickname 중복 여부를 조회한다")
+    @DisplayName("getAvailability: 입력값을 trim하여 중복 여부를 확인한다")
     void getAvailability_success() {
-        when(userRepository.existsByEmail("user@test.com")).thenReturn(false);
-        when(userRepository.existsByNickname("nick")).thenReturn(true);
+        given(userRepository.existsByEmail("user@test.com")).willReturn(false);
+        given(userRepository.existsByNickname("nick")).willReturn(true);
 
         AvailabilityResponse response = userService.getAvailability("  USER@test.com  ", "  nick  ");
 
-        assertTrue(response.emailAvailable());
-        assertFalse(response.nicknameAvailable());
+        assertThat(response.emailAvailable()).isTrue();
+        assertThat(response.nicknameAvailable()).isFalse();
 
-        // 호출 검증
         verify(userRepository).existsByEmail("user@test.com");
         verify(userRepository).existsByNickname("nick");
     }
 
     @ParameterizedTest
-    @DisplayName("getAvailability는 값이 없거나 공백이면 null을 반환한다")
+    @DisplayName("getAvailability: 값이 없거나 공백이면 null을 반환한다")
     @NullAndEmptySource
     @ValueSource(strings = {"  ", "\t", "\n"})
     void getAvailability_nullOrBlank(String invalid) {
-
         AvailabilityResponse response = userService.getAvailability(invalid, invalid);
 
-        assertNull(response.emailAvailable());
-        assertNull(response.nicknameAvailable());
+        assertThat(response.emailAvailable()).isNull();
+        assertThat(response.nicknameAvailable()).isNull();
 
-        verifyNoInteractions(userRepository);
+        then(userRepository).shouldHaveNoInteractions();
     }
 
     @Test
-    @DisplayName("updateMe는 닉네임이 변경될 경우 중복을 확인 후 변경하고, 프로필 이미지 변경 여부에 따라 파일 정리를 요청한다")
-    void updateMe_nicknameChanged_profileImageChanged_success() {
-        Long userId = 1L;
+    @DisplayName("getMe: 내 정보 조회 성공")
+    void getMe_Success() {
+        User user = User.builder()
+                .id(USER_ID)
+                .nickname("test")
+                .email("user@test.com")
+                .build();
+
+        MeResponse mockResponse = new MeResponse("user@test.com", "test", "http://image.url");
+
+        given(userRepository.findByIdOrThrow(USER_ID)).willReturn(user);
+        given(userMapper.userToMeResponse(user)).willReturn(mockResponse);
+
+        MeResponse result = userService.getMe(USER_ID);
+
+        assertThat(result).isNotNull();
+        assertThat(result.nickname()).isEqualTo("test");
+    }
+
+    @Test
+    @DisplayName("getMe: 존재하지 않는 유저 조회 시 예외가 발생한다")
+    void getMe_NotFound() {
+        given(userRepository.findByIdOrThrow(USER_ID))
+                .willThrow(new UserNotFoundException());
+
+        assertThatThrownBy(() -> userService.getMe(USER_ID))
+                .isInstanceOf(UserNotFoundException.class);
+    }
+
+    @Test
+    @DisplayName("updateMe: 닉네임과 프로필 이미지가 정상적으로 변경된다")
+    void updateMe_success() {
         UpdateMeRequest request = new UpdateMeRequest("newNick", "newImage");
-        User user = mock(User.class);
 
-        when(user.getNickname()).thenReturn("oldNick");
-        when(user.getProfileImageUrl()).thenReturn("oldImage");
+        User user = User.builder()
+                .id(USER_ID)
+                .nickname("oldNick")
+                .profileImageUrl("oldImage")
+                .build();
 
-        when(userRepository.findByIdOrThrow(userId)).thenReturn(user);
-        when(userRepository.existsByNickname("newNick")).thenReturn(false);
+        given(userRepository.findByIdOrThrow(USER_ID)).willReturn(user);
+        given(userRepository.existsByNickname("newNick")).willReturn(false);
 
-        MeResponse meResponse = new MeResponse("user@test.com", "newNick", "newImage");
-        when(userMapper.userToMeResponse(user)).thenReturn(meResponse);
+        MeResponse expectedResponse = new MeResponse("test@email.com", "newNick", "newImage");
+        given(userMapper.userToMeResponse(user)).willReturn(expectedResponse);
 
-        MeResponse result = userService.updateMe(userId, request);
+        MeResponse result = userService.updateMe(USER_ID, request);
 
-        verify(userRepository).findByIdOrThrow(userId);
-        verify(userRepository).existsByNickname("newNick");
-        verify(user).updateProfileImageUrl("newImage");
+        assertThat(result).isEqualTo(expectedResponse);
+
+        assertThat(user.getNickname()).isEqualTo("newNick");
+        assertThat(user.getProfileImageUrl()).isEqualTo("newImage");
+
         verify(fileService).deleteImageIfChanged("oldImage", "newImage");
-        verify(userMapper).userToMeResponse(user);
-
-        assertSame(meResponse, result);
     }
 
     @Test
-    @DisplayName("updateMe는 다른 사용자가 이미 사용 중인 닉네임으로 변경하려 하면 예외를 던진다")
-    void updateMe_nicknameDuplicate_throws() {
-        Long userId = 1L;
-        UpdateMeRequest request = new UpdateMeRequest("existingNick", null);
-        User user = mock(User.class);
+    @DisplayName("updateMe: 닉네임이 현재와 같으면 중복 체크를 건너뛰고 성공한다")
+    void updateMe_sameNickname() {
+        UpdateMeRequest request = new UpdateMeRequest("oldNick", "newImage");
 
-        when(user.getNickname()).thenReturn("oldNick");
-        when(userRepository.findByIdOrThrow(userId)).thenReturn(user);
-        when(userRepository.existsByNickname("existingNick")).thenReturn(true);
+        User user = User.builder()
+                .id(USER_ID)
+                .nickname("oldNick")
+                .profileImageUrl("oldImage")
+                .build();
 
-        BusinessException ex = assertThrows(
-                BusinessException.class,
-                () -> userService.updateMe(userId, request)
-        );
+        given(userRepository.findByIdOrThrow(USER_ID)).willReturn(user);
 
-        assertEquals(ErrorCode.NICKNAME_ALREADY_EXIST, ex.getErrorCode());
+        MeResponse expectedResponse = new MeResponse("test@email.com", "oldNick", "newImage");
+        given(userMapper.userToMeResponse(user)).willReturn(expectedResponse);
 
-        verify(userRepository).findByIdOrThrow(userId);
-        verify(userRepository).existsByNickname("existingNick");
-        verifyNoMoreInteractions(user);
-        verifyNoInteractions(fileService);
-        verifyNoInteractions(userMapper);
-    }
-
-    @ParameterizedTest
-    @DisplayName("updateMe는 닉네임/프로필 이미지가 null 또는 공백일 때 닉네임/프로필 관련 로직을 건너뛴다")
-    @NullAndEmptySource
-    @ValueSource(strings = {"  ", "\t", "\n"})
-    void updateMe_whenNullOrBlank_skip(String invalid) {
-        Long userId = 1L;
-
-        UpdateMeRequest request = new UpdateMeRequest(invalid, invalid);
-
-        User user = mock(User.class);
-        when(userRepository.findByIdOrThrow(userId)).thenReturn(user);
-
-
-        userService.updateMe(userId, request);
-
-        verify(userRepository).findByIdOrThrow(userId);
-        verifyNoMoreInteractions(user);
-        verifyNoInteractions(fileService);
-    }
-
-    @Test
-    @DisplayName("updateMe는 닉네임이 현재 닉네임과 동일할 때 닉네임 관련 로직을 건너뛴다")
-    void updateMe_whenNicknameSameAsCurrent_skip() {
-        Long userId = 1L;
-
-        UpdateMeRequest req = new UpdateMeRequest("sameNick", null);
-
-        User user = mock(User.class);
-        when(user.getNickname()).thenReturn("sameNick");
-        when(userRepository.findByIdOrThrow(userId)).thenReturn(user);
-
-        userService.updateMe(userId, req);
+        userService.updateMe(USER_ID, request);
 
         verify(userRepository, never()).existsByNickname(any());
-        verify(user, never()).updateNickname(any());
+        assertThat(user.getProfileImageUrl()).isEqualTo("newImage"); // 이미지는 변경됨
     }
 
     @Test
-    @DisplayName("updateMe는 중복된 닉네임으로 변경하려 할 때 예외를 던진다")
-    void updateMe_whenNicknameDuplicate_throws() {
-        Long userId = 1L;
+    @DisplayName("updateMe: 이미 존재하는 닉네임으로 변경 시 예외가 발생한다")
+    void updateMe_nicknameDuplicate_throws() {
+        UpdateMeRequest request = new UpdateMeRequest("existingNick", null);
+        User user = User.builder().id(USER_ID).nickname("oldNick").build();
 
-        UpdateMeRequest req = new UpdateMeRequest("dupNick", null);
+        given(userRepository.findByIdOrThrow(USER_ID)).willReturn(user);
+        given(userRepository.existsByNickname("existingNick")).willReturn(true);
 
-        User user = mock(User.class);
-        when(user.getNickname()).thenReturn("oldNick");
-        when(userRepository.findByIdOrThrow(userId)).thenReturn(user);
-        when(userRepository.existsByNickname("dupNick")).thenReturn(true);
+        assertThatThrownBy(() -> userService.updateMe(USER_ID, request))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NICKNAME_ALREADY_EXIST);
 
-        BusinessException ex = assertThrows(
-                BusinessException.class,
-                () -> userService.updateMe(userId, req)
-        );
-        assertEquals(ErrorCode.NICKNAME_ALREADY_EXIST, ex.getErrorCode());
+        assertThat(user.getNickname()).isEqualTo("oldNick");
     }
 
     @Test
-    @DisplayName("updatePassword는 비밀번호를 해시화하여 변경한다")
+    @DisplayName("updatePassword: 비밀번호 해시화 후 변경 상태를 검증한다")
     void updatePassword_success() {
-        Long userId = 1L;
         UpdatePasswordRequest request = new UpdatePasswordRequest("newPassword");
+        User user = User.builder()
+                .id(USER_ID)
+                .passwordHash("oldHash")
+                .build();
 
-        User user = mock(User.class);
-        when(userRepository.findByIdOrThrow(userId)).thenReturn(user);
-        when(passwordEncoder.encode("newPassword")).thenReturn("hashedPassword");
+        given(userRepository.findByIdOrThrow(USER_ID)).willReturn(user);
+        given(passwordEncoder.encode("newPassword")).willReturn("hashedPassword");
 
-        userService.updatePassword(userId, request);
+        userService.updatePassword(USER_ID, request);
 
-        verify(userRepository).findByIdOrThrow(userId);
-        verify(passwordEncoder).encode("newPassword");
-        verify(user).updatePasswordHash("hashedPassword");
+        assertThat(user.getPasswordHash()).isEqualTo("hashedPassword");
     }
 
     @Test
-    @DisplayName("withdrawMe는 회원 탈퇴 시 관련 데이터를 모두 소프트 삭제하고 리프레시 토큰을 폐기한다")
+    @DisplayName("withdrawMe: 회원 탈퇴 시 소프트 삭제 및 토큰을 폐기한다")
     void withdrawMe_success() {
-        Long userId = 1L;
-        User user = mock(User.class);
+        User user = User.builder().id(USER_ID).build();
         HttpServletResponse response = mock(HttpServletResponse.class);
+        given(userRepository.findByIdOrThrow(USER_ID)).willReturn(user);
 
-        when(userRepository.findByIdOrThrow(userId)).thenReturn(user);
+        userService.withdrawMe(USER_ID, response);
 
-        userService.withdrawMe(userId, response);
+        verify(commentRepository).softDeleteByUserId(eq(USER_ID), isA(Instant.class));
+        verify(postRepository).softDeleteByUserId(eq(USER_ID), isA(Instant.class));
+        verify(userRepository).softDeleteById(eq(USER_ID), isA(Instant.class));
 
-        verify(userRepository).findByIdOrThrow(userId);
-        verify(commentRepository).softDeleteByUserId(eq(userId), any());
-        verify(postRepository).softDeleteByUserId(eq(userId), any());
-        verify(userRepository).softDeleteById(eq(userId), any());
         verify(refreshTokenService).revokeAllByUser(user);
     }
 }

@@ -7,25 +7,27 @@ import com.example.ktb3community.exception.BusinessException;
 import com.example.ktb3community.user.domain.User;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 class UserTest {
 
     private User newUser() {
-        return User.createNew(
-                "user@test.com",
-                "hash",
-                "nickname",
-                "http://image",
-                Role.ROLE_USER
-        );
+        return User.builder()
+                .email("user@test.com")
+                .passwordHash("hash")
+                .nickname("nickname")
+                .profileImageUrl("http://image")
+                .role(Role.ROLE_USER)
+                .build();
     }
 
     @Test
-    @DisplayName("createNew는 email/nickname/profileUrl을 trim하고 email은 소문자로 변환한다")
+    @DisplayName("createNew: 입력값을 trim하고 email은 소문자로 변환하여 생성한다")
     void createNew_success() {
         String email = "  TEST@Email.Com  ";
         String passwordHash = "hash";
@@ -44,7 +46,7 @@ class UserTest {
     }
 
     @Test
-    @DisplayName("닉네임을 정상적으로 수정하면 trim 후 값이 변경된다")
+    @DisplayName("updateNickname: 정상적인 닉네임으로 변경 시 trim되어 반영된다")
     void updateNickname_success() {
         User user = newUser();
 
@@ -54,7 +56,7 @@ class UserTest {
     }
 
     @Test
-    @DisplayName("닉네임이 공백만 있으면 BusinessException이 발생한다")
+    @DisplayName("updateNickname: 공백만 있는 경우 예외가 발생한다")
     void updateNickname_blank_throws() {
         User user = newUser();
 
@@ -67,7 +69,7 @@ class UserTest {
     }
 
     @Test
-    @DisplayName("닉네임이 최대 길이를 초과하면 BusinessException이 발생한다")
+    @DisplayName("updateNickname: 길이 초과 시 예외가 발생한다")
     void updateNickname_tooLong_throws() {
         User user = newUser();
         String tooLong = "a".repeat(ValidationConstant.NICKNAME_MAX_LENGTH + 1);
@@ -81,7 +83,7 @@ class UserTest {
     }
 
     @Test
-    @DisplayName("닉네임에 공백 문자가 포함되면 BusinessException이 발생한다")
+    @DisplayName("updateNickname: 공백 포함 시 예외가 발생한다")
     void updateNickname_containsWhitespace_throws() {
         User user = newUser();
 
@@ -94,7 +96,7 @@ class UserTest {
     }
 
     @Test
-    @DisplayName("프로필 이미지 URL을 정상적으로 수정하면 trim 후 값이 변경된다")
+    @DisplayName("updateProfileImageUrl: 정상 변경 시 trim되어 반영된다")
     void updateProfileImageUrl_success() {
         User user = newUser();
 
@@ -104,7 +106,7 @@ class UserTest {
     }
 
     @Test
-    @DisplayName("프로필 이미지 URL이 공백만 있으면 BusinessException이 발생한다")
+    @DisplayName("updateProfileImageUrl: 공백일 경우 예외가 발생한다")
     void updateProfileImageUrl_blank_throws() {
         User user = newUser();
 
@@ -117,7 +119,7 @@ class UserTest {
     }
 
     @Test
-    @DisplayName("암호화된 비밀번호 정상적으로 수정하면 값이 변경된다")
+    @DisplayName("updatePasswordHash: 정상 변경 확인")
     void updatePasswordHash_success() {
         User user = newUser();
 
@@ -127,7 +129,7 @@ class UserTest {
     }
 
     @Test
-    @DisplayName("암호화된 비밀번호가 공백만 있으면 BusinessException이 발생한다")
+    @DisplayName("updatePasswordHash: 암호화된 비밀번호가 공백일 경우 예외가 발생한다")
     void updatePasswordHash_blank_throws() {
         User user = newUser();
 
@@ -140,7 +142,7 @@ class UserTest {
     }
 
     @Test
-    @DisplayName("delete는 deletedAt이 null일 때만 세팅하고, 이미 값이 있으면 변경하지 않는다")
+    @DisplayName("delete: 탈퇴 시 deletedAt이 설정되며, 중복 호출되어도 시간은 변경되지 않는다")
     void delete_setsDeletedAtOnlyOnce() {
         User user = newUser();
         Instant first = Instant.parse("2025-01-01T00:00:00Z");
@@ -154,5 +156,64 @@ class UserTest {
 
         assertEquals(first, afterFirst);
         assertEquals(first, afterSecond);
+    }
+
+    @Test
+    @DisplayName("equals & hashCode: ID가 같은 두 객체는 동등하다")
+    void equals_sameId_isEqual() {
+        User user1 = newUser();
+        ReflectionTestUtils.setField(user1, "id", 1L);
+
+        User user2 = newUser();
+        ReflectionTestUtils.setField(user2, "id", 1L);
+
+        assertThat(user1).isEqualTo(user2);
+        assertThat(user1.hashCode()).isEqualTo(user2.hashCode());
+    }
+
+    @Test
+    @DisplayName("equals: ID가 다르면 다른 객체다")
+    void equals_differentId_isNotEqual() {
+        User user1 = newUser();
+        ReflectionTestUtils.setField(user1, "id", 1L);
+
+        User user2 = newUser();
+        ReflectionTestUtils.setField(user2, "id", 2L);
+
+        assertThat(user1).isNotEqualTo(user2);
+    }
+
+    @Test
+    @DisplayName("equals: ID가 null인 비영속 객체는 필드 값이 같아도 동등하지 않다(각각 다른 인스턴스)")
+    void equals_nullId_isNotEqual() {
+        User user1 = newUser();
+        User user2 = newUser();
+
+        assertThat(user1).isNotEqualTo(user2);
+    }
+
+    @Test
+    @DisplayName("equals: 자기 자신과는 항상 동등하다")
+    void equals_self_isEqual() {
+        User user = newUser();
+        ReflectionTestUtils.setField(user, "id", 1L);
+
+        assertThat(user).isEqualTo(user);
+    }
+
+    @Test
+    @DisplayName("equals: 프록시 객체와 비교해도 ID가 같으면 동등하다")
+    void equals_proxy_isEqual() {
+        User original = newUser();
+        ReflectionTestUtils.setField(original, "id", 1L);
+
+        User proxy = new User() {
+            @Override
+            public Long getId() {
+                return 1L;
+            }
+        };
+
+        assertThat(original).isEqualTo(proxy);
     }
 }
