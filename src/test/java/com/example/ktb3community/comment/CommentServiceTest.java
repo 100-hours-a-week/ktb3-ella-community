@@ -234,7 +234,6 @@ class CommentServiceTest {
 
         given(commentRepository.findByIdOrThrow(commentId)).willReturn(comment);
         given(userRepository.findByIdOrThrow(otherId)).willReturn(otherUser);
-        given(postRepository.findByIdOrThrow(postId)).willReturn(post);
 
 
         Throwable thrown = catchThrowable(() -> commentService.deleteComment(commentId, otherId));
