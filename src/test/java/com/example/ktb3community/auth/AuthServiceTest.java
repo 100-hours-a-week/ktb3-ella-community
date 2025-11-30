@@ -45,8 +45,7 @@ class AuthServiceTest {
     @InjectMocks
     AuthService authService;
 
-    // 헬퍼: 더미 유저 생성
-    private User newUSer(String email, String passwordHash) {
+    private User newUser(String email, String passwordHash) {
         User user = User.createNew(email, passwordHash, "nickname", "img", Role.ROLE_USER);
         ReflectionTestUtils.setField(user, "id", USER_ID);
         return user;
@@ -118,7 +117,7 @@ class AuthServiceTest {
     @DisplayName("login: 이메일과 비밀번호가 일치하면 토큰을 발급한다")
     void login_success() {
         LoginRequest request = new LoginRequest("test@email.com", "password");
-        User user = newUSer("test@email.com", "encodedPassword");
+        User user = newUser("test@email.com", "encodedPassword");
 
         given(userRepository.findByEmail("test@email.com")).willReturn(Optional.of(user));
         given(passwordEncoder.matches("password", "encodedPassword")).willReturn(true);
@@ -146,7 +145,7 @@ class AuthServiceTest {
     @DisplayName("login: 비밀번호가 일치하지 않으면 UserNotFoundException 발생")
     void login_wrongPassword_throws() {
         LoginRequest request = new LoginRequest("test@email.com", "wrongPw");
-        User user = newUSer("test@email.com", "encodedPassword");
+        User user = newUser("test@email.com", "encodedPassword");
 
         given(userRepository.findByEmail("test@email.com")).willReturn(Optional.of(user));
         given(passwordEncoder.matches("wrongPw", "encodedPassword")).willReturn(false);
@@ -161,7 +160,7 @@ class AuthServiceTest {
         String oldRefreshToken = "old.refresh.token";
         String newRefreshToken = "new.refresh.token";
         String newAccessToken = "new.access.token";
-        User user = newUSer("email", "pw");
+        User user = newUser("email", "pw");
 
         RefreshToken validToken = RefreshToken.createNew(100L, user, null);
         given(refreshTokenService.getValidTokenOrThrow(oldRefreshToken)).willReturn(validToken);
