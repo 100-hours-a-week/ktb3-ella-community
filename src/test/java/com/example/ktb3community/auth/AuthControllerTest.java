@@ -55,7 +55,7 @@ class AuthControllerTest {
 
     @Test
     @DisplayName("[201] 회원가입 성공")
-    void signup_201() throws Exception {
+    void signup_201_success() throws Exception {
         SignUpRequest request = new SignUpRequest("test@email.com", "Password1234!", "nickname", "img");
         Token token = new Token(ACCESS_TOKEN, REFRESH_TOKEN);
 
@@ -78,7 +78,7 @@ class AuthControllerTest {
 
     @Test
     @DisplayName("[200] 로그인 성공")
-    void login_200() throws Exception {
+    void login_200_success() throws Exception {
         LoginRequest request = new LoginRequest("test@email.com", "Password1234!");
         Token token = new Token(ACCESS_TOKEN, REFRESH_TOKEN);
 
@@ -100,7 +100,7 @@ class AuthControllerTest {
 
     @Test
     @DisplayName("[200] 토큰 갱신 성공 (쿠키 필수)")
-    void refresh_200() throws Exception {
+    void refresh_200_withCookie() throws Exception {
         Token newToken = new Token("new.access", "new.refresh");
         AuthResponse authResponse = new AuthResponse("new.access");
         ResponseEntity<ApiResult<AuthResponse>> responseEntity = ResponseEntity
@@ -119,7 +119,7 @@ class AuthControllerTest {
 
     @Test
     @DisplayName("[401] 리프레시 토큰 쿠키가 없으면 예외 발생")
-    void refresh_no_cookie_throws() throws Exception {
+    void refresh_401_missingCookie() throws Exception {
         mockMvc.perform(post("/auth/refresh")
                         .with(csrf()))
                 .andExpect(status().isUnauthorized())
@@ -128,7 +128,7 @@ class AuthControllerTest {
 
     @Test
     @DisplayName("[204] 로그아웃 성공")
-    void logout_204() throws Exception {
+    void logout_204_success() throws Exception {
         mockMvc.perform(post("/auth/logout")
                         .cookie(new Cookie("refresh_token", REFRESH_TOKEN))
                         .with(csrf()))
@@ -141,7 +141,7 @@ class AuthControllerTest {
 
     @Test
     @DisplayName("[401] 로그아웃 시 리프레시 토큰이 없으면 예외 발생")
-    void logout_no_cookie_throws() throws Exception {
+    void logout_401_missingCookie() throws Exception {
         mockMvc.perform(post("/auth/logout")
                         .with(csrf()))
                 .andExpect(status().isUnauthorized())

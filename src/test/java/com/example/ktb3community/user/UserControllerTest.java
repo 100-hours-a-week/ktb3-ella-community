@@ -65,7 +65,7 @@ class UserControllerTest {
 
     @Test
     @DisplayName("[200] 중복 확인 성공")
-    void getAvailability_200() throws Exception {
+    void getAvailability_200_success() throws Exception {
         AvailabilityResponse response = new AvailabilityResponse(true, true);
         given(userService.getAvailability("email", null)).willReturn(response);
 
@@ -89,7 +89,7 @@ class UserControllerTest {
 
     @Test
     @DisplayName("[500] 서버 내부 에러 발생")
-    void getAvailability_500() throws Exception {
+    void getAvailability_500_internalError() throws Exception {
         given(userService.getAvailability(any(), any()))
                 .willThrow(new RuntimeException("Unexpected error"));
 
@@ -102,7 +102,7 @@ class UserControllerTest {
 
     @Test
     @DisplayName("[200] 내 정보 조회 성공")
-    void getMe_200() throws Exception {
+    void getMe_200_success() throws Exception {
         MeResponse response = new MeResponse("email", "nick", "img");
         given(userService.getMe(USER_ID)).willReturn(response);
 
@@ -113,7 +113,7 @@ class UserControllerTest {
 
     @Test
     @DisplayName("[401] 인증 정보가 없으면 Unauthorized")
-    void getMe_401() throws Exception {
+    void getMe_401_unauthenticated() throws Exception {
         SecurityContextHolder.clearContext();
 
         mockMvc.perform(get("/users/me").with(csrf()))
@@ -122,7 +122,7 @@ class UserControllerTest {
 
     @Test
     @DisplayName("[404] 존재하지 않는 유저 조회 시 404 Not Found")
-    void getMe_404() throws Exception {
+    void getMe_404_notFound() throws Exception {
         given(userService.getMe(USER_ID))
                 .willThrow(new BusinessException(ErrorCode.USER_NOT_FOUND));
 
@@ -133,7 +133,7 @@ class UserControllerTest {
 
     @Test
     @DisplayName("[204] 내 비밀번호 수정 성공")
-    void updatePassword_204() throws Exception {
+    void updatePassword_204_success() throws Exception {
         UpdatePasswordRequest request = new UpdatePasswordRequest("NewPassword1234!");
 
         mockMvc.perform(post("/users/me/password")
@@ -159,7 +159,7 @@ class UserControllerTest {
 
     @Test
     @DisplayName("[200] 내 정보 수정 성공")
-    void updateMe_200() throws Exception {
+    void updateMe_200_success() throws Exception {
         UpdateMeRequest request = new UpdateMeRequest("newNick", "newImg");
         MeResponse response = new MeResponse("email", "newNick", "newImg");
 
@@ -202,14 +202,14 @@ class UserControllerTest {
     }
     @Test
     @DisplayName("[204] 회원 탈퇴 성공")
-    void withdrawMe_204() throws Exception {
+    void withdrawMe_204_success() throws Exception {
         mockMvc.perform(delete("/users/me").with(csrf()))
                 .andExpect(status().isNoContent());
     }
 
     @Test
     @DisplayName("[403] 서비스에서 접근 거부 예외 발생 시 403 Forbidden")
-    void withdrawMe_403() throws Exception {
+    void withdrawMe_403_forbidden() throws Exception {
         doThrow(new AccessDeniedException("No permission"))
                 .when(userService).withdrawMe(eq(USER_ID), any());
 

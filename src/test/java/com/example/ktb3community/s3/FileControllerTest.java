@@ -54,7 +54,7 @@ class FileControllerTest {
 
     @Test
     @DisplayName("[200] Presigned URL 발급 성공")
-    void presignUpload_200_default() throws Exception {
+    void presignUpload_200_defaultContentType() throws Exception {
         String fileName = "test.png";
         String defaultContentType = "image/png";
 
@@ -83,7 +83,7 @@ class FileControllerTest {
 
     @Test
     @DisplayName("[200] Presigned URL 발급 성공")
-    void presignUpload_200_explicitContentType() throws Exception {
+    void presignUpload_200_customContentType() throws Exception {
         String fileName = "test.jpg";
         String contentType = "image/jpeg";
 
@@ -114,8 +114,8 @@ class FileControllerTest {
     }
 
     @Test
-    @DisplayName("[422] 지원하지 않는 파일 형식이면 예외 발생")
-    void presignUpload_422_invalidType() throws Exception {
+    @DisplayName("[400] 지원하지 않는 파일 형식이면 예외 발생")
+    void presignUpload_400_invalidType() throws Exception {
         String fileName = "test.txt";
         String invalidType = "text/plain";
 

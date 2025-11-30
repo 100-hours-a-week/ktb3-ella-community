@@ -89,7 +89,7 @@ class JwtAuthenticationFilterTest {
 
     @Test
     @DisplayName("토큰이 유효하지 않은 경우 INVALID_ACCESS_TOKEN 예외를 던진다")
-    void doFilterInternal_invalidToken_throwsException() {
+    void doFilterInternal_invalidToken_throws() {
         String token = "invalid.token";
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Authorization", "Bearer " + token);

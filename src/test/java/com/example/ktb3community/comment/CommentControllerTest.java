@@ -58,7 +58,7 @@ class CommentControllerTest {
 
     @Test
     @DisplayName("[201] 댓글 생성 성공")
-    void createComment_201() throws Exception {
+    void createComment_201_success() throws Exception {
         CreateCommentRequest request = new CreateCommentRequest("Nice Post!");
         CommentResponse response = new CommentResponse(COMMENT_ID, "Nice Post!", null, null);
 
@@ -76,7 +76,7 @@ class CommentControllerTest {
 
     @Test
     @DisplayName("[422] 내용이 없는 댓글 생성 시 유효성 검사 실패")
-    void createComment_422_invalid() throws Exception {
+    void createComment_422_invalidContent() throws Exception {
         CreateCommentRequest invalidRequest = new CreateCommentRequest("");
 
         mockMvc.perform(post("/posts/{postId}/comments", POST_ID)
@@ -89,7 +89,7 @@ class CommentControllerTest {
 
     @Test
     @DisplayName("[200] 댓글 목록 조회 성공")
-    void getComments_200() throws Exception {
+    void getComments_200_success() throws Exception {
         PageResponse<CommentResponse> response = new PageResponse<>(Collections.emptyList(), 1, 10, 0);
 
         given(commentService.getCommentList(POST_ID, 1)).willReturn(response);
@@ -112,7 +112,7 @@ class CommentControllerTest {
 
     @Test
     @DisplayName("[200] 댓글 수정 성공")
-    void updateComment_200() throws Exception {
+    void updateComment_200_success() throws Exception {
         CreateCommentRequest request = new CreateCommentRequest("Updated Content");
         CommentResponse response = new CommentResponse(COMMENT_ID, "Updated Content", null, null);
 
@@ -129,7 +129,7 @@ class CommentControllerTest {
 
     @Test
     @DisplayName("[204] 댓글 삭제 성공")
-    void deleteComment_204() throws Exception {
+    void deleteComment_204_success() throws Exception {
         mockMvc.perform(delete("/comments/{commentId}", COMMENT_ID)
                         .with(csrf()))
                 .andExpect(status().isNoContent());

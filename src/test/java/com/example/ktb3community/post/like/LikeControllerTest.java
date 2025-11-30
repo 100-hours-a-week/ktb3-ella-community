@@ -49,7 +49,7 @@ class LikeControllerTest {
 
     @Test
     @DisplayName("[200] 게시글 좋아요 성공")
-    void likePost_200() throws Exception {
+    void likePost_200_success() throws Exception {
         LikeResponse response = new LikeResponse(10L, 5L, 3L);
 
         given(likeService.likePost(POST_ID, USER_ID)).willReturn(response);
@@ -78,7 +78,7 @@ class LikeControllerTest {
 
     @Test
     @DisplayName("[200] 게시글 좋아요 취소 성공")
-    void unlikePost_200() throws Exception {
+    void unlikePost_200_success() throws Exception {
         LikeResponse response = new LikeResponse(9L, 5L, 3L);
 
         given(likeService.unlikePost(POST_ID, USER_ID)).willReturn(response);

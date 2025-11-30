@@ -66,7 +66,7 @@ class PostControllerTest {
 
     @Test
     @DisplayName("[201] 게시글 생성 성공")
-    void createPost_201() throws Exception {
+    void createPost_201_success() throws Exception {
         CreatePostRequest request = new CreatePostRequest("Title", "Content", "http://img.url");
         CreatePostResponse response = new CreatePostResponse(POST_ID);
 
@@ -83,7 +83,7 @@ class PostControllerTest {
 
     @Test
     @DisplayName("[422] 제목이 없으면 유효성 검사 실패")
-    void createPost_422_invalid() throws Exception {
+    void createPost_422_invalidInput() throws Exception {
         CreatePostRequest invalidRequest = new CreatePostRequest("", "Content", "img");
 
         mockMvc.perform(post("/posts")
@@ -96,7 +96,7 @@ class PostControllerTest {
 
     @Test
     @DisplayName("[200] 게시글 목록 조회 성공")
-    void list_200() throws Exception {
+    void list_200_success() throws Exception {
         PageResponse<PostListResponse> response = new PageResponse<>(Collections.emptyList(), 1, 10, 0);
 
         given(postViewService.getPostList(anyInt(), anyInt(), any(PostSort.class)))
@@ -133,7 +133,7 @@ class PostControllerTest {
 
     @Test
     @DisplayName("[200] 게시글 상세 조회 성공")
-    void getPostDetail_200() throws Exception {
+    void getPostDetail_200_success() throws Exception {
         PostDetailResponse response = new PostDetailResponse(POST_ID, "Title", "Content", null, null, 0, 0, 0, false, null, null);
 
         given(postViewService.getPostDetail(POST_ID, USER_ID)).willReturn(response);
@@ -147,7 +147,7 @@ class PostControllerTest {
 
     @Test
     @DisplayName("[200] 게시글 수정 성공")
-    void updatePost_200() throws Exception {
+    void updatePost_200_success() throws Exception {
         CreatePostRequest request = new CreatePostRequest("New Title", "New Content", "img");
         CreatePostResponse response = new CreatePostResponse(POST_ID);
 
@@ -163,7 +163,7 @@ class PostControllerTest {
 
     @Test
     @DisplayName("[204] 게시글 삭제 성공")
-    void deletePost_204() throws Exception {
+    void deletePost_204_success() throws Exception {
         mockMvc.perform(delete("/posts/{postId}", POST_ID)
                         .with(csrf()))
                 .andExpect(status().isNoContent());
