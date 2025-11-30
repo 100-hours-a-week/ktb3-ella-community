@@ -3,6 +3,7 @@ package com.example.ktb3community.auth.domain;
 import com.example.ktb3community.user.domain.User;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.domain.Persistable;
 
 import java.time.Instant;
 
@@ -17,7 +18,7 @@ import java.time.Instant;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
-public class RefreshToken {
+public class RefreshToken implements Persistable<Long> {
     @Id
     private Long id;
 
@@ -35,13 +36,26 @@ public class RefreshToken {
     @Column(nullable = false)
     private Long version;
 
+    @Transient
+    private boolean isNew = true;
+
+    @Override
+    public boolean isNew() {
+        return isNew;
+    }
+
+    @PostLoad
+    @PostPersist
+    void markNotNew() {
+        this.isNew = false;
+    }
+
     public static RefreshToken createNew(Long id, User user, Instant expiresAt) {
         return RefreshToken.builder()
                 .id(id)
                 .user(user)
                 .expiresAt(expiresAt)
                 .revoked(false)
-                .version(0L)
                 .build();
     }
 
