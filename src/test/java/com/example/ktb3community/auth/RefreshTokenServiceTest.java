@@ -130,7 +130,7 @@ class RefreshTokenServiceTest {
         String oldJwt = "old.jwt";
         Long oldTokenId = 100L;
         Long newTokenId = 200L;
-        User user = user().build();
+        User user = user().id(USER_ID).build();
 
         RefreshToken oldToken = refreshToken(user).id(oldTokenId).expiresAt(Instant.now().plusSeconds(3600)).build();
 
@@ -139,7 +139,7 @@ class RefreshTokenServiceTest {
 
         given(refreshTokenIdGenerator.generate()).willReturn(newTokenId);
         given(jwtTokenProvider.getRefreshExpiresAt()).willReturn(Instant.now().plusSeconds(3600));
-        given(jwtTokenProvider.createRefreshToken(newTokenId, 1L)).willReturn("new.jwt");
+        given(jwtTokenProvider.createRefreshToken(newTokenId, USER_ID)).willReturn("new.jwt");
 
         String newJwt = refreshTokenService.rotate(oldJwt);
 

@@ -9,11 +9,6 @@ import com.example.ktb3community.user.domain.User;
 
 import java.time.Instant;
 
-import static com.example.ktb3community.TestFixtures.COMMENT_ID;
-import static com.example.ktb3community.TestFixtures.POST_ID;
-import static com.example.ktb3community.TestFixtures.TOKEN_ID;
-import static com.example.ktb3community.TestFixtures.USER_ID;
-
 public final class TestEntityFactory {
 
     private static final String DEFAULT_EMAIL = "user@test.com";
@@ -34,7 +29,7 @@ public final class TestEntityFactory {
 
     public static User.UserBuilder user() {
         return User.builder()
-                .id(USER_ID)
+                .id(null)
                 .email(DEFAULT_EMAIL)
                 .passwordHash(DEFAULT_PASSWORD_HASH)
                 .nickname(DEFAULT_NICKNAME)
@@ -48,7 +43,7 @@ public final class TestEntityFactory {
 
     public static Post.PostBuilder post(User user) {
         return Post.builder()
-                .id(POST_ID)
+                .id(null)
                 .user(user)
                 .title(DEFAULT_POST_TITLE)
                 .content(DEFAULT_POST_CONTENT)
@@ -61,7 +56,7 @@ public final class TestEntityFactory {
 
     public static Comment.CommentBuilder comment(Post post, User user) {
         return Comment.builder()
-                .id(COMMENT_ID)
+                .id(null)
                 .post(post)
                 .user(user)
                 .content(DEFAULT_COMMENT_CONTENT)
@@ -77,7 +72,7 @@ public final class TestEntityFactory {
 
     public static RefreshToken.RefreshTokenBuilder refreshToken(User user) {
         return RefreshToken.builder()
-                .id(TOKEN_ID)
+                .id(null)
                 .user(user)
                 .expiresAt(DEFAULT_REFRESH_EXPIRES_AT)
                 .revoked(false)

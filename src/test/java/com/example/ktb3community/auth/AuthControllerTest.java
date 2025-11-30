@@ -138,4 +138,13 @@ class AuthControllerTest {
 
         verify(authService).logout(REFRESH_TOKEN);
     }
+
+    @Test
+    @DisplayName("[401] 로그아웃 시 리프레시 토큰이 없으면 예외 발생")
+    void logout_no_cookie_throws() throws Exception {
+        mockMvc.perform(post("/auth/logout")
+                        .with(csrf()))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_REFRESH_TOKEN.getCode()));
+    }
 }

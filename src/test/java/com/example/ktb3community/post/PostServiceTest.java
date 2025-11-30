@@ -48,7 +48,7 @@ class PostServiceTest {
     @DisplayName("createPost: 게시글이 정상적으로 저장되고 ID를 반환한다")
     void createPost_success() {
         CreatePostRequest request = new CreatePostRequest("Title", "Content", "http://image.url");
-        User user = user().build();
+        User user = user().id(USER_ID).build();
 
         given(userRepository.findByIdOrThrow(USER_ID)).willReturn(user);
 
@@ -75,8 +75,13 @@ class PostServiceTest {
     @DisplayName("updatePost: 작성자 본인이면 게시글을 수정하고, 기존 이미지가 변경되면 파일 삭제 로직을 호출한다")
     void updatePost_success() {
         CreatePostRequest request = new CreatePostRequest("New Title", "New Content", "http://new-image.com");
-        User user = user().build();
-        Post post = post(user).title("Old Title").content("Old Content").postImageUrl("http://old-image.com").build();
+        User user = user().id(USER_ID).build();
+        Post post = post(user)
+                .id(POST_ID)
+                .title("Old Title")
+                .content("Old Content")
+                .postImageUrl("http://old-image.com")
+                .build();
 
         given(userRepository.findByIdOrThrow(USER_ID)).willReturn(user);
         given(postRepository.findByIdOrThrow(POST_ID)).willReturn(post);
@@ -96,8 +101,13 @@ class PostServiceTest {
     @DisplayName("updatePost: 작성자가 아니면 AUTH_FORBIDDEN 예외가 발생한다")
     void updatePost_notOwner_throws() {
         CreatePostRequest request = new CreatePostRequest("Title", "Content", "Img");
-        User owner = user().build(); // ID: 1L
-        Post post = post(owner).title("Old Title").content("Old Content").postImageUrl("http://old-image.com").build();
+        User owner = user().id(USER_ID).build(); // ID: 1L
+        Post post = post(owner)
+                .id(POST_ID)
+                .title("Old Title")
+                .content("Old Content")
+                .postImageUrl("http://old-image.com")
+                .build();
 
         Long otherUserId = 999L; // 다른 유저 ID
 
@@ -117,8 +127,8 @@ class PostServiceTest {
     @Test
     @DisplayName("deletePost: 작성자 본인이면 댓글과 게시글을 소프트 삭제한다")
     void deletePost_success() {
-        User user = user().build();
-        Post post = post(user).build();
+        User user = user().id(USER_ID).build();
+        Post post = post(user).id(POST_ID).build();
 
         given(userRepository.findByIdOrThrow(USER_ID)).willReturn(user);
         given(postRepository.findByIdOrThrow(POST_ID)).willReturn(post);
@@ -133,8 +143,8 @@ class PostServiceTest {
     @Test
     @DisplayName("deletePost: 작성자가 아니면 AUTH_FORBIDDEN 예외가 발생한다")
     void deletePost_notOwner_throws() {
-        User owner = user().build(); // ID: 1L
-        Post post = post(owner).build();
+        User owner = user().id(USER_ID).build(); // ID: 1L
+        Post post = post(owner).id(POST_ID).build();
         Long otherUserId = 999L;
 
         given(userRepository.findByIdOrThrow(otherUserId)).willReturn(user().id(otherUserId).build());
@@ -153,7 +163,7 @@ class PostServiceTest {
     @Test
     @DisplayName("increaseCommentCount: 게시글의 댓글 카운트를 1 증가시킨다")
     void increaseCommentCount_success() {
-        Post post = post(user().build()).build();
+        Post post = post(user().id(USER_ID).build()).id(POST_ID).build();
         given(postRepository.findByIdOrThrow(POST_ID)).willReturn(post);
 
         postService.increaseCommentCount(POST_ID);
@@ -164,7 +174,7 @@ class PostServiceTest {
     @Test
     @DisplayName("decreaseCommentCount: 게시글의 댓글 카운트를 1 감소시킨다")
     void decreaseCommentCount_success() {
-        Post post = post(user().build()).build();
+        Post post = post(user().id(USER_ID).build()).id(POST_ID).build();
         post.increaseCommentCount();
         given(postRepository.findByIdOrThrow(POST_ID)).willReturn(post);
 
