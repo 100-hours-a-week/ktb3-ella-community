@@ -5,6 +5,7 @@ import com.example.ktb3community.exception.CustomException;
 import com.example.ktb3community.exception.GlobalExceptionHandler;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +44,26 @@ class GlobalExceptionHandlerTest {
             throw new CustomException(ErrorCode.USER_NOT_FOUND);
         }
 
+        @PostMapping("/validation")
+        void throwValidation(@Valid @RequestBody TestDto dto) {
+            // @NotNull 위반 유도
+        }
+
+        @GetMapping("/type-mismatch")
+        void throwTypeMismatch(@RequestParam Long id) {
+            // String -> Long 변환 실패 유도
+        }
+
+        @GetMapping("/constraint-violation")
+        void throwConstraintViolation(@NotBlank @RequestParam String value) {
+            // 빈 문자열 전달 시 ConstraintViolationException 유도
+        }
+
+        @GetMapping("/missing-param")
+        void throwMissingParam(@RequestParam String name) {
+            // 필수 파라미터 누락 유도
+        }
+
         @GetMapping("/authentication")
         void throwAuthentication() {
             throw new AuthenticationException("Auth failed") {};
@@ -65,6 +86,7 @@ class GlobalExceptionHandlerTest {
 
         @PostMapping("/bind")
         void throwBind(@Valid @ModelAttribute BindDto dto) {
+            // ModelAttribute 바인딩 검증 실패 유도
         }
 
         @GetMapping("/runtime")
@@ -75,6 +97,11 @@ class GlobalExceptionHandlerTest {
         @GetMapping("/no-handler")
         void throwNoHandler() throws NoHandlerFoundException {
             throw new NoHandlerFoundException("GET", "/test/no-handler", null);
+        }
+
+        public static class TestDto {
+            @NotNull
+            public String content;
         }
 
         public static class BindDto {
