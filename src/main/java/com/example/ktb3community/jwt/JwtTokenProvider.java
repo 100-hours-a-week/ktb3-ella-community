@@ -74,9 +74,9 @@ public class JwtTokenProvider {
         return Instant.now().plus(refreshExpDays, ChronoUnit.DAYS);
     }
 
-    public String getRefreshTokenId(String refreshToken) {
+    public Long getRefreshTokenId(String refreshToken) {
         Claims claims = parseClaims(refreshToken, ErrorCode.INVALID_REFRESH_TOKEN);
-        return claims.getId();
+        return Long.valueOf(claims.getId());
     }
 
     public Long getUserIdFromAccessToken(String accessToken) {

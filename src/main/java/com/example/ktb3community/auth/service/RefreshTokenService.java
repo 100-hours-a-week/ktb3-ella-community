@@ -7,9 +7,9 @@ import com.example.ktb3community.common.error.ErrorCode;
 import com.example.ktb3community.exception.BusinessException;
 import com.example.ktb3community.jwt.JwtTokenProvider;
 import com.example.ktb3community.user.domain.User;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 
@@ -37,7 +37,7 @@ public class RefreshTokenService {
 
     // JWT 서명/형식 검증
     public RefreshToken getValidTokenOrThrow(String refreshToken) {
-        String refreshTokenId = jwtTokenProvider.getRefreshTokenId(refreshToken);
+        Long refreshTokenId = jwtTokenProvider.getRefreshTokenId(refreshToken);
 
         RefreshToken token = refreshTokenRepository.findById(refreshTokenId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_EXIST_REFRESH_TOKEN));
@@ -61,7 +61,7 @@ public class RefreshTokenService {
 
     @Transactional
     public void revoke(String refreshToken) {
-        String refreshTokenId = jwtTokenProvider.getRefreshTokenId(refreshToken);
+        Long refreshTokenId = jwtTokenProvider.getRefreshTokenId(refreshToken);
 
         RefreshToken token = refreshTokenRepository.findById(refreshTokenId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_EXIST_REFRESH_TOKEN));

@@ -31,12 +31,17 @@ public class RefreshToken {
     @Column(nullable = false)
     private boolean revoked;
 
+    @Version
+    @Column(nullable = false)
+    private Long version;
+
     public static RefreshToken createNew(Long id, User user, Instant expiresAt) {
         return RefreshToken.builder()
                 .id(id)
                 .user(user)
                 .expiresAt(expiresAt)
                 .revoked(false)
+                .version(0L)
                 .build();
     }
 
