@@ -5,7 +5,6 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.Instant;
-import java.util.UUID;
 
 @Entity
 @Table(
@@ -20,7 +19,7 @@ import java.util.UUID;
 @Builder
 public class RefreshToken {
     @Id
-    private String id;
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -32,8 +31,7 @@ public class RefreshToken {
     @Column(nullable = false)
     private boolean revoked;
 
-    public static RefreshToken createNew(User user, Instant expiresAt) {
-        String id = UUID.randomUUID().toString();
+    public static RefreshToken createNew(Long id, User user, Instant expiresAt) {
         return RefreshToken.builder()
                 .id(id)
                 .user(user)

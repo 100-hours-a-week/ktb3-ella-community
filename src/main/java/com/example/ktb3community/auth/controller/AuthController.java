@@ -3,9 +3,11 @@ package com.example.ktb3community.auth.controller;
 import com.example.ktb3community.auth.dto.AuthResponse;
 import com.example.ktb3community.auth.dto.LoginRequest;
 import com.example.ktb3community.auth.dto.SignUpRequest;
+import com.example.ktb3community.auth.dto.Token;
 import com.example.ktb3community.auth.service.AuthService;
 import com.example.ktb3community.common.doc.ApiCommonErrorResponses;
 import com.example.ktb3community.common.error.ErrorCode;
+import com.example.ktb3community.common.util.CookieUtil;
 import com.example.ktb3community.exception.BusinessException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -24,6 +26,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class AuthController {
     private final AuthService authService;
+    private final TokenResponder tokenResponder;
 
     @Operation(summary = "회원가입", description = "새로운 사용자를 등록합니다.")
     @ApiResponses({
@@ -37,10 +40,8 @@ public class AuthController {
     public ResponseEntity<ApiResult<AuthResponse>> signup(
             @Valid @RequestBody SignUpRequest signUpRequest,
             HttpServletResponse response) {
-        AuthResponse authResponse = authService.signup(signUpRequest, response);
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(ApiResult.ok(authResponse));
+        Token token = authService.signup(signUpRequest);
+        return tokenResponder.success(token, response, HttpStatus.CREATED);
     }
 
     @Operation(summary = "로그인", description = "사용자 로그인을 처리합니다.")
@@ -52,8 +53,8 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<ApiResult<AuthResponse>> login(
             @Valid @RequestBody LoginRequest loginRequest, HttpServletResponse response) {
-        AuthResponse authResponse = authService.login(loginRequest, response);
-        return ResponseEntity.ok(ApiResult.ok(authResponse));
+        Token token = authService.login(loginRequest);
+        return tokenResponder.success(token, response, HttpStatus.OK);
     }
 
     @Operation(summary = "토큰 갱신", description = "액세스 토큰, 리프레시 토큰을 갱신합니다.")
@@ -68,8 +69,8 @@ public class AuthController {
         if (refreshJwt == null || refreshJwt.isBlank()) {
             throw new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN);
         }
-        AuthResponse authResponse = authService.refresh(refreshJwt, response);
-        return ResponseEntity.ok(ApiResult.ok(authResponse));
+        Token token = authService.refresh(refreshJwt);
+        return tokenResponder.success(token, response, HttpStatus.OK);
     }
 
     @Operation(summary = "로그아웃", description = "사용자 로그아웃을 처리합니다.")
@@ -84,7 +85,8 @@ public class AuthController {
         if (refreshJwt == null || refreshJwt.isBlank()) {
             throw new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN);
         }
-        authService.logout(refreshJwt, response);
+        authService.logout(refreshJwt);
+        CookieUtil.removeRefreshTokenCookie(response);
         return ResponseEntity.noContent().build();
     }
 }

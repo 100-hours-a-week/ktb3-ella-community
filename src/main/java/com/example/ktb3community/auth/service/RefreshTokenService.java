@@ -1,6 +1,7 @@
 package com.example.ktb3community.auth.service;
 
 import com.example.ktb3community.auth.domain.RefreshToken;
+import com.example.ktb3community.auth.infra.RefreshTokenIdGenerator;
 import com.example.ktb3community.auth.repository.RefreshTokenRepository;
 import com.example.ktb3community.common.error.ErrorCode;
 import com.example.ktb3community.exception.BusinessException;
@@ -18,11 +19,14 @@ public class RefreshTokenService {
 
     private final RefreshTokenRepository refreshTokenRepository;
     private final JwtTokenProvider jwtTokenProvider;
+    private final RefreshTokenIdGenerator refreshTokenIdGenerator;
 
     @Transactional
     public String createRefreshToken(User user) {
         Instant expiresAt = jwtTokenProvider.getRefreshExpiresAt();
-        RefreshToken refreshToken = RefreshToken.createNew(user, expiresAt);
+        long id = refreshTokenIdGenerator.generate();
+
+        RefreshToken refreshToken = RefreshToken.createNew(id, user, expiresAt);
         refreshTokenRepository.save(refreshToken);
 
         return jwtTokenProvider.createRefreshToken(
