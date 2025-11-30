@@ -1,5 +1,6 @@
 package com.example.ktb3community.post.controller;
 
+import com.example.ktb3community.auth.security.CustomUserDetails;
 import com.example.ktb3community.common.doc.ApiCommonErrorResponses;
 import com.example.ktb3community.common.error.ErrorCode;
 import com.example.ktb3community.common.pagination.PageResponse;
@@ -20,6 +21,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -37,10 +39,11 @@ public class PostController {
 
     })
     @ApiCommonErrorResponses
-    @PostMapping("/{userId}")
+    @PostMapping
     public ResponseEntity<ApiResult<CreatePostResponse>> createPost(
-            @Parameter(description = "사용자 id", example = "1") @PathVariable Long userId,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody CreatePostRequest createPostRequest) {
+        Long userId = userDetails.getId();
         CreatePostResponse createPostResponse = postService.createPost(userId, createPostRequest);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -74,10 +77,11 @@ public class PostController {
             @ApiResponse(responseCode = "404", description = "존재하지 않는 게시글입니다."),
     })
     @ApiCommonErrorResponses
-    @GetMapping("/{postId}/{userId}")
+    @GetMapping("/{postId}")
     public ResponseEntity<ApiResult<PostDetailResponse>> getPostDetail(
-            @Parameter(description = "게시글 id", example = "1") @PathVariable Long postId,
-            @Parameter(description = "사용자 id", example = "1") @PathVariable Long userId) {
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Parameter(description = "게시글 id", example = "1") @PathVariable Long postId) {
+        Long userId = userDetails.getId();
         PostDetailResponse postDetailResponse = postViewService.getPostDetail(postId, userId);
         return ResponseEntity.ok(ApiResult.ok(postDetailResponse));
     }
@@ -89,12 +93,13 @@ public class PostController {
             @ApiResponse(responseCode = "404", description = "존재하지 않는 사용자입니다.")
     })
     @ApiCommonErrorResponses
-    @PutMapping("/{postId}/{userId}")
+    @PutMapping("/{postId}")
     public ResponseEntity<ApiResult<CreatePostResponse>> updatePost(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @Parameter(description = "게시글 id", example = "1") @PathVariable Long postId,
-            @Parameter(description = "사용자 id", example = "1") @PathVariable Long userId,
             @Valid @RequestBody CreatePostRequest createPostRequest
     ) {
+        Long userId = userDetails.getId();
         CreatePostResponse createPostResponse = postService.updatePost(postId, userId, createPostRequest);
         return ResponseEntity.ok(ApiResult.ok(createPostResponse));
     }
@@ -106,11 +111,12 @@ public class PostController {
             @ApiResponse(responseCode = "404", description = "존재하지 않는 사용자입니다.")
     })
     @ApiCommonErrorResponses
-    @DeleteMapping("/{postId}/{userId}")
+    @DeleteMapping("/{postId}")
     public ResponseEntity<Void> deletePost(
-            @Parameter(description = "게시글 id", example = "1") @PathVariable Long postId,
-            @Parameter(description = "사용자 id", example = "1") @PathVariable Long userId
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Parameter(description = "게시글 id", example = "1") @PathVariable Long postId
     ) {
+        Long userId = userDetails.getId();
         postService.deletePost(postId, userId);
         return ResponseEntity.noContent().build();
     }

@@ -1,6 +1,7 @@
 package com.example.ktb3community.user.repository;
 
 
+import com.example.ktb3community.common.Role;
 import com.example.ktb3community.user.domain.User;
 import com.example.ktb3community.user.exception.UserNotFoundException;
 import org.springframework.stereotype.Repository;
@@ -26,7 +27,7 @@ public class InMemoryUserRepositoryAdapter implements UserRepository {
         if (userToSave.getId() == null) {
             long id = seq.getAndIncrement();
             userToSave = User.rehydrate(id, user.getEmail(), user.getPasswordHash(), user.getNickname(),
-                    user.getProfileImageUrl(), user.getCreatedAt(), user.getUpdatedAt(), user.getDeletedAt());
+                    user.getProfileImageUrl(), user.getCreatedAt(), user.getUpdatedAt(), user.getDeletedAt(), Role.ROLE_USER);
             emailToUserId.put(userToSave.getEmail(), id);
             nicknameToUserId.put(userToSave.getNickname(), id);
         } else {

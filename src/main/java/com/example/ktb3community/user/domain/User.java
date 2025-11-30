@@ -1,16 +1,11 @@
 package com.example.ktb3community.user.domain;
 
-import com.example.ktb3community.comment.domain.Comment;
+import com.example.ktb3community.common.Role;
 import com.example.ktb3community.common.constants.ValidationConstant;
 import com.example.ktb3community.common.domain.BaseTimeEntity;
 import com.example.ktb3community.common.error.ErrorCode;
 import com.example.ktb3community.exception.BusinessException;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -41,24 +36,28 @@ public class User extends BaseTimeEntity {
     @Column(name = "deleted_at")
     private Instant deletedAt;
 
-    private User(Long id, String email, String passwordHash, String nickname, String profileImageUrl, Instant deletedAt) {
+    @Enumerated(EnumType.STRING)
+    private Role role;
+
+
+    private User(Long id, String email, String passwordHash, String nickname, String profileImageUrl, Instant deletedAt, Role role) {
         this.id = id;
         this.email = email.trim().toLowerCase();
         this.passwordHash = passwordHash;
         this.nickname = nickname.trim();
         this.profileImageUrl = profileImageUrl;
         this.deletedAt = deletedAt;
+        this.role = role;
     }
 
-    public static User createNew(String email, String password,
-                                 String nickname, String profileImageUrl) {
-        // TODO: Spring Security 추가 시 비밀번호 암호화 추가
-        return new User(null, email, password, nickname, profileImageUrl, null);
+    public static User createNew(String email, String passwordHash,
+                                 String nickname, String profileImageUrl, Role role) {
+        return new User(null, email, passwordHash, nickname, profileImageUrl, null, role);
     }
 
     public static User rehydrate(Long id, String email, String passwordHash,
-                                 String nickname, String profileImageUrl, Instant createdAt, Instant updatedAt, Instant deletedAt) {
-        User user = new User(id, email, passwordHash, nickname, profileImageUrl, deletedAt);
+                                 String nickname, String profileImageUrl, Instant createdAt, Instant updatedAt, Instant deletedAt, Role role) {
+        User user = new User(id, email, passwordHash, nickname, profileImageUrl, deletedAt, role);
         user.createdAt = createdAt;
         user.updatedAt = updatedAt;
         return user;

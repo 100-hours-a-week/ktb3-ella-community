@@ -10,7 +10,7 @@ public final class ValidationConstant {
     public static final int NICKNAME_MAX_LENGTH = 10;
 
 
-    public static final int TITLE_MAX_LENGTH = 26;
+    public static final int TITLE_MAX_LENGTH = 50;
 
     public static final String NICKNAME_PATTERN_NO_SPACE = "^\\S+$";
 
