@@ -46,13 +46,6 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponseDto.of(ErrorCode.INVALID_INPUT_VALUE.getCode(), ErrorCode.INVALID_INPUT_VALUE.getMessage()));
     }
 
-    @ExceptionHandler(BindException.class)
-    public ResponseEntity<ErrorResponseDto> handleBind(BindException ex) {
-        return ResponseEntity
-                .status(HttpStatus.UNPROCESSABLE_ENTITY)
-                .body(ErrorResponseDto.of(ErrorCode.INVALID_INPUT_VALUE.getCode(), ErrorCode.INVALID_INPUT_VALUE.getMessage()));
-    }
-
     // === 400 요청 자체가 잘못 됨 ===
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponseDto> handleHttpMessageNotReadable(HttpMessageNotReadableException ex) {

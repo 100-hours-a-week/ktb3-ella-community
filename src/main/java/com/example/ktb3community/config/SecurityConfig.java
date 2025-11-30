@@ -1,11 +1,10 @@
 package com.example.ktb3community.config;
 
+import com.example.ktb3community.auth.security.CustomAccessDeniedHandler;
+import com.example.ktb3community.auth.security.CustomAuthenticationEntryPoint;
 import com.example.ktb3community.auth.security.CustomUserDetailsService;
 import com.example.ktb3community.jwt.JwtAuthenticationFilter;
 import com.example.ktb3community.jwt.JwtTokenProvider;
-import com.example.ktb3community.common.error.ErrorCode;
-import com.example.ktb3community.exception.ErrorResponseDto;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,14 +12,12 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.web.cors.CorsConfigurationSource;
 
-import java.nio.charset.StandardCharsets;
 
 import static com.example.ktb3community.auth.security.SecurityPaths.*;
 
@@ -32,6 +29,8 @@ public class SecurityConfig {
     private final JwtTokenProvider jwtTokenProvider;
     private final CustomUserDetailsService customUserDetailsService;
     private final CorsConfigurationSource corsConfigurationSource;
+    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
+    private final CustomAccessDeniedHandler customAccessDeniedHandler;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -49,26 +48,8 @@ public class SecurityConfig {
                         .ignoringRequestMatchers(CSRF_IGNORED)
                 )
                 .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint((request, response, authException) -> {
-                            ErrorResponseDto body = ErrorResponseDto.of(
-                                    ErrorCode.AUTH_UNAUTHORIZED.getCode(),
-                                    ErrorCode.AUTH_UNAUTHORIZED.getMessage()
-                            );
-                            response.setStatus(HttpStatus.UNAUTHORIZED.value());
-                            response.setContentType("application/json");
-                            response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-                            response.getWriter().write(new ObjectMapper().writeValueAsString(body));
-                        })
-                        .accessDeniedHandler((request, response, accessDeniedException) -> {
-                            ErrorResponseDto body = ErrorResponseDto.of(
-                                    ErrorCode.AUTH_FORBIDDEN.getCode(),
-                                    ErrorCode.AUTH_FORBIDDEN.getMessage()
-                            );
-                            response.setStatus(HttpStatus.FORBIDDEN.value());
-                            response.setContentType("application/json");
-                            response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-                            response.getWriter().write(new ObjectMapper().writeValueAsString(body));
-                        })
+                        .authenticationEntryPoint(customAuthenticationEntryPoint)
+                        .accessDeniedHandler(customAccessDeniedHandler)
                 )
                 .formLogin(AbstractHttpConfigurer::disable)
                 // 헤더로 아이디/비번 보내는 방식 비활성화
