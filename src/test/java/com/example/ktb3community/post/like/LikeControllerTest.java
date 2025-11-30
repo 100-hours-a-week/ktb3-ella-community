@@ -20,6 +20,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static com.example.ktb3community.TestFixtures.POST_ID;
 import static com.example.ktb3community.TestFixtures.USER_ID;
+import static com.example.ktb3community.TestEntityFactory.user;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -38,11 +39,7 @@ class LikeControllerTest {
 
     @BeforeEach
     void setUp() {
-        User mockUser = User.builder()
-                .id(USER_ID)
-                .email("test@email.com")
-                .role(com.example.ktb3community.common.Role.ROLE_USER)
-                .build();
+        User mockUser = user().id(USER_ID).build();
 
         CustomUserDetails principal = CustomUserDetails.from(mockUser);
         SecurityContext context = SecurityContextHolder.createEmptyContext();

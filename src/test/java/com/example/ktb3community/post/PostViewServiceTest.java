@@ -22,12 +22,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import static com.example.ktb3community.TestEntityFactory.post;
+import static com.example.ktb3community.TestEntityFactory.user;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -45,37 +46,14 @@ class PostViewServiceTest {
     @InjectMocks
     PostViewService postViewService;
 
-    private User newUser(Long id, String nickname) {
-        User user = User.builder()
-                .email("user@test.com")
-                .nickname(nickname)
-                .profileImageUrl("img")
-                .build();
-        ReflectionTestUtils.setField(user, "id", id);
-        return user;
-    }
-
-    private Post newPost(Long id, User user, String title) {
-        Post post = Post.builder()
-                .user(user)
-                .title(title)
-                .content("Content")
-                .viewCount(0)
-                .likeCount(0)
-                .commentCount(0)
-                .build();
-        ReflectionTestUtils.setField(post, "id", id);
-        return post;
-    }
-
     @Test
     @DisplayName("getPostList: 게시글 목록과 작성자 정보를 정상적으로 매핑하여 반환한다")
     void getPostList_success() {
-        User user1 = newUser(1L, "user1");
-        User user2 = newUser(2L, "user2");
+        User user1 = user().id(1L).nickname("user1").profileImageUrl("img").build();
+        User user2 = user().id(2L).nickname("user2").profileImageUrl("img").build();
 
-        Post post1 = newPost(10L, user1, "Title1");
-        Post post2 = newPost(11L, user2, "Title2");
+        Post post1 = post(user1).id(10L).title("Title1").content("Content").build();
+        Post post2 = post(user2).id(11L).title("Title2").content("Content").build();
 
         List<Post> posts = List.of(post1, post2);
         Page<Post> postPage = new PageImpl<>(posts, PageRequest.of(0, 10), posts.size());
@@ -103,8 +81,8 @@ class PostViewServiceTest {
     @DisplayName("getPostList: 작성자 정보가 DB에 없으면 UserNotFoundException 발생")
     void getPostList_authorNotFound_throws() {
 
-        User user1 = newUser(1L, "user1");
-        Post post1 = newPost(10L, user1, "Title1");
+        User user1 = user().id(1L).nickname("user1").profileImageUrl("img").build();
+        Post post1 = post(user1).id(10L).title("Title1").content("Content").build();
 
         Page<Post> postPage = new PageImpl<>(List.of(post1));
         PostSort sort = mock(PostSort.class);
@@ -124,9 +102,9 @@ class PostViewServiceTest {
         Long viewerId = 99L;
         Long authorId = 1L;
 
-        User author = newUser(authorId, "author");
-        User viewer = newUser(viewerId, "viewer");
-        Post post = newPost(postId, author, "Detail Title");
+        User author = user().id(authorId).nickname("author").profileImageUrl("img").build();
+        User viewer = user().id(viewerId).nickname("viewer").profileImageUrl("img").build();
+        Post post = post(author).id(postId).title("Detail Title").content("Content").build();
 
         given(postRepository.findByIdOrThrow(postId)).willReturn(post);
         given(userRepository.findByIdOrThrow(authorId)).willReturn(author);

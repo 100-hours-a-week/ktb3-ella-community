@@ -15,13 +15,14 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
 import java.util.Optional;
 
 import static com.example.ktb3community.TestFixtures.TOKEN_ID;
 import static com.example.ktb3community.TestFixtures.USER_ID;
+import static com.example.ktb3community.TestEntityFactory.refreshToken;
+import static com.example.ktb3community.TestEntityFactory.user;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.catchThrowable;
 import static org.mockito.BDDMockito.given;
@@ -38,20 +39,10 @@ class RefreshTokenServiceTest {
     @InjectMocks
     RefreshTokenService refreshTokenService;
 
-    private User newUser() {
-        User user = User.builder().build();
-        ReflectionTestUtils.setField(user, "id", USER_ID);
-        return user;
-    }
-
-    private RefreshToken newRefreshToken(Long id, User user, Instant expiresAt) {
-        return RefreshToken.createNew(id, user, expiresAt);
-    }
-
     @Test
     @DisplayName("createRefreshToken: ID 생성, DB 저장 후 JWT 문자열을 반환한다")
     void createRefreshToken_success() {
-        User user = newUser();
+        User user = user().id(USER_ID).build();
         Instant expiresAt = Instant.now().plusSeconds(3600);
 
         given(jwtTokenProvider.getRefreshExpiresAt()).willReturn(expiresAt);
@@ -76,7 +67,7 @@ class RefreshTokenServiceTest {
     @DisplayName("getValidToken: 유효한 토큰이면 객체를 반환한다")
     void getValidToken_success() {
         Long tokenId = 100L;
-        RefreshToken token = newRefreshToken(tokenId, newUser(), Instant.now().plusSeconds(3600));
+        RefreshToken token = refreshToken(user().build()).id(tokenId).expiresAt(Instant.now().plusSeconds(3600)).build();
 
         given(jwtTokenProvider.getRefreshTokenId(JWT)).willReturn(tokenId);
         given(refreshTokenRepository.findById(tokenId)).willReturn(Optional.of(token));
@@ -103,7 +94,7 @@ class RefreshTokenServiceTest {
     @Test
     @DisplayName("getValidToken: 이미 만료된 토큰이면 REFRESH_TOKEN_EXPIRED 예외 발생")
     void getValidToken_expiredTime_throws() {
-        RefreshToken token = newRefreshToken(TOKEN_ID, newUser(), Instant.now().minusSeconds(10));
+        RefreshToken token = refreshToken(user().build()).expiresAt(Instant.now().minusSeconds(10)).build();
 
         given(jwtTokenProvider.getRefreshTokenId(JWT)).willReturn(TOKEN_ID);
         given(refreshTokenRepository.findById(TOKEN_ID)).willReturn(Optional.of(token));
@@ -119,7 +110,7 @@ class RefreshTokenServiceTest {
     @Test
     @DisplayName("getValidToken: 이미 폐기된 토큰이면 REFRESH_TOKEN_EXPIRED 예외 발생")
     void getValidToken_revoked_throws() {
-        RefreshToken token = newRefreshToken(TOKEN_ID, newUser(), Instant.now().plusSeconds(3600));
+        RefreshToken token = refreshToken(user().build()).expiresAt(Instant.now().plusSeconds(3600)).build();
         token.revoke();
 
         given(jwtTokenProvider.getRefreshTokenId(JWT)).willReturn(TOKEN_ID);
@@ -139,9 +130,9 @@ class RefreshTokenServiceTest {
         String oldJwt = "old.jwt";
         Long oldTokenId = 100L;
         Long newTokenId = 200L;
-        User user = newUser();
+        User user = user().build();
 
-        RefreshToken oldToken = newRefreshToken(oldTokenId, user, Instant.now().plusSeconds(3600));
+        RefreshToken oldToken = refreshToken(user).id(oldTokenId).expiresAt(Instant.now().plusSeconds(3600)).build();
 
         given(jwtTokenProvider.getRefreshTokenId(oldJwt)).willReturn(oldTokenId);
         given(refreshTokenRepository.findById(oldTokenId)).willReturn(Optional.of(oldToken));
@@ -168,7 +159,7 @@ class RefreshTokenServiceTest {
     @Test
     @DisplayName("revoke: 토큰을 명시적으로 폐기한다")
     void revoke_success() {
-        RefreshToken token = newRefreshToken(TOKEN_ID, newUser(), Instant.now().plusSeconds(3600));
+        RefreshToken token = refreshToken(user().build()).expiresAt(Instant.now().plusSeconds(3600)).build();
 
         given(jwtTokenProvider.getRefreshTokenId(JWT)).willReturn(TOKEN_ID);
         given(refreshTokenRepository.findById(TOKEN_ID)).willReturn(Optional.of(token));
@@ -195,7 +186,7 @@ class RefreshTokenServiceTest {
     @Test
     @DisplayName("revokeAllByUser: 유저의 모든 토큰을 폐기 요청한다")
     void revokeAllByUser_success() {
-        User user = newUser();
+        User user = user().build();
 
         refreshTokenService.revokeAllByUser(user);
 

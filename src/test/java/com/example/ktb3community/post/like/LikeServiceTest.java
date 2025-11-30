@@ -13,10 +13,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import static com.example.ktb3community.TestFixtures.POST_ID;
 import static com.example.ktb3community.TestFixtures.USER_ID;
+import static com.example.ktb3community.TestEntityFactory.post;
+import static com.example.ktb3community.TestEntityFactory.user;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
@@ -31,26 +32,11 @@ class LikeServiceTest {
     @InjectMocks
     LikeService likeService;
 
-
-    private User newUser() {
-        return User.builder().id(USER_ID).build();
-    }
-
-    private Post newPost() {
-        Post post = Post.builder()
-                .likeCount(10)
-                .viewCount(5)
-                .commentCount(3)
-                .build();
-        ReflectionTestUtils.setField(post, "id", POST_ID);
-        return post;
-    }
-
     @Test
     @DisplayName("likePost: 좋아요를 처음 누르면 카운트가 1 증가한다")
     void likePost_added_increasesCount() {
-        User user = newUser();
-        Post post = newPost();
+        User user = user().id(USER_ID).build();
+        Post post = post().id(POST_ID).likeCount(10).viewCount(5).commentCount(3).build();
         long initialCount = post.getLikeCount();
 
         given(userRepository.findByIdOrThrow(USER_ID)).willReturn(user);
@@ -68,8 +54,8 @@ class LikeServiceTest {
     @Test
     @DisplayName("likePost: 이미 좋아요를 눌렀던 경우 카운트는 증가하지 않는다")
     void likePost_alreadyLiked_doesNotIncreaseCount() {
-        User user = newUser();
-        Post post = newPost();
+        User user = user().id(USER_ID).build();
+        Post post = post().id(POST_ID).likeCount(10).viewCount(5).commentCount(3).build();
         long initialCount = post.getLikeCount();
 
         given(userRepository.findByIdOrThrow(USER_ID)).willReturn(user);
@@ -85,8 +71,8 @@ class LikeServiceTest {
     @Test
     @DisplayName("unlikePost: 좋아요 취소 성공 시 카운트가 1 감소한다")
     void unlikePost_removed_decreasesCount() {
-        User user = newUser();
-        Post post = newPost();
+        User user = user().id(USER_ID).build();
+        Post post = post().id(POST_ID).likeCount(10).viewCount(5).commentCount(3).build();
         long initialCount = post.getLikeCount();
 
         given(userRepository.findByIdOrThrow(USER_ID)).willReturn(user);
@@ -104,8 +90,8 @@ class LikeServiceTest {
     @Test
     @DisplayName("unlikePost: 좋아요를 누른 적이 없는 경우카운트는 감소하지 않는다")
     void unlikePost_notLiked_doesNotDecreaseCount() {
-        User user = newUser();
-        Post post = newPost();
+        User user = user().id(USER_ID).build();
+        Post post = post().id(POST_ID).likeCount(10).viewCount(5).commentCount(3).build();
         long initialCount = post.getLikeCount();
 
         given(userRepository.findByIdOrThrow(USER_ID)).willReturn(user);

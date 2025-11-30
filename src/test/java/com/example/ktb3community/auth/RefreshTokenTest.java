@@ -4,26 +4,20 @@ import com.example.ktb3community.auth.domain.RefreshToken;
 import com.example.ktb3community.user.domain.User;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
 
 import static com.example.ktb3community.TestFixtures.TOKEN_ID;
 import static com.example.ktb3community.TestFixtures.USER_ID;
+import static com.example.ktb3community.TestEntityFactory.user;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class RefreshTokenTest {
 
-    private User newUser() {
-        User user = User.builder().build();
-        ReflectionTestUtils.setField(user, "id", USER_ID);
-        return user;
-    }
-
     @Test
     @DisplayName("createNew: 토큰 생성 시 version은 0L로 초기화되고, revoked는 false다")
     void createNew_success() {
-        User user = newUser();
+        User user = user().id(USER_ID).build();
         Instant expiresAt = Instant.now().plusSeconds(3600);
 
         RefreshToken token = RefreshToken.createNew(TOKEN_ID, user, expiresAt);
@@ -40,7 +34,7 @@ class RefreshTokenTest {
     @Test
     @DisplayName("revoke: 토큰을 폐기하면 revoked 상태가 true가 된다")
     void revoke_success() {
-        RefreshToken token = RefreshToken.createNew(TOKEN_ID, newUser(), Instant.now());
+        RefreshToken token = RefreshToken.createNew(TOKEN_ID, user().build(), Instant.now());
         assertThat(token.isRevoked()).isFalse();
 
         token.revoke();
@@ -51,7 +45,7 @@ class RefreshTokenTest {
     @Test
     @DisplayName("revoke: 이미 폐기된 토큰을 다시 폐기해도 상태는 유지된다")
     void revoke_idempotent() {
-        RefreshToken token = RefreshToken.createNew(TOKEN_ID, newUser(), Instant.now());
+        RefreshToken token = RefreshToken.createNew(TOKEN_ID, user().build(), Instant.now());
         token.revoke();
 
         token.revoke();

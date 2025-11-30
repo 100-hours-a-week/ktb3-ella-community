@@ -24,6 +24,8 @@ import java.time.Instant;
 
 import static com.example.ktb3community.TestFixtures.POST_ID;
 import static com.example.ktb3community.TestFixtures.USER_ID;
+import static com.example.ktb3community.TestEntityFactory.post;
+import static com.example.ktb3community.TestEntityFactory.user;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
@@ -42,29 +44,11 @@ class PostServiceTest {
     @InjectMocks
     PostService postService;
 
-    private User newUser() {
-        return User.builder().id(USER_ID).build();
-    }
-
-    private Post newPost(User user) {
-        Post post = Post.builder()
-                .user(user)
-                .title("Old Title")
-                .content("Old Content")
-                .postImageUrl("http://old-image.com")
-                .likeCount(0)
-                .viewCount(0)
-                .commentCount(0)
-                .build();
-        ReflectionTestUtils.setField(post, "id", POST_ID);
-        return post;
-    }
-
     @Test
     @DisplayName("createPost: 게시글이 정상적으로 저장되고 ID를 반환한다")
     void createPost_success() {
         CreatePostRequest request = new CreatePostRequest("Title", "Content", "http://image.url");
-        User user = newUser();
+        User user = user().build();
 
         given(userRepository.findByIdOrThrow(USER_ID)).willReturn(user);
 
@@ -91,8 +75,8 @@ class PostServiceTest {
     @DisplayName("updatePost: 작성자 본인이면 게시글을 수정하고, 기존 이미지가 변경되면 파일 삭제 로직을 호출한다")
     void updatePost_success() {
         CreatePostRequest request = new CreatePostRequest("New Title", "New Content", "http://new-image.com");
-        User user = newUser();
-        Post post = newPost(user);
+        User user = user().build();
+        Post post = post(user).title("Old Title").content("Old Content").postImageUrl("http://old-image.com").build();
 
         given(userRepository.findByIdOrThrow(USER_ID)).willReturn(user);
         given(postRepository.findByIdOrThrow(POST_ID)).willReturn(post);
@@ -112,12 +96,12 @@ class PostServiceTest {
     @DisplayName("updatePost: 작성자가 아니면 AUTH_FORBIDDEN 예외가 발생한다")
     void updatePost_notOwner_throws() {
         CreatePostRequest request = new CreatePostRequest("Title", "Content", "Img");
-        User owner = newUser(); // ID: 1L
-        Post post = newPost(owner);
+        User owner = user().build(); // ID: 1L
+        Post post = post(owner).title("Old Title").content("Old Content").postImageUrl("http://old-image.com").build();
 
         Long otherUserId = 999L; // 다른 유저 ID
 
-        given(userRepository.findByIdOrThrow(otherUserId)).willReturn(User.builder().id(otherUserId).build());
+        given(userRepository.findByIdOrThrow(otherUserId)).willReturn(user().id(otherUserId).build());
         given(postRepository.findByIdOrThrow(POST_ID)).willReturn(post);
 
         Throwable thrown = catchThrowable(() -> postService.updatePost(POST_ID, otherUserId, request));
@@ -133,8 +117,8 @@ class PostServiceTest {
     @Test
     @DisplayName("deletePost: 작성자 본인이면 댓글과 게시글을 소프트 삭제한다")
     void deletePost_success() {
-        User user = newUser();
-        Post post = newPost(user);
+        User user = user().build();
+        Post post = post(user).build();
 
         given(userRepository.findByIdOrThrow(USER_ID)).willReturn(user);
         given(postRepository.findByIdOrThrow(POST_ID)).willReturn(post);
@@ -149,11 +133,11 @@ class PostServiceTest {
     @Test
     @DisplayName("deletePost: 작성자가 아니면 AUTH_FORBIDDEN 예외가 발생한다")
     void deletePost_notOwner_throws() {
-        User owner = newUser(); // ID: 1L
-        Post post = newPost(owner);
+        User owner = user().build(); // ID: 1L
+        Post post = post(owner).build();
         Long otherUserId = 999L;
 
-        given(userRepository.findByIdOrThrow(otherUserId)).willReturn(User.builder().id(otherUserId).build());
+        given(userRepository.findByIdOrThrow(otherUserId)).willReturn(user().id(otherUserId).build());
         given(postRepository.findByIdOrThrow(POST_ID)).willReturn(post);
 
         Throwable thrown = catchThrowable(() -> postService.deletePost(POST_ID, otherUserId));
@@ -169,7 +153,7 @@ class PostServiceTest {
     @Test
     @DisplayName("increaseCommentCount: 게시글의 댓글 카운트를 1 증가시킨다")
     void increaseCommentCount_success() {
-        Post post = newPost(newUser());
+        Post post = post(user().build()).build();
         given(postRepository.findByIdOrThrow(POST_ID)).willReturn(post);
 
         postService.increaseCommentCount(POST_ID);
@@ -180,7 +164,7 @@ class PostServiceTest {
     @Test
     @DisplayName("decreaseCommentCount: 게시글의 댓글 카운트를 1 감소시킨다")
     void decreaseCommentCount_success() {
-        Post post = newPost(newUser());
+        Post post = post(user().build()).build();
         post.increaseCommentCount();
         given(postRepository.findByIdOrThrow(POST_ID)).willReturn(post);
 

@@ -25,12 +25,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import static com.example.ktb3community.TestEntityFactory.comment;
+import static com.example.ktb3community.TestEntityFactory.post;
+import static com.example.ktb3community.TestEntityFactory.user;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForClassTypes.catchThrowable;
@@ -52,24 +54,6 @@ class CommentServiceTest {
     @InjectMocks
     CommentService commentService;
 
-    private User newUser(Long id) {
-        User user = User.builder().nickname("nick").build();
-        ReflectionTestUtils.setField(user, "id", id);
-        return user;
-    }
-
-    private Post newPost(Long id) {
-        Post post = Post.builder().build();
-        ReflectionTestUtils.setField(post, "id", id);
-        return post;
-    }
-
-    private Comment newComment(Long id, Post post, User user, String content) {
-        Comment comment = Comment.createNew(post, user, content);
-        ReflectionTestUtils.setField(comment, "id", id);
-        return comment;
-    }
-
     @Test
     @DisplayName("createComment: 댓글 저장 후 카운트를 증가시키고 응답을 반환한다")
     void createComment_success() {
@@ -77,9 +61,9 @@ class CommentServiceTest {
         Long userId = 1L;
         CreateCommentRequest request = new CreateCommentRequest("New Comment");
 
-        User user = newUser(userId);
-        Post post = newPost(postId);
-        Comment savedComment = newComment(100L, post, user, "New Comment");
+        User user = user().id(userId).nickname("nick").build();
+        Post post = post().id(postId).build();
+        Comment savedComment = comment(post, user).id(100L).content("New Comment").build();
 
         given(userRepository.findByIdOrThrow(userId)).willReturn(user);
         given(postRepository.findByIdOrThrow(postId)).willReturn(post);
@@ -104,12 +88,12 @@ class CommentServiceTest {
     @DisplayName("getCommentList: 댓글 목록과 작성자 정보를 매핑하여 반환한다")
     void getCommentList_success() {
         Long postId = 10L;
-        Post post = newPost(postId);
-        User user1 = newUser(1L);
-        User user2 = newUser(2L);
+        Post post = post().id(postId).build();
+        User user1 = user().id(1L).nickname("nick").build();
+        User user2 = user().id(2L).nickname("nick").build();
 
-        Comment c1 = newComment(100L, post, user1, "Content1");
-        Comment c2 = newComment(101L, post, user2, "Content2");
+        Comment c1 = comment(post, user1).id(100L).content("Content1").build();
+        Comment c2 = comment(post, user2).id(101L).content("Content2").build();
 
         Page<Comment> commentPage = new PageImpl<>(List.of(c1, c2));
 
@@ -134,9 +118,9 @@ class CommentServiceTest {
     @DisplayName("getCommentList: 작성자 정보가 없으면 UserNotFoundException 발생")
     void getCommentList_userNotFound_throws() {
         Long postId = 10L;
-        Post post = newPost(postId);
-        User user1 = newUser(1L);
-        Comment c1 = newComment(100L, post, user1, "Content1");
+        Post post = post().id(postId).build();
+        User user1 = user().id(1L).nickname("nick").build();
+        Comment c1 = comment(post, user1).id(100L).content("Content1").build();
 
         Page<Comment> commentPage = new PageImpl<>(List.of(c1));
 
@@ -156,9 +140,9 @@ class CommentServiceTest {
         Long userId = 1L;
         CreateCommentRequest request = new CreateCommentRequest("Updated Content");
 
-        User user = newUser(userId);
-        Post post = newPost(10L);
-        Comment comment = newComment(commentId, post, user, "Old Content");
+        User user = user().id(userId).nickname("nick").build();
+        Post post = post().id(10L).build();
+        Comment comment = comment(post, user).id(commentId).content("Old Content").build();
 
         given(commentRepository.findByIdOrThrow(commentId)).willReturn(comment);
         given(userRepository.findByIdOrThrow(userId)).willReturn(user);
@@ -180,9 +164,9 @@ class CommentServiceTest {
         Long ownerId = 1L;
         Long otherId = 2L;
 
-        User owner = newUser(ownerId);
-        User otherUser = newUser(otherId);
-        Comment comment = newComment(commentId, newPost(10L), owner, "Old Content");
+        User owner = user().id(ownerId).nickname("nick").build();
+        User otherUser = user().id(otherId).nickname("nick").build();
+        Comment comment = comment(post().id(10L).build(), owner).id(commentId).content("Old Content").build();
 
         given(commentRepository.findByIdOrThrow(commentId)).willReturn(comment);
         given(userRepository.findByIdOrThrow(otherId)).willReturn(otherUser);
@@ -204,9 +188,9 @@ class CommentServiceTest {
         Long userId = 1L;
         Long postId = 10L;
 
-        User user = newUser(userId);
-        Post post = newPost(postId);
-        Comment comment = newComment(commentId, post, user, "Content");
+        User user = user().id(userId).nickname("nick").build();
+        Post post = post().id(postId).build();
+        Comment comment = comment(post, user).id(commentId).content("Content").build();
 
         given(commentRepository.findByIdOrThrow(commentId)).willReturn(comment);
         given(userRepository.findByIdOrThrow(userId)).willReturn(user);
@@ -227,10 +211,10 @@ class CommentServiceTest {
         Long otherId = 2L;
         Long postId = 10L;
 
-        User owner = newUser(ownerId);
-        User otherUser = newUser(otherId);
-        Post post = newPost(postId);
-        Comment comment = newComment(commentId, post, owner, "Content");
+        User owner = user().id(ownerId).nickname("nick").build();
+        User otherUser = user().id(otherId).nickname("nick").build();
+        Post post = post().id(postId).build();
+        Comment comment = comment(post, owner).id(commentId).content("Content").build();
 
         given(commentRepository.findByIdOrThrow(commentId)).willReturn(comment);
         given(userRepository.findByIdOrThrow(otherId)).willReturn(otherUser);

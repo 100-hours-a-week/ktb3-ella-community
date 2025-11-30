@@ -12,21 +12,12 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
 
+import static com.example.ktb3community.TestEntityFactory.user;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.catchThrowable;
 import static org.junit.jupiter.api.Assertions.*;
 
 class UserTest {
-
-    private User newUser() {
-        return User.builder()
-                .email("user@test.com")
-                .passwordHash("hash")
-                .nickname("nickname")
-                .profileImageUrl("http://image")
-                .role(Role.ROLE_USER)
-                .build();
-    }
 
     @Test
     @DisplayName("createNew: 입력값을 trim하고 email은 소문자로 변환하여 생성한다")
@@ -50,7 +41,7 @@ class UserTest {
     @Test
     @DisplayName("updateNickname: 정상적인 닉네임으로 변경 시 trim되어 반영된다")
     void updateNickname_success() {
-        User user = newUser();
+        User user = user().build();
 
         user.updateNickname("  newNick  ");
 
@@ -60,7 +51,7 @@ class UserTest {
     @Test
     @DisplayName("updateNickname: 공백만 있는 경우 예외가 발생한다")
     void updateNickname_blank_throws() {
-        User user = newUser();
+        User user = user().build();
 
         BusinessException ex = assertThrows(
                 BusinessException.class,
@@ -73,7 +64,7 @@ class UserTest {
     @Test
     @DisplayName("updateNickname: 길이 초과 시 예외가 발생한다")
     void updateNickname_tooLong_throws() {
-        User user = newUser();
+        User user = user().build();
         String tooLong = "a".repeat(ValidationConstant.NICKNAME_MAX_LENGTH + 1);
 
         BusinessException ex = assertThrows(
@@ -87,7 +78,7 @@ class UserTest {
     @Test
     @DisplayName("updateNickname: 공백 포함 시 예외가 발생한다")
     void updateNickname_containsWhitespace_throws() {
-        User user = newUser();
+        User user = user().build();
 
         BusinessException ex = assertThrows(
                 BusinessException.class,
@@ -100,7 +91,7 @@ class UserTest {
     @Test
     @DisplayName("updateProfileImageUrl: 정상 변경 시 trim되어 반영된다")
     void updateProfileImageUrl_success() {
-        User user = newUser();
+        User user = user().build();
 
         user.updateProfileImageUrl("  http://new-image  ");
 
@@ -110,7 +101,7 @@ class UserTest {
     @Test
     @DisplayName("updateProfileImageUrl: 공백일 경우 예외가 발생한다")
     void updateProfileImageUrl_blank_throws() {
-        User user = newUser();
+        User user = user().build();
 
         Throwable thrown = catchThrowable(() -> user.updateProfileImageUrl("   "));
 
@@ -123,7 +114,7 @@ class UserTest {
     @Test
     @DisplayName("updatePasswordHash: 정상 변경 확인")
     void updatePasswordHash_success() {
-        User user = newUser();
+        User user = user().build();
 
         user.updatePasswordHash("passwordHashNew");
 
@@ -133,7 +124,7 @@ class UserTest {
     @Test
     @DisplayName("updatePasswordHash: 암호화된 비밀번호가 공백일 경우 예외가 발생한다")
     void updatePasswordHash_blank_throws() {
-        User user = newUser();
+        User user = user().build();
 
         BusinessException ex = assertThrows(
                 BusinessException.class,
@@ -146,7 +137,7 @@ class UserTest {
     @Test
     @DisplayName("delete: 탈퇴 시 deletedAt이 설정되며, 중복 호출되어도 시간은 변경되지 않는다")
     void delete_setsDeletedAtOnlyOnce() {
-        User user = newUser();
+        User user = user().build();
         Instant first = Instant.parse("2025-01-01T00:00:00Z");
         Instant second = Instant.parse("2025-02-01T00:00:00Z");
 
@@ -163,10 +154,10 @@ class UserTest {
     @Test
     @DisplayName("equals & hashCode: ID가 같은 두 객체는 동등하다")
     void equals_sameId_isEqual() {
-        User user1 = newUser();
+        User user1 = user().build();
         ReflectionTestUtils.setField(user1, "id", 1L);
 
-        User user2 = newUser();
+        User user2 = user().build();
         ReflectionTestUtils.setField(user2, "id", 1L);
 
         assertThat(user1).isEqualTo(user2);
@@ -176,10 +167,10 @@ class UserTest {
     @Test
     @DisplayName("equals: ID가 다르면 다른 객체다")
     void equals_differentId_isNotEqual() {
-        User user1 = newUser();
+        User user1 = user().build();
         ReflectionTestUtils.setField(user1, "id", 1L);
 
-        User user2 = newUser();
+        User user2 = user().build();
         ReflectionTestUtils.setField(user2, "id", 2L);
 
         assertThat(user1).isNotEqualTo(user2);
@@ -188,8 +179,8 @@ class UserTest {
     @Test
     @DisplayName("equals: ID가 null인 비영속 객체는 필드 값이 같아도 동등하지 않다")
     void equals_nullId_isNotEqual() {
-        User user1 = newUser();
-        User user2 = newUser();
+        User user1 = user().id(null).build();
+        User user2 = user().id(null).build();
 
         assertThat(user1).isNotEqualTo(user2);
     }
@@ -197,7 +188,7 @@ class UserTest {
     @Test
     @DisplayName("equals: 자기 자신과는 항상 동등하다")
     void equals_self_isEqual() {
-        User user = newUser();
+        User user = user().build();
         ReflectionTestUtils.setField(user, "id", 1L);
 
         assertThat(user).isEqualTo(user);
@@ -206,7 +197,7 @@ class UserTest {
     @Test
     @DisplayName("equals: 프록시 객체와 비교해도 ID가 같으면 동등하다")
     void equals_proxy_isEqual() {
-        User original = newUser();
+        User original = user().build();
         ReflectionTestUtils.setField(original, "id", 1L);
 
         User proxy = new User() {

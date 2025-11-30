@@ -14,33 +14,18 @@ import java.time.Instant;
 
 import static com.example.ktb3community.TestFixtures.POST_ID;
 import static com.example.ktb3community.TestFixtures.USER_ID;
+import static com.example.ktb3community.TestEntityFactory.post;
+import static com.example.ktb3community.TestEntityFactory.user;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class CommentTest {
 
-    private User newUser() {
-        User user = User.builder()
-                .email("test@email.com")
-                .nickname("tester")
-                .build();
-        ReflectionTestUtils.setField(user, "id", USER_ID);
-        return user;
-    }
-
-    private Post newPost() {
-        Post post = Post.builder()
-                .title("Post Title")
-                .build();
-        ReflectionTestUtils.setField(post, "id", POST_ID);
-        return post;
-    }
-
     @Test
     @DisplayName("createNew: 댓글 생성 시 내용과 연관관계가 설정되고 deletedAt은 null이다")
     void createNew_success() {
-        User user = newUser();
-        Post post = newPost();
+        User user = user().id(USER_ID).build();
+        Post post = post().id(POST_ID).title("Post Title").build();
         String content = "Nice comment!";
 
         Comment comment = Comment.createNew(post, user, content);
@@ -54,7 +39,7 @@ class CommentTest {
     @Test
     @DisplayName("updateContent: 내용이 null이거나 공백이 아니면 수정된다")
     void updateContent_success() {
-        Comment comment = Comment.createNew(newPost(), newUser(), "Old Content");
+        Comment comment = Comment.createNew(post().build(), user().build(), "Old Content");
 
         comment.updateContent("New Content");
 
@@ -65,7 +50,7 @@ class CommentTest {
     @DisplayName("updateContent: 내용이 null이거나 공백이면 수정되지 않는다")
     void updateContent_ignoreInvalid() {
         String initialContent = "Original Content";
-        Comment comment = Comment.createNew(newPost(), newUser(), initialContent);
+        Comment comment = Comment.createNew(post().build(), user().build(), initialContent);
 
         comment.updateContent(null);
         assertThat(comment.getContent()).isEqualTo(initialContent);
@@ -77,7 +62,7 @@ class CommentTest {
     @Test
     @DisplayName("delete: 삭제 시간을 설정하며 멱등성을 보장한다")
     void delete_success() {
-        Comment comment = Comment.createNew(newPost(), newUser(), "Content");
+        Comment comment = Comment.createNew(post().build(), user().build(), "Content");
         Instant now = Instant.now();
 
         comment.delete(now);
@@ -90,8 +75,8 @@ class CommentTest {
     @Test
     @DisplayName("getUserId: User가 존재하면 ID를 반환한다")
     void getUserId_success() {
-        User user = newUser();
-        Comment comment = Comment.createNew(newPost(), user, "Content");
+        User user = user().build();
+        Comment comment = Comment.createNew(post().build(), user, "Content");
 
         assertThat(comment.getUserId()).isEqualTo(user.getId());
     }
@@ -100,7 +85,7 @@ class CommentTest {
     @DisplayName("getUserId: User가 null이면 UserNotFoundException을 던진다")
     void getUserId_null_throws() {
         Comment comment = Comment.builder()
-                .post(newPost())
+                .post(post().build())
                 .user(null)
                 .content("Content")
                 .build();
@@ -112,8 +97,8 @@ class CommentTest {
     @Test
     @DisplayName("getPostId: Post가 존재하면 ID를 반환한다")
     void getPostId_success() {
-        Post post = newPost();
-        Comment comment = Comment.createNew(post, newUser(), "Content");
+        Post post = post().build();
+        Comment comment = Comment.createNew(post, user().build(), "Content");
 
         assertThat(comment.getPostId()).isEqualTo(post.getId());
     }
@@ -123,7 +108,7 @@ class CommentTest {
     void getPostId_null_throws() {
         Comment comment = Comment.builder()
                 .post(null)
-                .user(newUser())
+                .user(user().build())
                 .content("Content")
                 .build();
 
