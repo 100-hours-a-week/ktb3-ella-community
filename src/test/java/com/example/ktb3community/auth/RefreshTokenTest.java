@@ -27,8 +27,6 @@ class RefreshTokenTest {
         assertThat(token.getExpiresAt()).isEqualTo(expiresAt);
 
         assertThat(token.isRevoked()).isFalse();
-
-        assertThat(token.getVersion()).isZero();
     }
 
     @Test

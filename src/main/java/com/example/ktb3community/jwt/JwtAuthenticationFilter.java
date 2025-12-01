@@ -26,13 +26,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final CustomUserDetailsService userDetailsService;
-    private static final AntPathMatcher pathMatcher = new AntPathMatcher();
+    private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getServletPath();
-        return Arrays.stream(SecurityPaths.PUBLIC_AUTH)
-                .anyMatch(pattern -> pathMatcher.match(pattern, path));
+
+        for (String pattern : SecurityPaths.PUBLIC_AUTH) {
+            if (pathMatcher.match(pattern, path)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     // 모든 요청마다 이 메서드가 호출되고, 여기서 JWT 검증과 인증 처리를 한 뒤 다음 필터로 넘어감

@@ -2,6 +2,7 @@ package com.example.ktb3community.jwt;
 
 import com.example.ktb3community.auth.security.CustomUserDetails;
 import com.example.ktb3community.auth.security.CustomUserDetailsService;
+import com.example.ktb3community.auth.security.SecurityPaths;
 import com.example.ktb3community.common.error.ErrorCode;
 import com.example.ktb3community.exception.BusinessException;
 import jakarta.servlet.FilterChain;
@@ -16,11 +17,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
 import java.util.Collections;
 
-import static com.example.ktb3community.auth.security.SecurityPaths.PUBLIC_AUTH;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
@@ -108,10 +109,14 @@ class JwtAuthenticationFilterTest {
     @Test
     @DisplayName("공개된 URL(PUBLIC_AUTH)에 포함되면 필터를 실행하지 않아야 한다")
     void shouldNotFilter_publicUrl_returnsTrue() {
-        String publicPath = PUBLIC_AUTH[0];
-        MockHttpServletRequest request = new MockHttpServletRequest("GET", publicPath);
 
-        boolean result = jwtAuthenticationFilter.shouldNotFilter(request);
+        String pattern = SecurityPaths.PUBLIC_AUTH[0];
+
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", pattern);
+
+        request.setServletPath(pattern);
+
+        boolean result = Boolean.TRUE.equals(ReflectionTestUtils.invokeMethod(jwtAuthenticationFilter, "shouldNotFilter", request));
 
         assertThat(result).isTrue();
     }
