@@ -36,10 +36,6 @@ public class RefreshToken{
     @Column(nullable = false)
     private Long version;
 
-    @Transient
-    private boolean isNew = true;
-
-
     public static RefreshToken createNew(Long id, User user, Instant expiresAt) {
         return RefreshToken.builder()
                 .id(id)
