@@ -21,20 +21,17 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 class JpaUserRepositoryTest {
     @Autowired
     private JpaUserRepository jpaUserRepository;
+
     @Test
     @DisplayName("soft_delete된 유저는 조회 메서드에서 검색되지 않아야 한다.")
     void findByEmailAndDeletedAtIsNull() {
         User deletedUser = user()
-                .id(null)
                 .email("user@test.com")
-                .passwordHash("hash")
-                .nickname("deletedUser")
-                .profileImageUrl("http://image")
                 .role(Role.ROLE_USER)
                 .build();
 
         jpaUserRepository.save(deletedUser);
-        jpaUserRepository.softDeleteById(deletedUser.getId(), java.time.Instant.now());
+        jpaUserRepository.softDeleteById(deletedUser.getId(), Instant.now());
 
         Optional<User> result = jpaUserRepository.findByEmailAndDeletedAtIsNull("user@test.com");
         assertThat(result).isEmpty();
@@ -43,15 +40,11 @@ class JpaUserRepositoryTest {
     @Test
     @DisplayName("softDeleteById에서 deletedAt, updatedAt이 갱신된다")
     void softDeleteById_updates_deletedAt() {
-
         User user = user()
-                .id(null)
                 .email("user@test.com")
-                .passwordHash("hash")
-                .nickname("deletedUser")
-                .profileImageUrl("http://image")
                 .role(Role.ROLE_USER)
                 .build();
+
         User savedUser = jpaUserRepository.save(user);
 
         int updatedCount = jpaUserRepository.softDeleteById(savedUser.getId(), Instant.now());
@@ -61,5 +54,28 @@ class JpaUserRepositoryTest {
         User updatedUser = jpaUserRepository.findById(savedUser.getId()).orElseThrow();
         assertThat(updatedUser.getDeletedAt()).isNotNull();
         assertThat(updatedUser.getUpdatedAt()).isAfter(savedUser.getCreatedAt());
+    }
+
+    @Test
+    @DisplayName("softDeleteById에서 deletedAt이 null이 아니면 업데이트되지 않는다")
+    void softDeleteById_no_update_if_already_deleted() {
+
+        Instant originalDeletedAt = Instant.now().minusSeconds(3600);
+
+        User user = user()
+                .id(null)
+                .email("user@test.com")
+                .role(Role.ROLE_USER)
+                .deletedAt(originalDeletedAt)
+                .build();
+        User savedUser = jpaUserRepository.save(user);
+
+        int updatedCount = jpaUserRepository.softDeleteById(savedUser.getId(), Instant.now());
+
+        assertThat(updatedCount).isZero();
+
+        User updatedUser = jpaUserRepository.findById(savedUser.getId()).orElseThrow();
+        assertThat(updatedUser.getDeletedAt()).isEqualTo(savedUser.getDeletedAt());
+        assertThat(updatedUser.getUpdatedAt()).isEqualTo(savedUser.getCreatedAt());
     }
 }
