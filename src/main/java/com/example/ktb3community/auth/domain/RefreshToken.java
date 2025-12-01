@@ -18,7 +18,7 @@ import java.time.Instant;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
-public class RefreshToken implements Persistable<Long> {
+public class RefreshToken{
     @Id
     private Long id;
 
@@ -39,16 +39,6 @@ public class RefreshToken implements Persistable<Long> {
     @Transient
     private boolean isNew = true;
 
-    @Override
-    public boolean isNew() {
-        return isNew;
-    }
-
-    @PostLoad
-    @PostPersist
-    void markNotNew() {
-        this.isNew = false;
-    }
 
     public static RefreshToken createNew(Long id, User user, Instant expiresAt) {
         return RefreshToken.builder()
