@@ -1,6 +1,7 @@
-package com.example.ktb3community.post.repository;
+package com.example.ktb3community.post.repository.inmemory;
 
 import com.example.ktb3community.post.domain.Post;
+import com.example.ktb3community.post.repository.PostLikeRepository;
 import com.example.ktb3community.user.domain.User;
 import org.springframework.stereotype.Repository;
 
