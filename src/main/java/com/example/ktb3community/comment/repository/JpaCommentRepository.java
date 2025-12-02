@@ -22,6 +22,6 @@ public interface JpaCommentRepository extends JpaRepository<Comment, Long> {
     int softDeleteByUserId(@Param("userId") Long userId, @Param("now") Instant now);
 
     @Modifying(clearAutomatically = true)
-    @Query("update Comment c set c.deletedAt = :now where c.post.id = :postId and c.deletedAt is null")
+    @Query("update Comment c set c.deletedAt = :now, c.updatedAt =:now  where c.post.id = :postId and c.deletedAt is null")
     int softDeleteByPostId(@Param("postId") Long postId, @Param("now") Instant now);
 }

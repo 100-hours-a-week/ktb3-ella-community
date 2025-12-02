@@ -7,6 +7,7 @@ import com.example.ktb3community.post.repository.JpaPostRepository;
 import com.example.ktb3community.user.domain.User;
 import com.example.ktb3community.user.repository.JpaUserRepository;
 import jakarta.persistence.EntityManager;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,55 +34,64 @@ class JpaPostRepositoryTest {
     @Autowired
     private EntityManager em;
 
-    @Test
-    @DisplayName("soft_delete된 게시글은 조회 메서드에서 검색되지 않아야 한다")
-    void findByIdAndDeletedAtIsNull() {
-        User newUser = user()
+    private User user;
+
+    @BeforeEach
+    void setUp() {
+        user = user()
                 .email("user@test.com")
                 .role(Role.ROLE_USER)
                 .build();
-        jpaUserRepository.save(newUser);
-
-        Post newPost = post()
-                .title("Test Post")
-                .content("This is a test post.")
-                .user(newUser)
-                .build();
-
-        newPost.delete(Instant.now());
-        Post savedPost = jpaPostRepository.save(newPost);
-
-        Optional<Post> result = jpaPostRepository.findByIdAndDeletedAtIsNull(savedPost.getId());
-
-        assertThat(result).isEmpty();
+        jpaUserRepository.save(user);
     }
 
     @Test
-    @DisplayName("softDeleteByUserId에서 해당 유저의 모든 게시글이 soft delete 된다")
-    void softDeleteByUserId_updates_deletedAt() {
+    @DisplayName("findByIdAndDeletedAtIsNull: 삭제되지 않은 게시글만 조회된다")
+    void findByIdAndDeletedAtIsNull() {
 
-        User newUser = user()
-                .email("user2@test.com")
-                .role(Role.ROLE_USER)
+        Post activePost = post()
+                .title("Post")
+                .content("Content 1")
+                .user(user)
                 .build();
-        User savedUser = jpaUserRepository.save(newUser);
+        jpaPostRepository.save(activePost);
+
+        Post deletedPost = post()
+                .title("Post")
+                .content("Content 1")
+                .user(user)
+                .build();
+
+        deletedPost.delete(Instant.now());
+        jpaPostRepository.save(deletedPost);
+
+        Optional<Post> foundActive = jpaPostRepository.findByIdAndDeletedAtIsNull(activePost.getId());
+        Optional<Post> foundDeleted = jpaPostRepository.findByIdAndDeletedAtIsNull(deletedPost.getId());
+
+        assertThat(foundActive).isPresent();
+        assertThat(foundDeleted).isEmpty();
+    }
+
+    @Test
+    @DisplayName("softDeleteByUserId: 해당 유저의 모든 게시글이 soft delete 된다")
+    void softDeleteByUserId_updates_deletedAt() {
 
         Post post1 = post()
                 .title("Post 1")
                 .content("Content 1")
-                .user(savedUser)
+                .user(user)
                 .build();
 
         Post post2 = post()
                 .title("Post 2")
                 .content("Content 2")
-                .user(savedUser)
+                .user(user)
                 .build();
 
         jpaPostRepository.save(post1);
         jpaPostRepository.save(post2);
 
-        int updatedCount = jpaPostRepository.softDeleteByUserId(savedUser.getId(), Instant.now());
+        int updatedCount = jpaPostRepository.softDeleteByUserId(user.getId(), Instant.now());
 
         em.flush();
         em.clear();
