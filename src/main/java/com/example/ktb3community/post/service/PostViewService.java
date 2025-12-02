@@ -2,8 +2,8 @@ package com.example.ktb3community.post.service;
 
 import com.example.ktb3community.comment.dto.CommentResponse;
 import com.example.ktb3community.comment.service.CommentService;
+import com.example.ktb3community.common.pagination.CursorResponse;
 import com.example.ktb3community.common.pagination.PageResponse;
-import com.example.ktb3community.post.PostSort;
 import com.example.ktb3community.post.domain.Post;
 import com.example.ktb3community.post.dto.Author;
 import com.example.ktb3community.post.dto.PostDetailResponse;
@@ -11,18 +11,14 @@ import com.example.ktb3community.post.dto.PostListResponse;
 import com.example.ktb3community.post.repository.PostLikeRepository;
 import com.example.ktb3community.post.repository.PostRepository;
 import com.example.ktb3community.user.domain.User;
-import com.example.ktb3community.user.exception.UserNotFoundException;
 import com.example.ktb3community.user.repository.UserRepository;
 import lombok.AllArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -34,16 +30,23 @@ public class PostViewService {
 
     private static final int COMMENT_PAGE = 1;
 
-    @Transactional(readOnly = true)
-    public PageResponse<PostListResponse> getPostList(int page, int pageSize, PostSort sort) {
-        int requestedPage = Math.max(page, 1);
-        PageRequest pageRequest = PageRequest.of(requestedPage - 1, pageSize, sort.sort());
-        Page<Post> postPage = postRepository.findAllWithAuthor(pageRequest);
-        List<PostListResponse> content = postPage.getContent().stream().map(p -> {
+    public CursorResponse<PostListResponse> getPostList(Long cursorId, int size) {
+        // 다음 페이지가 있는지 확인
+        Pageable pageable = PageRequest.of(0, size + 1);
+
+        List<Post> posts = postRepository.findAllByCursorWithUser(cursorId, pageable);
+
+        boolean hasNext = false;
+        if (posts.size() > size) {
+            hasNext = true;
+            posts.remove(size);
+        }
+
+        // 다음 커서 ID 계산
+        Long nextCursorId = posts.isEmpty() ? null : posts.get(posts.size() - 1).getId();
+
+        List<PostListResponse> content = posts.stream().map(p -> {
             User user = p.getUser();
-            if(user == null){
-                throw new UserNotFoundException();
-            }
             Author author = new Author(user.getNickname(), user.getProfileImageUrl());
             return new PostListResponse(
                     p.getId(),
@@ -55,7 +58,7 @@ public class PostViewService {
                     p.getCreatedAt()
             );
         }).toList();
-        return new PageResponse<>(content, postPage.getNumber() + 1, postPage.getSize(), postPage.getTotalPages());
+        return new CursorResponse<>(content, nextCursorId, hasNext);
     }
 
     @Transactional

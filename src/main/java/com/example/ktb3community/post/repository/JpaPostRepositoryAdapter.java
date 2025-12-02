@@ -40,24 +40,16 @@ public class JpaPostRepositoryAdapter implements PostRepository {
     }
 
     @Override
-    public Page<Post> findAllWithAuthor(Pageable pageable) {
-        return jpaPostRepository.findAllWithUser(pageable);
-    }
-
-    @Override
     public int softDeleteByUserId(Long userId, Instant now) {
         return jpaPostRepository.softDeleteByUserId(userId, now);
     }
 
-    // --- [구현 추가] ---
     @Override
-    public void saveAll(List<Post> posts) {
-        jpaPostRepository.saveAll(posts);
+    public List<Post> findAllByCursorWithUser(Long cursorId, Pageable pageable) {
+        if (cursorId == null) {
+            return jpaPostRepository.findAllByOrderByIdDesc(pageable);
+        } else {
+            return jpaPostRepository.findByIdLessThanOrderByIdDesc(cursorId, pageable);
+        }
     }
-
-    @Override
-    public long count() {
-        return jpaPostRepository.count();
-    }
-    // ------------------
 }

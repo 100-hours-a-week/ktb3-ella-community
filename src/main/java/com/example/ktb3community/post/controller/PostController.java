@@ -3,10 +3,9 @@ package com.example.ktb3community.post.controller;
 import com.example.ktb3community.auth.security.CustomUserDetails;
 import com.example.ktb3community.common.doc.ApiCommonErrorResponses;
 import com.example.ktb3community.common.error.ErrorCode;
-import com.example.ktb3community.common.pagination.PageResponse;
+import com.example.ktb3community.common.pagination.CursorResponse;
 import com.example.ktb3community.common.response.ApiResult;
 import com.example.ktb3community.exception.BusinessException;
-import com.example.ktb3community.post.PostSort;
 import com.example.ktb3community.post.dto.CreatePostRequest;
 import com.example.ktb3community.post.dto.CreatePostResponse;
 import com.example.ktb3community.post.dto.PostDetailResponse;
@@ -54,20 +53,19 @@ public class PostController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "OK"),
             @ApiResponse(responseCode = "400", description = "pageSize는 1~20 사이만 허용합니다."),
-            @ApiResponse(responseCode = "400", description = "page는 1부터 허용합니다.")
+            @ApiResponse(responseCode = "400", description = "cursorId는 1부터 허용합니다.")
     })
     @ApiCommonErrorResponses
     @GetMapping
-    public ResponseEntity<ApiResult<PageResponse<PostListResponse>>> list(
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(required = false, defaultValue = "10") int pageSize,
-            @RequestParam(required = false, defaultValue = "NEW") PostSort sort
+    public ResponseEntity<ApiResult<CursorResponse<PostListResponse>>> list(
+            @RequestParam(defaultValue = "1") long cursorId,
+            @RequestParam(required = false, defaultValue = "10") int pageSize
     ) {
-        if (page < 1) throw new BusinessException(ErrorCode.INVALID_PAGE);
+        if (cursorId < 1) throw new BusinessException(ErrorCode.INVALID_CURSOR_ID);
         if (pageSize < 1 || pageSize > 20) {
             throw new BusinessException(ErrorCode.INVALID_PAGE_SIZE);
         }
-        PageResponse<PostListResponse> pageResponse = postViewService.getPostList(page, pageSize, sort);
+        CursorResponse<PostListResponse> pageResponse = postViewService.getPostList(cursorId, pageSize);
         return ResponseEntity.ok(ApiResult.ok(pageResponse));
     }
 

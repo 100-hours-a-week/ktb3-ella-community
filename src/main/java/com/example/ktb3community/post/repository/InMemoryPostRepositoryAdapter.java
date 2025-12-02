@@ -104,4 +104,17 @@ public class InMemoryPostRepositoryAdapter implements PostRepository {
                 })
                 .sum();
     }
+
+    @Override
+    public List<Post> findAllByCursorWithUser(Long cursorId, Pageable pageable) {
+        List<Post> filteredPosts = posts.values().stream()
+                .filter(post -> post.getDeletedAt() == null)
+                .filter(post -> cursorId == null || post.getId() < cursorId)
+                .sorted(Comparator.comparing(Post::getId).reversed())
+                .toList();
+
+        int fromIndex = 0;
+        int toIndex = Math.min(filteredPosts.size(), pageable.getPageSize());
+        return fromIndex >= toIndex ? List.of() : filteredPosts.subList(fromIndex, toIndex);
+    }
 }

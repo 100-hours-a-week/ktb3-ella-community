@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 public interface JpaPostRepository extends JpaRepository<Post, Long> {
@@ -20,7 +21,10 @@ public interface JpaPostRepository extends JpaRepository<Post, Long> {
     @Query("update Post p set p.deletedAt = :now, p.updatedAt = :now where p.user.id = :userId and p.deletedAt is null")
     int softDeleteByUserId(@Param("userId") Long userId, @Param("now") Instant now);
 
-    @Query(value = "SELECT p FROM Post p JOIN FETCH p.user WHERE p.deletedAt IS NULL",
-            countQuery = "SELECT count(p) FROM Post p WHERE p.deletedAt IS NULL")
-    Page<Post> findAllWithUser(Pageable pageable);
+    @Query("SELECT p FROM Post p JOIN FETCH p.user WHERE p.id < :id AND p.deletedAt IS NULL")
+    List<Post> findByIdLessThanOrderByIdDesc(@Param("id") Long id, Pageable pageable);
+
+    // 첫 페이지 조회용
+    @Query("SELECT p FROM Post p JOIN FETCH p.user WHERE p.deletedAt IS NULL")
+    List<Post> findAllByOrderByIdDesc(Pageable pageable);
 }
