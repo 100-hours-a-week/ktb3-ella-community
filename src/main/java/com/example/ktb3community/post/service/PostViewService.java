@@ -38,16 +38,9 @@ public class PostViewService {
     public PageResponse<PostListResponse> getPostList(int page, int pageSize, PostSort sort) {
         int requestedPage = Math.max(page, 1);
         PageRequest pageRequest = PageRequest.of(requestedPage - 1, pageSize, sort.sort());
-        Page<Post> postPage = postRepository.findAll(pageRequest);
-
-        Set<Long> authorIds = postPage.getContent().stream()
-                .map(Post::getUserId)
-                .collect(Collectors.toSet());
-
-        Map<Long, User> authorMap = userRepository.findAllByIdIn(authorIds).stream()
-                .collect(Collectors.toMap(User::getId, user -> user));
+        Page<Post> postPage = postRepository.findAllWithAuthor(pageRequest);
         List<PostListResponse> content = postPage.getContent().stream().map(p -> {
-            User user = authorMap.get(p.getUserId());
+            User user = p.getUser();
             if(user == null){
                 throw new UserNotFoundException();
             }

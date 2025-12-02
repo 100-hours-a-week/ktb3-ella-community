@@ -19,4 +19,8 @@ public interface JpaPostRepository extends JpaRepository<Post, Long> {
     @Modifying(clearAutomatically = true)
     @Query("update Post p set p.deletedAt = :now, p.updatedAt = :now where p.user.id = :userId and p.deletedAt is null")
     int softDeleteByUserId(@Param("userId") Long userId, @Param("now") Instant now);
+
+    @Query(value = "SELECT p FROM Post p JOIN FETCH p.user WHERE p.deletedAt IS NULL",
+            countQuery = "SELECT count(p) FROM Post p WHERE p.deletedAt IS NULL")
+    Page<Post> findAllWithUser(Pageable pageable);
 }
