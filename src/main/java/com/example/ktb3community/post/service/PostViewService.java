@@ -4,6 +4,7 @@ import com.example.ktb3community.comment.dto.CommentResponse;
 import com.example.ktb3community.comment.service.CommentService;
 import com.example.ktb3community.common.pagination.CursorResponse;
 import com.example.ktb3community.common.pagination.PageResponse;
+import com.example.ktb3community.post.PostSort;
 import com.example.ktb3community.post.domain.Post;
 import com.example.ktb3community.post.dto.Author;
 import com.example.ktb3community.post.dto.PostDetailResponse;
@@ -30,11 +31,11 @@ public class PostViewService {
 
     private static final int COMMENT_PAGE = 1;
 
-    public CursorResponse<PostListResponse> getPostList(Long cursorId, int size) {
-        // 다음 페이지가 있는지 확인
+    public CursorResponse<PostListResponse> getPostList(Long cursorId, Long cursorValue, int size, PostSort sort) {
+
         Pageable pageable = PageRequest.of(0, size + 1);
 
-        List<Post> posts = postRepository.findAllByCursorWithUser(cursorId, pageable);
+        List<Post> posts = postRepository.findAllByCursor(cursorId, cursorValue, sort, pageable);
 
         boolean hasNext = false;
         if (posts.size() > size) {
@@ -42,8 +43,20 @@ public class PostViewService {
             posts.remove(size);
         }
 
-        // 다음 커서 ID 계산
-        Long nextCursorId = posts.isEmpty() ? null : posts.get(posts.size() - 1).getId();
+        Long nextCursorId = null;
+        Long nextCursorValue = null;
+
+        if (!posts.isEmpty()) {
+            Post lastPost = posts.getLast();
+            nextCursorId = lastPost.getId();
+
+            nextCursorValue = switch (sort) {
+                case VIEW -> lastPost.getViewCount();
+                case LIKE -> lastPost.getLikeCount();
+                case CMT -> lastPost.getCommentCount();
+                default -> null;
+            };
+        }
 
         List<PostListResponse> content = posts.stream().map(p -> {
             User user = p.getUser();
@@ -58,7 +71,7 @@ public class PostViewService {
                     p.getCreatedAt()
             );
         }).toList();
-        return new CursorResponse<>(content, nextCursorId, hasNext);
+        return new CursorResponse<>(content, nextCursorId, nextCursorValue, hasNext);
     }
 
     @Transactional

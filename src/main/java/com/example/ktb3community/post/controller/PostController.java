@@ -6,6 +6,7 @@ import com.example.ktb3community.common.error.ErrorCode;
 import com.example.ktb3community.common.pagination.CursorResponse;
 import com.example.ktb3community.common.response.ApiResult;
 import com.example.ktb3community.exception.BusinessException;
+import com.example.ktb3community.post.PostSort;
 import com.example.ktb3community.post.dto.CreatePostRequest;
 import com.example.ktb3community.post.dto.CreatePostResponse;
 import com.example.ktb3community.post.dto.PostDetailResponse;
@@ -58,14 +59,15 @@ public class PostController {
     @ApiCommonErrorResponses
     @GetMapping
     public ResponseEntity<ApiResult<CursorResponse<PostListResponse>>> list(
-            @RequestParam(defaultValue = "1") long cursorId,
-            @RequestParam(required = false, defaultValue = "10") int pageSize
+            @RequestParam(required = false) Long cursorId,
+            @RequestParam(required = false) Long cursorValue,
+            @RequestParam(required = false, defaultValue = "10") int pageSize,
+            @RequestParam(required = false)PostSort sort
     ) {
-        if (cursorId < 1) throw new BusinessException(ErrorCode.INVALID_CURSOR_ID);
         if (pageSize < 1 || pageSize > 20) {
             throw new BusinessException(ErrorCode.INVALID_PAGE_SIZE);
         }
-        CursorResponse<PostListResponse> pageResponse = postViewService.getPostList(cursorId, pageSize);
+        CursorResponse<PostListResponse> pageResponse = postViewService.getPostList(cursorId, cursorValue, pageSize, sort);
         return ResponseEntity.ok(ApiResult.ok(pageResponse));
     }
 

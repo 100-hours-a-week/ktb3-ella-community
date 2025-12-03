@@ -1,10 +1,9 @@
 package com.example.ktb3community.post.repository.inmemory;
 
+import com.example.ktb3community.post.PostSort;
 import com.example.ktb3community.post.domain.Post;
 import com.example.ktb3community.post.exception.PostNotFoundException;
 import com.example.ktb3community.post.repository.PostRepository;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
@@ -54,20 +53,6 @@ public class InMemoryPostRepositoryAdapter implements PostRepository {
                 .orElseThrow(PostNotFoundException::new);
     }
 
-    @Override
-    public Page<Post> findAll(Pageable pageable) {
-        List<Post> all = posts.values().stream()
-                .filter(p -> p.getDeletedAt() == null)
-                .sorted(resolveComparator(pageable.getSort()))
-                .toList();
-
-        int fromIndex = (int) Math.min(all.size(), pageable.getOffset());
-        int toIndex = Math.min(all.size(), fromIndex + pageable.getPageSize());
-        List<Post> content = fromIndex >= toIndex ? List.of() : all.subList(fromIndex, toIndex);
-
-        return new PageImpl<>(content, pageable, all.size());
-    }
-
     private Comparator<Post> resolveComparator(Sort sort) {
         Comparator<Post> comparator = null;
         for (Sort.Order order : sort) {
@@ -107,15 +92,34 @@ public class InMemoryPostRepositoryAdapter implements PostRepository {
     }
 
     @Override
-    public List<Post> findAllByCursorWithUser(Long cursorId, Pageable pageable) {
-        List<Post> filteredPosts = posts.values().stream()
+    public List<Post> findAllByCursor(Long cursorId, Long cursorValue, PostSort sort, Pageable pageable) {
+        Comparator<Post> comparator = resolveComparator(sort.sort());
+        return posts.values().stream()
                 .filter(post -> post.getDeletedAt() == null)
-                .filter(post -> cursorId == null || post.getId() < cursorId)
-                .sorted(Comparator.comparing(Post::getId).reversed())
+                .filter(post -> {
+                    if (cursorId == null || cursorValue == null) {
+                        return true;
+                    }
+                    int cmp = compareBySort(post, cursorValue, sort);
+                    if (cmp < 0) {
+                        return true;
+                    } else if (cmp == 0) {
+                        return post.getId() < cursorId;
+                    } else {
+                        return false;
+                    }
+                })
+                .sorted(comparator)
+                .limit(pageable.getPageSize())
                 .toList();
+    }
 
-        int fromIndex = 0;
-        int toIndex = Math.min(filteredPosts.size(), pageable.getPageSize());
-        return fromIndex >= toIndex ? List.of() : filteredPosts.subList(fromIndex, toIndex);
+    private int compareBySort(Post post, Long cursorValue, PostSort sort) {
+        return switch (sort) {
+            case VIEW -> Long.compare(post.getViewCount(), cursorValue);
+            case LIKE -> Long.compare(post.getLikeCount(), cursorValue);
+            case CMT -> Long.compare(post.getCommentCount(), cursorValue);
+            default -> Long.compare(post.getId(), cursorValue);
+        };
     }
 }
