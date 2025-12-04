@@ -66,22 +66,35 @@ public class RefreshTokenService {
             }
         }
 
-        String familyId = jwtTokenProvider.getClaim(oldAccessToken, "familyId");
-        Long userId = Long.valueOf(jwtTokenProvider.getClaim(oldAccessToken, "userId"));
+        String familyIdFromAccess = jwtTokenProvider.getClaim(oldAccessToken, "familyId");
+        String userIdClaim = jwtTokenProvider.getClaim(oldAccessToken, "userId");
+
+        if (familyIdFromAccess == null || userIdClaim == null) {
+            throw new BusinessException(ErrorCode.INVALID_ACCESS_TOKEN);
+        }
 
         RefreshToken oldToken = refreshTokenRepository.findByToken(oldRefreshToken)
                 .orElse(null);
 
         if(oldToken == null ) {
-            List<RefreshToken> familyTokens = refreshTokenRepository.findAllByFamilyId(familyId);
+            List<RefreshToken> familyTokens = refreshTokenRepository.findAllByFamilyId(familyIdFromAccess);
             if (!familyTokens.isEmpty()) {
                 refreshTokenRepository.deleteAll(familyTokens);
             }
             throw new BusinessException(ErrorCode.INVALID_TOKEN_REUSE_DETECTED);
         }
 
+        if (!oldToken.getFamilyId().equals(familyIdFromAccess) || !oldToken.getUserId().toString().equals(userIdClaim)) {
+            List<RefreshToken> familyTokens = refreshTokenRepository.findAllByFamilyId(oldToken.getFamilyId());
+            if (!familyTokens.isEmpty()) {
+                refreshTokenRepository.deleteAll(familyTokens);
+            }
+            refreshTokenRepository.delete(oldToken);
+            throw new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
+
         refreshTokenRepository.delete(oldToken);
-        TokenDto newTokenDto = createRefreshToken(userId, familyId);
+        TokenDto newTokenDto = createRefreshToken(oldToken.getUserId(), oldToken.getFamilyId());
 
         try {
             String newTokenJson = objectMapper.writeValueAsString(newTokenDto);
