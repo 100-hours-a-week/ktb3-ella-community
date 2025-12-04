@@ -24,6 +24,7 @@ public enum ErrorCode {
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "INVALID_REFRESH_TOKEN", "유효하지 않은 리프레시 토큰입니다."),
     INVALID_ACCESS_TOKEN(HttpStatus.UNAUTHORIZED, "INVALID_ACCESS_TOKEN", "유효하지 않은 액세스 토큰입니다."),
     NOT_EXIST_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "NOT_EXIST_REFRESH_TOKEN", "리프레시 토큰이 존재하지 않습니다."),
+    INVALID_TOKEN_REUSE_DETECTED(HttpStatus.UNAUTHORIZED, "INVALID_TOKEN_REUSE_DETECTED", "리프레시 토큰 재사용이 감지되었습니다. 모든 토큰이 무효화됩니다."),
     REFRESH_TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "REFRESH_TOKEN_EXPIRED"," 리프레시 토큰이 만료되었습니다."),
     INVALID_USER_ID(HttpStatus.BAD_REQUEST, "INVALID_USER_ID", "유효하지 않은 사용자 ID입니다."),
 

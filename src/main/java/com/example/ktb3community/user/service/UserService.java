@@ -91,7 +91,7 @@ public class UserService {
         commentRepository.softDeleteByUserId(userId, now);
         postRepository.softDeleteByUserId(userId, now);
         userRepository.softDeleteById(userId, now);
-        refreshTokenService.revokeAllByUser(user);
+        refreshTokenService.revokeAllByUser(user.getId());
         CookieUtil.removeRefreshTokenCookie(response);
     }
 }

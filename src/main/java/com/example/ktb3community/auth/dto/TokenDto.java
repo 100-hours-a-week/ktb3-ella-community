@@ -1,6 +1,6 @@
 package com.example.ktb3community.auth.dto;
 
-public record Token (
+public record TokenDto(
         String accessToken,
         String refreshToken
 ){}

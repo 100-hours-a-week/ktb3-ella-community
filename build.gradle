@@ -51,6 +51,9 @@ dependencies {
     runtimeOnly 'com.h2database:h2'
     implementation 'com.github.f4b6a3:tsid-creator:5.2.3'
 
+    // Redis
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
     // QueryDSL 라이브러리
     implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
 

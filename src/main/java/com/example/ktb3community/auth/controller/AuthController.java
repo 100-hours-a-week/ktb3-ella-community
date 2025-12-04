@@ -3,7 +3,7 @@ package com.example.ktb3community.auth.controller;
 import com.example.ktb3community.auth.dto.AuthResponse;
 import com.example.ktb3community.auth.dto.LoginRequest;
 import com.example.ktb3community.auth.dto.SignUpRequest;
-import com.example.ktb3community.auth.dto.Token;
+import com.example.ktb3community.auth.dto.TokenDto;
 import com.example.ktb3community.auth.service.AuthService;
 import com.example.ktb3community.common.doc.ApiCommonErrorResponses;
 import com.example.ktb3community.common.error.ErrorCode;
@@ -40,8 +40,8 @@ public class AuthController {
     public ResponseEntity<ApiResult<AuthResponse>> signup(
             @Valid @RequestBody SignUpRequest signUpRequest,
             HttpServletResponse response) {
-        Token token = authService.signup(signUpRequest);
-        return tokenResponder.success(token, response, HttpStatus.CREATED);
+        TokenDto tokenDto = authService.signup(signUpRequest);
+        return tokenResponder.success(tokenDto, response, HttpStatus.CREATED);
     }
 
     @Operation(summary = "로그인", description = "사용자 로그인을 처리합니다.")
@@ -53,8 +53,8 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<ApiResult<AuthResponse>> login(
             @Valid @RequestBody LoginRequest loginRequest, HttpServletResponse response) {
-        Token token = authService.login(loginRequest);
-        return tokenResponder.success(token, response, HttpStatus.OK);
+        TokenDto tokenDto = authService.login(loginRequest);
+        return tokenResponder.success(tokenDto, response, HttpStatus.OK);
     }
 
     @Operation(summary = "토큰 갱신", description = "액세스 토큰, 리프레시 토큰을 갱신합니다.")
@@ -63,14 +63,21 @@ public class AuthController {
     })
     @PostMapping("/refresh")
     public ResponseEntity<ApiResult<AuthResponse>> refresh(
-            @CookieValue(name = "refresh_token", required=false) String refreshJwt,
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @CookieValue(name = "refresh_token", required=false) String refreshToken,
             HttpServletResponse response
     ) {
-        if (refreshJwt == null || refreshJwt.isBlank()) {
+        if (refreshToken == null || refreshToken.isBlank()) {
             throw new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN);
         }
-        Token token = authService.refresh(refreshJwt);
-        return tokenResponder.success(token, response, HttpStatus.OK);
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new BusinessException(ErrorCode.INVALID_ACCESS_TOKEN);
+        }
+
+        String accessToken = authHeader.substring(7);
+        TokenDto tokenDto = authService.refresh(refreshToken, accessToken);
+
+        return tokenResponder.success(tokenDto, response, HttpStatus.OK);
     }
 
     @Operation(summary = "로그아웃", description = "사용자 로그아웃을 처리합니다.")
