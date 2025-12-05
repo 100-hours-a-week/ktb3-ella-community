@@ -59,17 +59,17 @@ public class PostViewService {
                     : null;
         }
 
-        List<PostListResponse> content = posts.stream().map(p -> {
-            User user = p.getUser();
+        List<PostListResponse> content = posts.stream().map(post -> {
+            User user = post.getUser();
             Author author = new Author(user.getNickname(), user.getProfileImageUrl());
             return new PostListResponse(
-                    p.getId(),
-                    p.getTitle(),
+                    post.getId(),
+                    post.getTitle(),
                     author,
-                    p.getLikeCount(),
-                    p.getViewCount(),
-                    p.getCommentCount(),
-                    p.getCreatedAt()
+                    post.getLikeCount(),
+                    post.getViewCount(),
+                    post.getCommentCount(),
+                    post.getCreatedAt()
             );
         }).toList();
         return new CursorResponse<>(content, nextCursorId, nextCursorValue, hasNext);
@@ -78,11 +78,11 @@ public class PostViewService {
     @Transactional
     public PostDetailResponse getPostDetail(long postId, long userId) {
         Post post = postRepository.findByIdOrThrow(postId);
-        User authorUser = userRepository.findByIdOrThrow(post.getUserId());
-        Author author = new Author(authorUser.getNickname(), authorUser.getProfileImageUrl());
-        User viewer = userRepository.findByIdOrThrow(userId);
+        User user = post.getUser();
+        Author author = new Author(user.getNickname(), user.getProfileImageUrl());
         PageResponse<CommentResponse> commentsPage =
                 commentService.getCommentList(postId, COMMENT_PAGE);
+        User viewer = userRepository.findByIdOrThrow(userId);
         post.increaseViewCount();
         return new PostDetailResponse(
                 post.getId(),

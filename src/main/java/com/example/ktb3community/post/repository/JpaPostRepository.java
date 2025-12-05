@@ -1,6 +1,7 @@
 package com.example.ktb3community.post.repository;
 
 import com.example.ktb3community.post.domain.Post;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -12,6 +13,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface JpaPostRepository extends JpaRepository<Post, Long> {
+    @EntityGraph(attributePaths = {"user"})
     Optional<Post> findByIdAndDeletedAtIsNull(Long id);
 
     @Modifying(clearAutomatically = true)

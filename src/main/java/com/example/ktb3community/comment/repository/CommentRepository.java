@@ -20,5 +20,5 @@ public interface CommentRepository {
 
     int softDeleteByUserId(Long userId, Instant now);
 
-    int softDeleteByPostId(Long postId, Instant now);
+    void softDeleteByPostId(Long postId, Instant now);
 }

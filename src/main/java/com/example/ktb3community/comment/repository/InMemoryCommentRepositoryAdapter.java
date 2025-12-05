@@ -101,8 +101,8 @@ public class InMemoryCommentRepositoryAdapter implements CommentRepository {
     }
 
     @Override
-    public int softDeleteByPostId(Long postId, Instant now) {
-        return comments.values().stream()
+    public void softDeleteByPostId(Long postId, Instant now) {
+        comments.values().stream()
                 .filter(comment -> comment.getDeletedAt() == null && comment.getPostId().equals(postId))
                 .mapToInt(comment -> {
                     comment.delete(now);

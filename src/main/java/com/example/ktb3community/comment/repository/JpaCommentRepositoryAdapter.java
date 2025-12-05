@@ -45,7 +45,7 @@ public class JpaCommentRepositoryAdapter implements CommentRepository {
     }
 
     @Override
-    public int softDeleteByPostId(Long postId, Instant now) {
-        return jpaCommentRepository.softDeleteByPostId(postId, now);
+    public void softDeleteByPostId(Long postId, Instant now) {
+        jpaCommentRepository.softDeleteByPostId(postId, now);
     }
 }

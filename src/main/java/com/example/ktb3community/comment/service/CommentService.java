@@ -12,7 +12,6 @@ import com.example.ktb3community.post.domain.Post;
 import com.example.ktb3community.post.repository.PostRepository;
 import com.example.ktb3community.post.service.PostCommentCounter;
 import com.example.ktb3community.user.domain.User;
-import com.example.ktb3community.user.exception.UserNotFoundException;
 import com.example.ktb3community.user.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -22,10 +21,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -39,9 +34,9 @@ public class CommentService {
     private static final int PAGE_SIZE = 10;
 
     @Transactional
-    public CommentResponse createComment(Long postId, Long userId, CreateCommentRequest createCommentRequest) {
-        User user = userRepository.findByIdOrThrow(userId);
+    public CommentResponse createComment(long postId, long userId, CreateCommentRequest createCommentRequest) {
         Post post = postRepository.findByIdOrThrow(postId);
+        User user = userRepository.findByIdOrThrow(userId);
         Comment saved = commentRepository.save(Comment.createNew(post, user,
                 createCommentRequest.content()));
         postCommentCounter.increaseCommentCount(postId);
@@ -55,44 +50,41 @@ public class CommentService {
         PageRequest pageRequest = PageRequest.of(requestedPage - 1, PAGE_SIZE,
                 Sort.by(Sort.Direction.DESC, "createdAt")
                         .and(Sort.by(Sort.Direction.DESC, "id")));
+
         Page<Comment> commentPage = commentRepository.findByPost(post, pageRequest);
 
-        Set<Long> authorIds = commentPage.getContent().stream()
-                .map(Comment::getUserId)
-                .collect(Collectors.toSet());
-
-        Map<Long, User> authorMap = userRepository.findAllByIdIn(authorIds).stream()
-                .collect(Collectors.toMap(User::getId, user -> user));
-
-        List<CommentResponse> content = commentPage.getContent().stream().map(c -> {
-            User user = authorMap.get(c.getUserId());
-            if(user == null){
-                throw new UserNotFoundException();
-            }
+        Page<CommentResponse> mapped = commentPage.map(c -> {
+            User user = c.getUser();
             return commentMapper.toCommentResponse(c, user);
-        }).toList();
-        return new PageResponse<>(content, commentPage.getNumber() + 1, commentPage.getSize(), commentPage.getTotalPages());
+        });
+
+        return new PageResponse<>(
+                mapped.getContent(),
+                mapped.getNumber() + 1,
+                mapped.getSize(),
+                mapped.getTotalPages()
+        );
     }
 
     @Transactional
-    public CommentResponse updateComment(Long commentId, Long userId, CreateCommentRequest createCommentRequest) {
+    public CommentResponse updateComment(long commentId, long userId, CreateCommentRequest createCommentRequest) {
         Comment comment =  commentRepository.findByIdOrThrow(commentId);
-        User user = userRepository.findByIdOrThrow(userId);
-        if(!comment.getUserId().equals(user.getId())) {
+        if(!comment.getUserId().equals(userId)) {
             throw new BusinessException(ErrorCode.AUTH_FORBIDDEN);
         }
         comment.updateContent(createCommentRequest.content());
+        User user = comment.getUser();
         return commentMapper.toCommentResponse(comment, user);
     }
 
     @Transactional
-    public void deleteComment(Long commentId, Long userId) {
+    public void deleteComment(long commentId, long userId) {
         Comment comment =  commentRepository.findByIdOrThrow(commentId);
-        User user = userRepository.findByIdOrThrow(userId);
-        if(!comment.getUserId().equals(user.getId())) {
+        if (!comment.getUserId().equals(userId)) {
             throw new BusinessException(ErrorCode.AUTH_FORBIDDEN);
         }
         comment.delete(Instant.now());
+
         Post post = postRepository.findByIdOrThrow(comment.getPostId());
         postCommentCounter.decreaseCommentCount(post.getId());
     }
