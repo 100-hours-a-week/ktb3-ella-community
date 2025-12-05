@@ -86,12 +86,11 @@ public class UserService {
 
     @Transactional
     public void withdrawMe(Long userId, HttpServletResponse response){
-        User user = userRepository.findByIdOrThrow(userId);
         Instant now = Instant.now();
         commentRepository.softDeleteByUserId(userId, now);
         postRepository.softDeleteByUserId(userId, now);
         userRepository.softDeleteById(userId, now);
-        refreshTokenService.revokeAllByUser(user.getId());
+        refreshTokenService.revokeAllByUser(userId);
         CookieUtil.removeRefreshTokenCookie(response);
     }
 }

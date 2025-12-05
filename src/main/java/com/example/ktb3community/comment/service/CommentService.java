@@ -39,7 +39,7 @@ public class CommentService {
         User user = userRepository.findByIdOrThrow(userId);
         Comment saved = commentRepository.save(Comment.createNew(post, user,
                 createCommentRequest.content()));
-        postCommentCounter.increaseCommentCount(postId);
+        postCommentCounter.increaseCommentCount(post);
         return commentMapper.toCommentResponse(saved, user);
     }
 
@@ -86,6 +86,6 @@ public class CommentService {
         comment.delete(Instant.now());
 
         Post post = postRepository.findByIdOrThrow(comment.getPostId());
-        postCommentCounter.decreaseCommentCount(post.getId());
+        postCommentCounter.decreaseCommentCount(post);
     }
 }

@@ -1,6 +1,8 @@
 package com.example.ktb3community.post.service;
 
+import com.example.ktb3community.post.domain.Post;
+
 public interface PostCommentCounter {
-    void increaseCommentCount(Long postId);
-    void decreaseCommentCount(Long postId);
+    void increaseCommentCount(Post post);
+    void decreaseCommentCount(Post post);
 }

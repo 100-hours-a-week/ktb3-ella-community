@@ -33,7 +33,6 @@ public class PostService implements PostCommentCounter {
 
     @Transactional
     public CreatePostResponse updatePost(Long postId, Long userId, CreatePostRequest createPostRequest) {
-        userRepository.findByIdOrThrow(userId);
         Post post = postRepository.findByIdOrThrow(postId);
         if(!post.getUserId().equals(userId)){
             throw new BusinessException(ErrorCode.AUTH_FORBIDDEN);
@@ -46,28 +45,24 @@ public class PostService implements PostCommentCounter {
 
     @Transactional
     public void deletePost(Long postId, Long userId) {
-        userRepository.findByIdOrThrow(userId);
         Post post = postRepository.findByIdOrThrow(postId);
         if(!post.getUserId().equals(userId)){
             throw new BusinessException(ErrorCode.AUTH_FORBIDDEN);
         }
         Instant now = Instant.now();
         commentRepository.softDeleteByPostId(postId, now);
-        Post postToDelete = postRepository.findByIdOrThrow(postId);
-        postToDelete.delete(now);
+        post.delete(now);
     }
 
     @Transactional
     @Override
-    public void increaseCommentCount(Long postId) {
-        Post post = postRepository.findByIdOrThrow(postId);
+    public void increaseCommentCount(Post post) {
         post.increaseCommentCount();
     }
 
     @Transactional
     @Override
-    public void decreaseCommentCount(Long postId) {
-        Post post = postRepository.findByIdOrThrow(postId);
+    public void decreaseCommentCount(Post post) {
         post.decreaseCommentCount();
     }
 }
