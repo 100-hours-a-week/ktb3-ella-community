@@ -1,7 +1,6 @@
 package com.example.ktb3community.comment.repository;
 
 import com.example.ktb3community.comment.domain.Comment;
-import com.example.ktb3community.post.domain.Post;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -17,7 +16,7 @@ public interface JpaCommentRepository extends JpaRepository<Comment, Long> {
     Optional<Comment> findByIdAndDeletedAtIsNull(Long id);
 
     @EntityGraph(attributePaths = {"user"})
-    Page<Comment> findByPostAndDeletedAtIsNull(Post post, Pageable pageable);
+    Page<Comment> findByPost_IdAndDeletedAtIsNull(Long postId, Pageable pageable);
 
     @Modifying(clearAutomatically = true)
     @Query("update Comment c set c.deletedAt = :now where c.user.id = :userId and c.deletedAt is null")

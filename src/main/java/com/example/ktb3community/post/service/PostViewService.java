@@ -24,7 +24,6 @@ import java.util.List;
 @AllArgsConstructor
 public class PostViewService {
     private final PostRepository postRepository;
-    private final UserRepository userRepository;
     private final PostLikeRepository postLikeRepository;
     private final CommentService commentService;
 
@@ -82,7 +81,6 @@ public class PostViewService {
         Author author = new Author(user.getNickname(), user.getProfileImageUrl());
         PageResponse<CommentResponse> commentsPage =
                 commentService.getCommentList(postId, COMMENT_PAGE);
-        User viewer = userRepository.findByIdOrThrow(userId);
         post.increaseViewCount();
         return new PostDetailResponse(
                 post.getId(),
@@ -93,7 +91,7 @@ public class PostViewService {
                 post.getLikeCount(),
                 post.getViewCount(),
                 post.getCommentCount(),
-                postLikeRepository.exists(post, viewer),
+                postLikeRepository.exists(postId, userId),
                 post.getCreatedAt(),
                 commentsPage
         );

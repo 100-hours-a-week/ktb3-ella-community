@@ -35,8 +35,8 @@ public class JpaCommentRepositoryAdapter implements CommentRepository {
     }
 
     @Override
-    public Page<Comment> findByPost(Post post, Pageable pageable) {
-        return jpaCommentRepository.findByPostAndDeletedAtIsNull(post, pageable);
+    public Page<Comment> findByPostId(Long postId, Pageable pageable) {
+        return jpaCommentRepository.findByPost_IdAndDeletedAtIsNull(postId, pageable);
     }
 
     @Override

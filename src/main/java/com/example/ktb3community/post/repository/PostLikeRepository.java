@@ -4,7 +4,7 @@ import com.example.ktb3community.post.domain.Post;
 import com.example.ktb3community.user.domain.User;
 
 public interface PostLikeRepository {
-    boolean exists(Post post, User user);
+    boolean exists(long postId, long userId);
 
     boolean add(Post post, User user);
 

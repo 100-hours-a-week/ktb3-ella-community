@@ -51,8 +51,7 @@ public class InMemoryCommentRepositoryAdapter implements CommentRepository {
     }
 
     @Override
-    public Page<Comment> findByPost(Post post, Pageable pageable) {
-        Long postId = post.getId();
+    public Page<Comment> findByPostId(Long postId, Pageable pageable) {
         List<Comment> all = comments.values().stream()
                 .filter(comment -> comment.getDeletedAt() == null && comment.getPostId().equals(postId))
                 .sorted(resolveComparator(pageable.getSort()))

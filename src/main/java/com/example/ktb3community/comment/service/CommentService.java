@@ -45,13 +45,12 @@ public class CommentService {
 
     @Transactional(readOnly = true)
     public PageResponse<CommentResponse> getCommentList(long postId, int page){
-        Post post = postRepository.findByIdOrThrow(postId);
         int requestedPage = Math.max(page, 1);
         PageRequest pageRequest = PageRequest.of(requestedPage - 1, PAGE_SIZE,
                 Sort.by(Sort.Direction.DESC, "createdAt")
                         .and(Sort.by(Sort.Direction.DESC, "id")));
 
-        Page<Comment> commentPage = commentRepository.findByPost(post, pageRequest);
+        Page<Comment> commentPage = commentRepository.findByPostId(postId, pageRequest);
 
         Page<CommentResponse> mapped = commentPage.map(c -> {
             User user = c.getUser();
