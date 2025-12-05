@@ -54,58 +54,17 @@ public class RefreshTokenService {
 
     @Transactional
     public TokenDto rotate(String oldRefreshToken, String oldAccessToken) {
-        // 동시 요청인지 먼저 확인
-        String graceKey = "grace:" + oldRefreshToken;
-        String cachedTokenJson = redisTemplate.opsForValue().get(graceKey);
-
-        if(cachedTokenJson != null) {
-            try {
-                return objectMapper.readValue(cachedTokenJson, TokenDto.class);
-            } catch (JsonProcessingException e){
-                log.error("Grace Period 캐시 파싱 실패");
-            }
+        // grace 기간 내 동시 요청 확인
+        TokenDto cached = getFromGraceCache(oldRefreshToken);
+        if (cached != null) {
+            return cached;
         }
-
-        String familyIdFromAccess = jwtTokenProvider.getClaim(oldAccessToken, "familyId");
-        String userIdClaim = jwtTokenProvider.getClaim(oldAccessToken, "userId");
-
-        if (familyIdFromAccess == null || userIdClaim == null) {
-            throw new BusinessException(ErrorCode.INVALID_ACCESS_TOKEN);
-        }
-
-        RefreshToken oldToken = refreshTokenRepository.findByToken(oldRefreshToken)
-                .orElse(null);
-
-        if(oldToken == null ) {
-            List<RefreshToken> familyTokens = refreshTokenRepository.findAllByFamilyId(familyIdFromAccess);
-            if (!familyTokens.isEmpty()) {
-                refreshTokenRepository.deleteAll(familyTokens);
-            }
-            throw new BusinessException(ErrorCode.INVALID_TOKEN_REUSE_DETECTED);
-        }
-
-        if (!oldToken.getFamilyId().equals(familyIdFromAccess) || !oldToken.getUserId().toString().equals(userIdClaim)) {
-            List<RefreshToken> familyTokens = refreshTokenRepository.findAllByFamilyId(oldToken.getFamilyId());
-            if (!familyTokens.isEmpty()) {
-                refreshTokenRepository.deleteAll(familyTokens);
-            }
-            refreshTokenRepository.delete(oldToken);
-            throw new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN);
-        }
+        AccessClaims claims = extractClaimsOrThrow(oldAccessToken);
+        RefreshToken oldToken = validateAndHandleOldToken(oldRefreshToken, claims);
 
         refreshTokenRepository.delete(oldToken);
         TokenDto newTokenDto = createRefreshToken(oldToken.getUserId(), oldToken.getFamilyId());
-
-        try {
-            String newTokenJson = objectMapper.writeValueAsString(newTokenDto);
-            redisTemplate.opsForValue().set(
-                    graceKey,
-                    newTokenJson,
-                    Duration.ofSeconds(GRACE_PERIOD_SECONDS)
-            );
-        } catch (JsonProcessingException e) {
-            log.error("Grace Period 캐시 저장 실패");
-        }
+        putToGraceCache(oldRefreshToken, newTokenDto);
 
         return newTokenDto;
     }
@@ -123,4 +82,85 @@ public class RefreshTokenService {
             refreshTokenRepository.deleteAll(tokens);
         }
     }
+
+    // Grace Period 캐시에서 토큰 조회
+    private TokenDto getFromGraceCache(String oldRefreshToken) {
+        String key = "grace:" + oldRefreshToken;
+        String cachedJson = redisTemplate.opsForValue().get(key);
+        if (cachedJson == null) {
+            return null;
+        }
+        try {
+            return objectMapper.readValue(cachedJson, TokenDto.class);
+        } catch (JsonProcessingException e) {
+            log.error("Grace Period 캐시 파싱 실패", e);
+            return null;
+        }
+    }
+
+    // Grace Period 캐시에 토큰 저장
+    private void putToGraceCache(String oldRefreshToken, TokenDto tokenDto) {
+        try {
+            String key = "grace:" + oldRefreshToken;
+            String json = objectMapper.writeValueAsString(tokenDto);
+            redisTemplate.opsForValue().set(
+                    key,
+                    json,
+                    Duration.ofSeconds(GRACE_PERIOD_SECONDS)
+            );
+        } catch (JsonProcessingException e) {
+            log.error("Grace Period 캐시 저장 실패", e);
+        }
+    }
+
+    // AccessToken에서 familyId, userId 추출 및 검증
+    private AccessClaims extractClaimsOrThrow(String accessToken) {
+        String familyId = jwtTokenProvider.getClaim(accessToken, "familyId");
+        String userIdClaim = jwtTokenProvider.getClaim(accessToken, "userId");
+
+        if (familyId == null || userIdClaim == null) {
+            throw new BusinessException(ErrorCode.INVALID_ACCESS_TOKEN);
+        }
+
+        try {
+            Long userId = Long.valueOf(userIdClaim);
+            return new AccessClaims(familyId, userId);
+        } catch (NumberFormatException e) {
+            throw new BusinessException(ErrorCode.INVALID_ACCESS_TOKEN);
+        }
+    }
+
+    // old RT 검증 및 탈취/위조 처리
+    private RefreshToken validateAndHandleOldToken(String oldRefreshToken, AccessClaims claims) {
+        RefreshToken oldToken = refreshTokenRepository.findByToken(oldRefreshToken)
+                .orElse(null);
+
+        // old RT 자체가 없는 경우
+        if (oldToken == null) {
+            List<RefreshToken> familyTokens = refreshTokenRepository.findAllByFamilyId(claims.familyId());
+            if (!familyTokens.isEmpty()) {
+                refreshTokenRepository.deleteAll(familyTokens);
+            }
+            throw new BusinessException(ErrorCode.INVALID_TOKEN_REUSE_DETECTED);
+        }
+
+        // familyId or userId 불일치 → 탈취/위조 가능성
+        boolean sameFamily = oldToken.getFamilyId().equals(claims.familyId());
+        boolean sameUser = oldToken.getUserId().equals(claims.userId());
+
+        if (!sameFamily || !sameUser) {
+            List<RefreshToken> familyTokens = refreshTokenRepository.findAllByFamilyId(oldToken.getFamilyId());
+            if (!familyTokens.isEmpty()) {
+                refreshTokenRepository.deleteAll(familyTokens);
+            }
+            refreshTokenRepository.delete(oldToken);
+            throw new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
+
+        return oldToken;
+    }
+
+    // 접근 토큰에서 familyId, userId 추출용 레코드
+    private record AccessClaims(String familyId, Long userId) {}
+
 }

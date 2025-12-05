@@ -15,8 +15,6 @@ import com.example.ktb3community.post.repository.PostRepository;
 import com.example.ktb3community.user.domain.User;
 import com.example.ktb3community.user.repository.UserRepository;
 import lombok.AllArgsConstructor;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
