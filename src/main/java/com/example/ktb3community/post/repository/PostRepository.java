@@ -1,10 +1,10 @@
 package com.example.ktb3community.post.repository;
 
-import com.example.ktb3community.post.PostSort;
 import com.example.ktb3community.post.domain.Post;
-import org.springframework.data.domain.Pageable;
+import com.example.ktb3community.post.dto.CursorPageRequest;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,5 +17,7 @@ public interface PostRepository {
 
     int softDeleteByUserId(Long userId, Instant now);
 
-    List<Post> findAllByCursor(Long cursorId, Long cursorValue, PostSort sort, Pageable pageable);
+    List<Post> findAllByCursor(CursorPageRequest request);
+
+    List<Post> findAllByIdIn(Collection<Long> ids);
 }

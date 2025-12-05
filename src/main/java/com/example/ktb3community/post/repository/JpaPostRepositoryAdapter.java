@@ -2,16 +2,17 @@ package com.example.ktb3community.post.repository;
 
 import com.example.ktb3community.post.PostSort;
 import com.example.ktb3community.post.domain.Post;
+import com.example.ktb3community.post.dto.CursorPageRequest;
 import com.example.ktb3community.post.exception.PostNotFoundException;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Primary;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -46,8 +47,8 @@ public class JpaPostRepositoryAdapter implements PostRepository {
     }
 
     @Override
-    public List<Post> findAllByCursor(Long cursorId, Long cursorValue, PostSort sort, Pageable pageable) {
-
+    public List<Post> findAllByCursor(CursorPageRequest request) {
+        PostSort sort = request.sort();
         NumberExpression<Long> sortPath = getSortPath(sort);
 
         return queryFactory
@@ -55,13 +56,13 @@ public class JpaPostRepositoryAdapter implements PostRepository {
                 .join(post.user).fetchJoin()
                 .where(
                         post.deletedAt.isNull(),
-                        cursorCondition(cursorId, cursorValue, sortPath)
+                        cursorCondition(request, sortPath)
                 )
                 .orderBy(
                         sortPath.desc(),
                         post.id.desc()
                 )
-                .limit(pageable.getPageSize())
+                .limit(request.limit())
                 .fetch();
     }
 
@@ -70,21 +71,32 @@ public class JpaPostRepositoryAdapter implements PostRepository {
             case VIEW -> post.viewCount;
             case LIKE -> post.likeCount;
             case CMT -> post.commentCount;
-            default -> post.id;
+            case LATEST -> post.id;
         };
     }
 
-    private BooleanExpression cursorCondition(Long cursorId, Long cursorValue, NumberExpression<Long> path) {
+    private BooleanExpression cursorCondition(CursorPageRequest request,
+                                              NumberExpression<Long> sortPath) {
+        Long cursorId = request.cursorId();
+        Long cursorValue = request.cursorValue();
+        PostSort sort = request.sort();
 
-        if (cursorId == null) return null; // 첫 페이지
+        // 첫 페이지
+        if (cursorId == null) {
+            return null;
+        }
 
-        // 최신순일 경우: ID만 비교
-        if (path.equals(post.id)) {
+        // LATEST
+        if (!sort.usesCursorValue()) {
             return post.id.lt(cursorId);
         }
 
-        // 나머지 경우
-        return path.lt(cursorValue)
-                .or(path.eq(cursorValue).and(post.id.lt(cursorId)));
+        return sortPath.lt(cursorValue)
+                .or(sortPath.eq(cursorValue).and(post.id.lt(cursorId)));
+    }
+
+    @Override
+    public List<Post> findAllByIdIn(Collection<Long> ids) {
+        return jpaPostRepository.findAllByIdInAndDeletedAtIsNull(ids);
     }
 }

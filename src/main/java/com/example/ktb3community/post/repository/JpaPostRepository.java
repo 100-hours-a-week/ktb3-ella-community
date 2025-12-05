@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.Instant;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 public interface JpaPostRepository extends JpaRepository<Post, Long> {
@@ -15,4 +17,6 @@ public interface JpaPostRepository extends JpaRepository<Post, Long> {
     @Modifying(clearAutomatically = true)
     @Query("update Post p set p.deletedAt = :now, p.updatedAt = :now where p.user.id = :userId and p.deletedAt is null")
     int softDeleteByUserId(@Param("userId") Long userId, @Param("now") Instant now);
+
+    List<Post> findAllByIdInAndDeletedAtIsNull(Collection<Long> ids);
 }

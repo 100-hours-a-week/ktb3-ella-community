@@ -2,17 +2,13 @@ package com.example.ktb3community.post.repository.inmemory;
 
 import com.example.ktb3community.post.PostSort;
 import com.example.ktb3community.post.domain.Post;
+import com.example.ktb3community.post.dto.CursorPageRequest;
 import com.example.ktb3community.post.exception.PostNotFoundException;
 import com.example.ktb3community.post.repository.PostRepository;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Comparator;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -53,33 +49,6 @@ public class InMemoryPostRepositoryAdapter implements PostRepository {
                 .orElseThrow(PostNotFoundException::new);
     }
 
-    private Comparator<Post> resolveComparator(Sort sort) {
-        Comparator<Post> comparator = null;
-        for (Sort.Order order : sort) {
-            Comparator<Post> propertyComparator = propertyComparator(order.getProperty());
-            if (propertyComparator == null) {
-                continue;
-            }
-            if (order.isDescending()) {
-                propertyComparator = propertyComparator.reversed();
-            }
-            comparator = (comparator == null) ? propertyComparator : comparator.thenComparing(propertyComparator);
-        }
-        return comparator != null ? comparator : Comparator.comparing(Post::getId);
-    }
-
-    private Comparator<Post> propertyComparator(String property) {
-        return POST_COMPARATORS.get(property);
-    }
-
-    private static final Map<String, Comparator<Post>> POST_COMPARATORS = Map.of(
-            "createdAt", Comparator.comparing(Post::getCreatedAt),
-            "viewCount", Comparator.comparingLong(Post::getViewCount),
-            "likeCount", Comparator.comparingLong(Post::getLikeCount),
-            "commentCount", Comparator.comparingLong(Post::getCommentCount),
-            "id", Comparator.comparing(Post::getId)
-    );
-
     @Override
     public int softDeleteByUserId(Long userId, Instant now) {
         return posts.values().stream()
@@ -92,34 +61,44 @@ public class InMemoryPostRepositoryAdapter implements PostRepository {
     }
 
     @Override
-    public List<Post> findAllByCursor(Long cursorId, Long cursorValue, PostSort sort, Pageable pageable) {
-        Comparator<Post> comparator = resolveComparator(sort.sort());
+    public List<Post> findAllByCursor(CursorPageRequest request) {
+        PostSort sort = request.sort();
+        Comparator<Post> comparator = sort.descendingComparator();
+
         return posts.values().stream()
                 .filter(post -> post.getDeletedAt() == null)
-                .filter(post -> {
-                    if (cursorId == null || cursorValue == null) {
-                        return true;
-                    }
-                    int cmp = compareBySort(post, cursorValue, sort);
-                    if (cmp < 0) {
-                        return true;
-                    } else if (cmp == 0) {
-                        return post.getId() < cursorId;
-                    } else {
-                        return false;
-                    }
-                })
+                .filter(post -> isAfterCursor(post, request))
                 .sorted(comparator)
-                .limit(pageable.getPageSize())
+                .limit(request.limit())
                 .toList();
     }
 
-    private int compareBySort(Post post, Long cursorValue, PostSort sort) {
-        return switch (sort) {
-            case VIEW -> Long.compare(post.getViewCount(), cursorValue);
-            case LIKE -> Long.compare(post.getLikeCount(), cursorValue);
-            case CMT -> Long.compare(post.getCommentCount(), cursorValue);
-            default -> Long.compare(post.getId(), cursorValue);
-        };
+    private boolean isAfterCursor(Post post, CursorPageRequest request) {
+        Long cursorId = request.cursorId();
+        Long cursorValue = request.cursorValue();
+        PostSort sort = request.sort();
+
+        // 첫 페이지
+        if (cursorId == null) {
+            return true;
+        }
+
+        // LATEST처럼 cursorValue를 쓰지 않는 경우
+        if (!sort.usesCursorValue()) {
+            return post.getId() < cursorId;
+        }
+
+        long key = sort.extractKey(post);
+        if (key < cursorValue) return true;
+        if (key > cursorValue) return false;
+        return post.getId() < cursorId;
+    }
+
+    @Override
+    public List<Post> findAllByIdIn(Collection<Long> ids) {
+        return ids.stream()
+                .map(posts::get)
+                .filter(post -> post != null && post.getDeletedAt() == null)
+                .toList();
     }
 }

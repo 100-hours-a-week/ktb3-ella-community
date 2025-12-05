@@ -7,6 +7,7 @@ import com.example.ktb3community.common.pagination.PageResponse;
 import com.example.ktb3community.post.PostSort;
 import com.example.ktb3community.post.domain.Post;
 import com.example.ktb3community.post.dto.Author;
+import com.example.ktb3community.post.dto.CursorPageRequest;
 import com.example.ktb3community.post.dto.PostDetailResponse;
 import com.example.ktb3community.post.dto.PostListResponse;
 import com.example.ktb3community.post.repository.PostLikeRepository;
@@ -33,14 +34,20 @@ public class PostViewService {
 
     public CursorResponse<PostListResponse> getPostList(Long cursorId, Long cursorValue, int size, PostSort sort) {
 
-        Pageable pageable = PageRequest.of(0, size + 1);
+        int limit = size + 1;
 
-        List<Post> posts = postRepository.findAllByCursor(cursorId, cursorValue, sort, pageable);
+        CursorPageRequest request = new CursorPageRequest(
+                cursorId,
+                cursorValue,
+                limit,
+                sort
+        );
 
-        boolean hasNext = false;
-        if (posts.size() > size) {
-            hasNext = true;
-            posts.remove(size);
+        List<Post> posts = postRepository.findAllByCursor(request);
+
+        boolean hasNext = posts.size() > size;
+        if (hasNext) {
+            posts = posts.subList(0, size);
         }
 
         Long nextCursorId = null;
@@ -49,13 +56,9 @@ public class PostViewService {
         if (!posts.isEmpty()) {
             Post lastPost = posts.getLast();
             nextCursorId = lastPost.getId();
-
-            nextCursorValue = switch (sort) {
-                case VIEW -> lastPost.getViewCount();
-                case LIKE -> lastPost.getLikeCount();
-                case CMT -> lastPost.getCommentCount();
-                default -> null;
-            };
+            nextCursorValue = sort.usesCursorValue()
+                    ? sort.extractKey(lastPost)
+                    : null;
         }
 
         List<PostListResponse> content = posts.stream().map(p -> {

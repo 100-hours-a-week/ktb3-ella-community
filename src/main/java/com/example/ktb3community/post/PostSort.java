@@ -1,26 +1,38 @@
 package com.example.ktb3community.post;
 
+import com.example.ktb3community.post.domain.Post;
 import lombok.Getter;
-import org.springframework.data.domain.Sort;
+
+import java.util.Comparator;
+import java.util.function.ToLongFunction;
 
 @Getter
 public enum PostSort {
-    NEW(Sort.Direction.DESC, "createdAt"),
-    VIEW(Sort.Direction.DESC, "viewCount"),
-    LIKE(Sort.Direction.DESC, "likeCount"),
-    CMT(Sort.Direction.DESC, "commentCount");
+    LATEST(Post::getId),
+    VIEW(Post::getViewCount),
+    LIKE(Post::getLikeCount),
+    CMT(Post::getCommentCount);
 
-    private final Sort sort;
-    private final String property;
+    private final ToLongFunction<Post> keyExtractor;
 
-    PostSort(Sort.Direction direction, String property) {
-        this.property = property;
-        // 동일 정렬 값인 경우 id 오름차순으로 안정 정렬
-        this.sort = Sort.by(new Sort.Order(direction, property))
-                .and(Sort.by(Sort.Direction.DESC, "id"));
+    PostSort(ToLongFunction<Post> keyExtractor) {
+        this.keyExtractor = keyExtractor;
     }
 
-    public Sort sort() {
-        return sort;
+    public long extractKey(Post post) {
+        return keyExtractor.applyAsLong(post);
+    }
+
+    // cursorValue를 실제로 사용하는 정렬인지 여부
+    public boolean usesCursorValue() {
+        return this != LATEST;
+    }
+
+    // 인메모리 정렬용 공통 comparator
+    public Comparator<Post> descendingComparator() {
+        return Comparator
+                .comparingLong(this::extractKey)
+                .reversed()
+                .thenComparing(Post::getId, Comparator.reverseOrder());
     }
 }
