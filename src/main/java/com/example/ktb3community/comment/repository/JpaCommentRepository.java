@@ -13,6 +13,7 @@ import java.time.Instant;
 import java.util.Optional;
 
 public interface JpaCommentRepository extends JpaRepository<Comment, Long> {
+    @EntityGraph(attributePaths = {"user"})
     Optional<Comment> findByIdAndDeletedAtIsNull(Long id);
 
     @EntityGraph(attributePaths = {"user"})
