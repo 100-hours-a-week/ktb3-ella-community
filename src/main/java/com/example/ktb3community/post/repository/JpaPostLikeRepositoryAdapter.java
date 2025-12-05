@@ -20,7 +20,7 @@ public class JpaPostLikeRepositoryAdapter implements PostLikeRepository {
     @Override
     @Transactional(readOnly = true)
     public boolean exists(long postId, long userId) {
-        return jpaPostLikeRepository.existsByPostIdAndUserIdAndDeletedAtIsNull(postId, userId);
+        return jpaPostLikeRepository.existsByPost_IdAndUser_IdAndDeletedAtIsNull(postId, userId);
     }
 
     @Override

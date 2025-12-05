@@ -53,13 +53,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = header.substring(7);
         try {
             Long userId = jwtTokenProvider.getUserIdFromAccessToken(token);
+            String email = jwtTokenProvider.getEmailFromAccessToken(token);
+            String role = jwtTokenProvider.getRoleFromAccessToken(token);
 
             // 이미 다른 필터나 로직에서 인증을 처리한 경우가 아니라면
             if (userId != null &&
                     SecurityContextHolder.getContext().getAuthentication() == null) {
 
                 CustomUserDetails userDetails =
-                        (CustomUserDetails) userDetailsService.loadUserByUsername(userId.toString());
+                        CustomUserDetails.fromClaims(userId, email, role);
 
                 // Authentication 객체 생성
                 UsernamePasswordAuthenticationToken authentication =

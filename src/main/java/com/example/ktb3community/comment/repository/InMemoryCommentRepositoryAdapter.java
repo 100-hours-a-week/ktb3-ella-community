@@ -2,7 +2,6 @@ package com.example.ktb3community.comment.repository;
 
 import com.example.ktb3community.comment.domain.Comment;
 import com.example.ktb3community.comment.exception.CommentNotFound;
-import com.example.ktb3community.post.domain.Post;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;

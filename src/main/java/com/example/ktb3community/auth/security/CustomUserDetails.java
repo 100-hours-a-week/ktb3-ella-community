@@ -17,17 +17,36 @@ public class CustomUserDetails implements UserDetails {
     private final String password;
     private final Collection<? extends GrantedAuthority> authorities;
 
-    private CustomUserDetails(User user, Collection<? extends GrantedAuthority> authorities) {
-        this.id = user.getId();
-        this.email = user.getEmail();
-        this.password = user.getPasswordHash();
+    private CustomUserDetails(
+            Long id,
+            String email,
+            String password,
+            Collection<? extends GrantedAuthority> authorities
+    ) {
+        this.id = id;
+        this.email = email;
+        this.password = password;
         this.authorities = authorities;
     }
 
     public static CustomUserDetails from(User user) {
         String roleName = user.getRole().name();
-        List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(roleName));
-        return new CustomUserDetails(user, authorities);
+        List<GrantedAuthority> authorities =
+                List.of(new SimpleGrantedAuthority(roleName));
+
+        return new CustomUserDetails(
+                user.getId(),
+                user.getEmail(),
+                user.getPasswordHash(),
+                authorities
+        );
+    }
+
+    public static CustomUserDetails fromClaims(Long id, String email, String roleName) {
+        List<GrantedAuthority> authorities =
+                List.of(new SimpleGrantedAuthority(roleName));
+
+        return new CustomUserDetails(id, email, null, authorities);
     }
 
     @Override

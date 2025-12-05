@@ -2,6 +2,7 @@ package com.example.ktb3community.jwt;
 
 import com.example.ktb3community.common.error.ErrorCode;
 import com.example.ktb3community.exception.BusinessException;
+import com.example.ktb3community.user.domain.User;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,14 +28,16 @@ public class JwtTokenProvider {
         return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
-    public String createAccessToken(Long userId, String familyId) {
+    public String createAccessToken(User user, String familyId) {
         Instant now = Instant.now();
         Instant exp = now.plus(accessExpMinutes, ChronoUnit.MINUTES);
 
         return Jwts.builder()
-                .setSubject(userId.toString())
-                .claim("userId", userId)
+                .setSubject(user.getId().toString())
+                .claim("userId", user.getId())
                 .claim("familyId", familyId)
+                .claim("email", user.getEmail())
+                .claim("role", user.getRole().name())
                 .setIssuedAt(Date.from(now))
                 .setExpiration(Date.from(exp))
                 .signWith(getKey(), SignatureAlgorithm.HS256)
@@ -59,22 +62,18 @@ public class JwtTokenProvider {
         return Long.parseLong(claims.getSubject());
     }
 
-    public String getClaim(String token, String claimKey) {
-        try {
-            Claims claims = Jwts.parserBuilder()
-                    .setSigningKey(getKey())
-                    .build()
-                    .parseClaimsJws(token)
-                    .getBody();
+    public String getEmailFromAccessToken(String accessToken) {
+        Claims claims = parseClaims(accessToken);
+        return claims.get("email", String.class);
+    }
 
-            Object value = claims.get(claimKey);
-            return value != null ? String.valueOf(value) : null;
+    public String getRoleFromAccessToken(String accessToken) {
+        Claims claims = parseClaims(accessToken);
+        return claims.get("role", String.class);
+    }
 
-        } catch (ExpiredJwtException e) {
-            Object value = e.getClaims().get(claimKey);
-            return value != null ? String.valueOf(value) : null;
-        } catch (Exception e) {
-            throw new BusinessException(ErrorCode.INVALID_ACCESS_TOKEN);
-        }
+    public String getFamilyIdFromAccessToken(String accessToken) {
+        Claims claims = parseClaims(accessToken);
+        return claims.get("familyId", String.class);
     }
 }

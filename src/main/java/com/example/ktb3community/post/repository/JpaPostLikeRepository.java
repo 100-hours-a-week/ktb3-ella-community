@@ -9,7 +9,7 @@ import java.util.Optional;
 
 public interface JpaPostLikeRepository extends JpaRepository<Like, Long> {
 
-    boolean existsByPostIdAndUserIdAndDeletedAtIsNull(Long postId, Long userId);
+    boolean existsByPost_IdAndUser_IdAndDeletedAtIsNull(Long postId, Long userId);
 
     Optional<Like> findByPostAndUser(Post post, User user);
 

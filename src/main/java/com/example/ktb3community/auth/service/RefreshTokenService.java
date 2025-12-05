@@ -6,6 +6,8 @@ import com.example.ktb3community.auth.repository.RefreshTokenRepository;
 import com.example.ktb3community.common.error.ErrorCode;
 import com.example.ktb3community.exception.BusinessException;
 import com.example.ktb3community.jwt.JwtTokenProvider;
+import com.example.ktb3community.user.domain.User;
+import com.example.ktb3community.user.repository.UserRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +26,7 @@ import java.util.UUID;
 public class RefreshTokenService {
 
     private final RefreshTokenRepository refreshTokenRepository;
+    private final UserRepository userRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final RedisTemplate<String, String> redisTemplate;
     private final ObjectMapper objectMapper;
@@ -40,7 +43,8 @@ public class RefreshTokenService {
     // 로그인 유지 시 기존 familyId로 토큰 발급
     @Transactional
     public TokenDto createRefreshToken(Long userId, String familyId) {
-        String newAccessToken = jwtTokenProvider.createAccessToken(userId, familyId);
+        User user = userRepository.findByIdOrThrow(userId);
+        String newAccessToken = jwtTokenProvider.createAccessToken(user, familyId);
         String newRefreshToken = UUID.randomUUID().toString();
 
         refreshTokenRepository.save(RefreshToken.builder()
@@ -115,10 +119,10 @@ public class RefreshTokenService {
 
     // AccessToken에서 familyId, userId 추출 및 검증
     private AccessClaims extractClaimsOrThrow(String accessToken) {
-        String familyId = jwtTokenProvider.getClaim(accessToken, "familyId");
-        String userIdClaim = jwtTokenProvider.getClaim(accessToken, "userId");
+        String familyId = jwtTokenProvider.getFamilyIdFromAccessToken(accessToken);
+        String userIdClaim = jwtTokenProvider.getUserIdFromAccessToken(accessToken).toString();
 
-        if (familyId == null || userIdClaim == null) {
+        if (familyId == null) {
             throw new BusinessException(ErrorCode.INVALID_ACCESS_TOKEN);
         }
 
