@@ -192,6 +192,93 @@ class RefreshTokenServiceTest {
     }
 
     @Test
+    @DisplayName("rotate: Grace 캐시 JSON 파싱 실패 시 캐시를 무시하고 정상 로테이션을 진행한다")
+    void rotate_graceCache_parseError_fallbackToNormalFlow() throws Exception {
+        String key = graceKey(OLD_RT);
+
+        given(redisTemplate.opsForValue()).willReturn(valueOperations);
+        given(valueOperations.get(key)).willReturn("broken-json");
+        given(objectMapper.readValue("broken-json", TokenDto.class))
+                .willThrow(new JsonProcessingException("parse error") {});
+
+        stubValidClaims(OLD_AT, FAMILY_ID, USER_ID);
+
+        RefreshToken oldToken = rt(OLD_RT, USER_ID, FAMILY_ID);
+        given(refreshTokenRepository.findByToken(OLD_RT)).willReturn(Optional.of(oldToken));
+
+        User user = user().id(USER_ID).build();
+        given(userRepository.findByIdOrThrow(USER_ID)).willReturn(user);
+        given(jwtTokenProvider.createAccessToken(user, FAMILY_ID)).willReturn("new-access");
+
+        given(objectMapper.writeValueAsString(any(TokenDto.class))).willReturn("json");
+
+        TokenDto result = refreshTokenService.rotate(OLD_RT, OLD_AT);
+
+        assertThat(result.accessToken()).isEqualTo("new-access");
+        verify(refreshTokenRepository).delete(oldToken);
+    }
+
+    @Test
+    @DisplayName("rotate: Grace 캐시 저장 시 직렬화 실패해도 예외를 던지지 않는다")
+    void rotate_graceCache_serializeError() throws Exception {
+        stubGraceCacheMiss(OLD_RT);
+        stubValidClaims(OLD_AT, FAMILY_ID, USER_ID);
+
+        RefreshToken oldToken = rt(OLD_RT, USER_ID, FAMILY_ID);
+        given(refreshTokenRepository.findByToken(OLD_RT)).willReturn(Optional.of(oldToken));
+
+        User user = user().id(USER_ID).build();
+        given(userRepository.findByIdOrThrow(USER_ID)).willReturn(user);
+        given(jwtTokenProvider.createAccessToken(user, FAMILY_ID)).willReturn("new-access");
+
+        given(objectMapper.writeValueAsString(any(TokenDto.class)))
+                .willThrow(new JsonProcessingException("serialize error") {});
+
+        TokenDto result = refreshTokenService.rotate(OLD_RT, OLD_AT);
+
+        assertThat(result.accessToken()).isEqualTo("new-access");
+
+        verify(valueOperations, never()).set(anyString(), anyString(), any(Duration.class));
+    }
+
+    @Test
+    @DisplayName("rotate: RT도 없고 동일 familyId 토큰도 없으면 재사용 공격으로 간주하지만 deleteAll은 호출하지 않는다")
+    void rotate_oldTokenNotFound_noFamilyTokens() {
+        stubGraceCacheMiss(OLD_RT);
+        stubValidClaims(OLD_AT, FAMILY_ID, USER_ID);
+
+        given(refreshTokenRepository.findByToken(OLD_RT)).willReturn(Optional.empty());
+        given(refreshTokenRepository.findAllByFamilyId(FAMILY_ID)).willReturn(List.of());
+
+        Throwable thrown = catchThrowable(() -> refreshTokenService.rotate(OLD_RT, OLD_AT));
+
+        assertBusinessError(thrown, ErrorCode.INVALID_TOKEN_REUSE_DETECTED);
+
+        verify(refreshTokenRepository, never()).deleteAll(anyList());
+    }
+
+    @Test
+    @DisplayName("rotate: familyId 또는 userId 불일치이고 family 토큰이 없으면 oldToken만 삭제한다")
+    void rotate_familyOrUserMismatch_noFamilyTokens() {
+        stubGraceCacheMiss(OLD_RT);
+        stubValidClaims(OLD_AT, "claims-family", USER_ID);
+
+        RefreshToken oldToken = rt(OLD_RT, USER_ID, "db-family");
+        given(refreshTokenRepository.findByToken(OLD_RT)).willReturn(Optional.of(oldToken));
+
+        given(refreshTokenRepository.findAllByFamilyId(oldToken.getFamilyId()))
+                .willReturn(List.of());
+
+        Throwable thrown = catchThrowable(() -> refreshTokenService.rotate(OLD_RT, OLD_AT));
+
+        assertBusinessError(thrown, ErrorCode.INVALID_REFRESH_TOKEN);
+
+        verify(refreshTokenRepository, never()).deleteAll(anyList());
+        verify(refreshTokenRepository).delete(oldToken);
+    }
+
+
+    @Test
     @DisplayName("revoke: 해당 RT가 존재하면 삭제한다")
     void revoke_success() {
         String rtValue = "rt-value";

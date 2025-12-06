@@ -34,6 +34,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -150,5 +151,66 @@ class AuthControllerTest {
                         .with(csrf()))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_REFRESH_TOKEN.getCode()));
+    }
+
+    @Test
+    @DisplayName("[401] 리프레시 토큰 쿠키가 공백이면 예외 발생")
+    void refresh_401_blankCookie() throws Exception {
+        mockMvc.perform(post("/auth/refresh")
+                        .cookie(new Cookie("refresh_token", "   "))
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN)
+                        .with(csrf()))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_REFRESH_TOKEN.getCode()));
+
+        verifyNoInteractions(authService, tokenResponder);
+    }
+
+    @Test
+    @DisplayName("[401] Authorization 헤더가 없으면 INVALID_ACCESS_TOKEN 예외 발생")
+    void refresh_401_missingAuthorizationHeader() throws Exception {
+        mockMvc.perform(post("/auth/refresh")
+                        .cookie(new Cookie("refresh_token", REFRESH_TOKEN))
+                        .with(csrf()))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_ACCESS_TOKEN.getCode()));
+
+        verifyNoInteractions(authService, tokenResponder);
+    }
+
+    @Test
+    @DisplayName("[401] Authorization 헤더가 Bearer 로 시작하지 않으면 INVALID_ACCESS_TOKEN 예외 발생")
+    void refresh_401_invalidAuthorizationPrefix() throws Exception {
+        mockMvc.perform(post("/auth/refresh")
+                        .cookie(new Cookie("refresh_token", REFRESH_TOKEN))
+                        .header("Authorization", "Token " + ACCESS_TOKEN) // 잘못된 prefix
+                        .with(csrf()))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_ACCESS_TOKEN.getCode()));
+
+        verifyNoInteractions(authService, tokenResponder);
+    }
+
+    @Test
+    @DisplayName("[200] 리프레시 토큰 및 Authorization 헤더가 유효하면 토큰 갱신 성공")
+    void refresh_200_success() throws Exception {
+        TokenDto tokenDto = new TokenDto(ACCESS_TOKEN, REFRESH_TOKEN);
+        AuthResponse authResponse = new AuthResponse(ACCESS_TOKEN);
+
+        ResponseEntity<ApiResult<AuthResponse>> responseEntity =
+                ResponseEntity.ok(ApiResult.ok(authResponse));
+
+        given(authService.refresh(REFRESH_TOKEN, ACCESS_TOKEN)).willReturn(tokenDto);
+        given(tokenResponder.success(eq(tokenDto), any(HttpServletResponse.class), eq(HttpStatus.OK)))
+                .willReturn(responseEntity);
+
+        mockMvc.perform(post("/auth/refresh")
+                        .cookie(new Cookie("refresh_token", REFRESH_TOKEN))
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN)
+                        .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.accessToken").value(ACCESS_TOKEN));
+
+        verify(authService).refresh(REFRESH_TOKEN, ACCESS_TOKEN);
     }
 }
