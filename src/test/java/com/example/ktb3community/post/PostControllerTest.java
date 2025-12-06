@@ -1,8 +1,9 @@
 package com.example.ktb3community.post;
 
 import com.example.ktb3community.auth.security.CustomUserDetails;
+import com.example.ktb3community.common.Role;
 import com.example.ktb3community.common.error.ErrorCode;
-import com.example.ktb3community.common.pagination.PageResponse;
+import com.example.ktb3community.common.pagination.CursorResponse;
 import com.example.ktb3community.post.controller.PostController;
 import com.example.ktb3community.post.dto.CreatePostRequest;
 import com.example.ktb3community.post.dto.CreatePostResponse;
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -39,6 +41,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(PostController.class)
+@AutoConfigureMockMvc(addFilters = false)
 class PostControllerTest {
 
     @Autowired MockMvc mockMvc;
@@ -55,12 +58,16 @@ class PostControllerTest {
         User mockUser = User.builder()
                 .id(USER_ID)
                 .email("test@email.com")
-                .role(com.example.ktb3community.common.Role.ROLE_USER)
+                .passwordHash("encoded")
+                .nickname("test")
+                .role(Role.ROLE_USER)
                 .build();
 
         CustomUserDetails principal = CustomUserDetails.from(mockUser);
         SecurityContext context = SecurityContextHolder.createEmptyContext();
-        context.setAuthentication(new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities()));
+        context.setAuthentication(
+                new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities())
+        );
         SecurityContextHolder.setContext(context);
     }
 
@@ -97,27 +104,19 @@ class PostControllerTest {
     @Test
     @DisplayName("[200] 게시글 목록 조회 성공")
     void list_200_success() throws Exception {
-        PageResponse<PostListResponse> response = new PageResponse<>(Collections.emptyList(), 1, 10, 0);
+        CursorResponse<PostListResponse> response =
+                new CursorResponse<>(Collections.emptyList(), null, null, false);
 
-        given(postViewService.getPostList(anyInt(), anyInt(), any(PostSort.class)))
-                .willReturn(response);
+        given(postViewService.getPostList(
+                any(), any(), anyInt(), any(PostSort.class))
+        ).willReturn(response);
 
         mockMvc.perform(get("/posts")
-                        .param("page", "1")
                         .param("pageSize", "10")
-                        .param("sort", "NEW")
+                        .param("sort", PostSort.LIKE.name())
                         .with(csrf()))
-                .andExpect(status().isOk());
-    }
-
-    @Test
-    @DisplayName("[400] page가 1 미만이면 예외 발생")
-    void list_400_invalidPage() throws Exception {
-        mockMvc.perform(get("/posts")
-                        .param("page", "0")
-                        .with(csrf()))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_PAGE.getCode()));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.content").isArray());
     }
 
     @Test

@@ -58,7 +58,6 @@ class UserControllerTest {
                 .build();
 
         CustomUserDetails principal = CustomUserDetails.from(mockUser);
-
         var auth = new UsernamePasswordAuthenticationToken(
                 principal,
                 null,

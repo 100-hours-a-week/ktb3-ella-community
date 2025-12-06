@@ -69,6 +69,7 @@ class PostServiceTest {
         assertThat(capturedPost.getUser()).isEqualTo(user);
         assertThat(capturedPost.getTitle()).isEqualTo("Title");
         assertThat(capturedPost.getContent()).isEqualTo("Content");
+        assertThat(capturedPost.getPostImageUrl()).isEqualTo("http://image.url");
     }
 
     @Test
@@ -83,13 +84,11 @@ class PostServiceTest {
                 .postImageUrl("http://old-image.com")
                 .build();
 
-        given(userRepository.findByIdOrThrow(USER_ID)).willReturn(user);
         given(postRepository.findByIdOrThrow(POST_ID)).willReturn(post);
 
         CreatePostResponse response = postService.updatePost(POST_ID, USER_ID, request);
 
         assertThat(response.postId()).isEqualTo(POST_ID);
-
         assertThat(post.getTitle()).isEqualTo("New Title");
         assertThat(post.getContent()).isEqualTo("New Content");
         assertThat(post.getPostImageUrl()).isEqualTo("http://new-image.com");
@@ -101,7 +100,7 @@ class PostServiceTest {
     @DisplayName("updatePost: 작성자가 아니면 AUTH_FORBIDDEN 예외가 발생한다")
     void updatePost_notOwner_throws() {
         CreatePostRequest request = new CreatePostRequest("Title", "Content", "Img");
-        User owner = user().id(USER_ID).build(); // ID: 1L
+        User owner = user().id(USER_ID).build();
         Post post = post(owner)
                 .id(POST_ID)
                 .title("Old Title")
@@ -111,7 +110,6 @@ class PostServiceTest {
 
         Long otherUserId = 999L; // 다른 유저 ID
 
-        given(userRepository.findByIdOrThrow(otherUserId)).willReturn(user().id(otherUserId).build());
         given(postRepository.findByIdOrThrow(POST_ID)).willReturn(post);
 
         Throwable thrown = catchThrowable(() -> postService.updatePost(POST_ID, otherUserId, request));
@@ -122,6 +120,8 @@ class PostServiceTest {
                 .isEqualTo(ErrorCode.AUTH_FORBIDDEN);
 
         assertThat(post.getTitle()).isEqualTo("Old Title");
+        assertThat(post.getContent()).isEqualTo("Old Content");
+        assertThat(post.getPostImageUrl()).isEqualTo("http://old-image.com");
     }
 
     @Test
@@ -130,24 +130,21 @@ class PostServiceTest {
         User user = user().id(USER_ID).build();
         Post post = post(user).id(POST_ID).build();
 
-        given(userRepository.findByIdOrThrow(USER_ID)).willReturn(user);
         given(postRepository.findByIdOrThrow(POST_ID)).willReturn(post);
 
         postService.deletePost(POST_ID, USER_ID);
 
         verify(commentRepository).softDeleteByPostId(any(Long.class), any(Instant.class));
-
         assertThat(post.getDeletedAt()).isNotNull();
     }
 
     @Test
     @DisplayName("deletePost: 작성자가 아니면 AUTH_FORBIDDEN 예외가 발생한다")
     void deletePost_notOwner_throws() {
-        User owner = user().id(USER_ID).build(); // ID: 1L
+        User owner = user().id(USER_ID).build();
         Post post = post(owner).id(POST_ID).build();
         Long otherUserId = 999L;
 
-        given(userRepository.findByIdOrThrow(otherUserId)).willReturn(user().id(otherUserId).build());
         given(postRepository.findByIdOrThrow(POST_ID)).willReturn(post);
 
         Throwable thrown = catchThrowable(() -> postService.deletePost(POST_ID, otherUserId));
@@ -164,9 +161,7 @@ class PostServiceTest {
     @DisplayName("increaseCommentCount: 게시글의 댓글 카운트를 1 증가시킨다")
     void increaseCommentCount_success() {
         Post post = post(user().id(USER_ID).build()).id(POST_ID).build();
-        given(postRepository.findByIdOrThrow(POST_ID)).willReturn(post);
-
-        postService.increaseCommentCount(POST_ID);
+        postService.increaseCommentCount(post);
 
         assertThat(post.getCommentCount()).isEqualTo(1);
     }
@@ -176,9 +171,8 @@ class PostServiceTest {
     void decreaseCommentCount_success() {
         Post post = post(user().id(USER_ID).build()).id(POST_ID).build();
         post.increaseCommentCount();
-        given(postRepository.findByIdOrThrow(POST_ID)).willReturn(post);
 
-        postService.decreaseCommentCount(POST_ID);
+        postService.decreaseCommentCount(post);
 
         assertThat(post.getCommentCount()).isZero();
     }

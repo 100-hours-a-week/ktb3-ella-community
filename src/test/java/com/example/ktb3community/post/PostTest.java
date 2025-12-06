@@ -7,6 +7,9 @@ import com.example.ktb3community.user.domain.User;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
@@ -53,14 +56,16 @@ class PostTest {
         assertThat(post.getPostImageUrl()).isEqualTo("http://new.jpg");
     }
 
-    @Test
+    @ParameterizedTest
     @DisplayName("updatePost: 제목과 내용이 null이거나 공백이면 기존 값을 유지한다")
-    void updatePost_ignoreNullOrBlank() {
+    @NullAndEmptySource
+    @ValueSource(strings = {"  ", "\t", "\n"})
+    void updatePost_nullOrBlank(String invalid) {
         Post post = post().title("Original Title").content("Original Content").postImageUrl("http://original.jpg").build();
         String originalTitle = post.getTitle();
         String originalContent = post.getContent();
 
-        post.updatePost(null, "   ", "http://changed.jpg");
+        post.updatePost(invalid, invalid, "http://changed.jpg");
 
         assertThat(post.getTitle()).isEqualTo(originalTitle);
         assertThat(post.getContent()).isEqualTo(originalContent);
