@@ -1,6 +1,7 @@
 package com.example.ktb3community.post.like;
 
 import com.example.ktb3community.auth.security.CustomUserDetails;
+import com.example.ktb3community.common.Role;
 import com.example.ktb3community.common.error.ErrorCode;
 import com.example.ktb3community.exception.BusinessException;
 import com.example.ktb3community.post.controller.LikeController;
@@ -11,16 +12,15 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static com.example.ktb3community.TestFixtures.POST_ID;
 import static com.example.ktb3community.TestFixtures.USER_ID;
-import static com.example.ktb3community.TestEntityFactory.user;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -30,6 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(LikeController.class)
+@AutoConfigureMockMvc(addFilters = false)
 class LikeControllerTest {
 
     @Autowired MockMvc mockMvc;
@@ -39,11 +40,23 @@ class LikeControllerTest {
 
     @BeforeEach
     void setUp() {
-        User mockUser = user().id(USER_ID).build();
+        User mockUser = User.builder()
+                .id(USER_ID)
+                .email("test@email.com")
+                .passwordHash("encoded")
+                .nickname("test")
+                .role(Role.ROLE_USER)
+                .build();
 
         CustomUserDetails principal = CustomUserDetails.from(mockUser);
-        SecurityContext context = SecurityContextHolder.createEmptyContext();
-        context.setAuthentication(new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities()));
+
+        var auth = new UsernamePasswordAuthenticationToken(
+                principal,
+                null,
+                principal.getAuthorities()
+        );
+        var context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(auth);
         SecurityContextHolder.setContext(context);
     }
 
