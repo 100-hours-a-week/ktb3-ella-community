@@ -7,7 +7,9 @@ import com.example.ktb3community.post.domain.Like;
 import com.example.ktb3community.post.domain.Post;
 import com.example.ktb3community.user.domain.User;
 
-import java.time.Instant;
+
+import static com.example.ktb3community.TestFixtures.TOKEN_ID;
+import static com.example.ktb3community.TestFixtures.USER_ID;
 
 public final class TestEntityFactory {
 
@@ -22,7 +24,7 @@ public final class TestEntityFactory {
 
     private static final String DEFAULT_COMMENT_CONTENT = "Comment Content";
 
-    private static final Instant DEFAULT_REFRESH_EXPIRES_AT = Instant.parse("2099-01-01T00:00:00Z");
+    private static final String DEFAULT_FAMILY_ID = "family-default";
 
     private TestEntityFactory() {
     }
@@ -70,12 +72,10 @@ public final class TestEntityFactory {
                 .deletedAt(null);
     }
 
-    public static RefreshToken.RefreshTokenBuilder refreshToken(User user) {
+    public static RefreshToken.RefreshTokenBuilder refreshToken() {
         return RefreshToken.builder()
-                .id(null)
-                .user(user)
-                .expiresAt(DEFAULT_REFRESH_EXPIRES_AT)
-                .revoked(false)
-                .version(0L);
+                .token(TOKEN_ID)
+                .userId(USER_ID)
+                .familyId(DEFAULT_FAMILY_ID);
     }
 }

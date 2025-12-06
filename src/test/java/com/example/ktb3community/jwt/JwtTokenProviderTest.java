@@ -2,6 +2,7 @@ package com.example.ktb3community.jwt;
 
 import com.example.ktb3community.common.error.ErrorCode;
 import com.example.ktb3community.exception.BusinessException;
+import com.example.ktb3community.user.domain.User;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -15,6 +16,8 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 
+import static com.example.ktb3community.TestEntityFactory.user;
+import static com.example.ktb3community.TestFixtures.USER_ID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -23,44 +26,42 @@ class JwtTokenProviderTest {
     private JwtTokenProvider jwtTokenProvider;
 
     private static final String TEST_SECRET = "test_secret_key_must_be_over_32_bytes_long_1234";
-    private static final long ACCESS_EXP_MIN = 30;
-    private static final long REFRESH_EXP_DAYS = 7;
+    private static final long ACCESS_EXP_MIN = 30L;
 
     @BeforeEach
     void setUp() {
         jwtTokenProvider = new JwtTokenProvider();
         ReflectionTestUtils.setField(jwtTokenProvider, "secret", TEST_SECRET);
         ReflectionTestUtils.setField(jwtTokenProvider, "accessExpMinutes", ACCESS_EXP_MIN);
-        ReflectionTestUtils.setField(jwtTokenProvider, "refreshExpDays", REFRESH_EXP_DAYS);
     }
 
+
     @Test
-    @DisplayName("createAccessToken: 유저 ID로 유효한 JWT 액세스 토큰을 생성하고, 파싱하여 ID를 복구할 수 있다")
+    @DisplayName("createAccessToken: 유저와 familyId로 토큰을 생성하고, 정보를 복구할 수 있다")
     void createAccessToken_success() {
-        Long userId = 100L;
+        User user = user()
+                .id(USER_ID)
+                .email("user@test.com")
+                .build();
+        String familyId = "family-1234";
 
-        String token = jwtTokenProvider.createAccessToken(userId);
+        String token = jwtTokenProvider.createAccessToken(user, familyId);
 
         assertThat(token).isNotNull();
+
         Long parsedUserId = jwtTokenProvider.getUserIdFromAccessToken(token);
-        assertThat(parsedUserId).isEqualTo(userId);
+        String parsedEmail = jwtTokenProvider.getEmailFromAccessToken(token);
+        String parsedRole = jwtTokenProvider.getRoleFromAccessToken(token);
+        String parsedFamilyId = jwtTokenProvider.getFamilyIdFromAccessToken(token);
+
+        assertThat(parsedUserId).isEqualTo(USER_ID);
+        assertThat(parsedEmail).isEqualTo(user.getEmail());
+        assertThat(parsedRole).isEqualTo(user.getRole().name());
+        assertThat(parsedFamilyId).isEqualTo(familyId);
     }
 
     @Test
-    @DisplayName("createRefreshToken: 토큰 ID와 유저 ID로 리프레시 토큰을 생성하고, 파싱하여 토큰 ID를 복구할 수 있다")
-    void createRefreshToken_success() {
-        Long refreshTokenId = 555L;
-        Long userId = 100L;
-
-        String token = jwtTokenProvider.createRefreshToken(refreshTokenId, userId);
-
-        assertThat(token).isNotNull();
-        Long parsedTokenId = jwtTokenProvider.getRefreshTokenId(token);
-        assertThat(parsedTokenId).isEqualTo(refreshTokenId);
-    }
-
-    @Test
-    @DisplayName("getUserIdFromAccessToken: 잘못된 토큰(서명 불일치 등) 입력 시 INVALID_ACCESS_TOKEN 예외 발생")
+    @DisplayName("getUserIdFromAccessToken: 잘못된 토큰(형식 등)이면 INVALID_ACCESS_TOKEN 예외 발생")
     void getUserIdFromAccessToken_invalid_throws() {
         String invalidToken = "invalid.token.structure";
 
@@ -70,12 +71,15 @@ class JwtTokenProviderTest {
     }
 
     @Test
-    @DisplayName("getUserIdFromAccessToken: 다른 시크릿 키로 서명된 토큰은 파싱에 실패한다")
+    @DisplayName("getUserIdFromAccessToken: 다른 시크릿 키로 서명된 토큰은 INVALID_ACCESS_TOKEN 예외 발생")
     void getUserIdFromAccessToken_wrongSignature_throws() {
         String otherSecret = "other_secret_key_must_be_over_32_bytes_long_9999";
         String fakeToken = Jwts.builder()
-                .setSubject("100")
-                .signWith(Keys.hmacShaKeyFor(otherSecret.getBytes(StandardCharsets.UTF_8)), SignatureAlgorithm.HS256)
+                .setSubject(USER_ID.toString())
+                .signWith(
+                        Keys.hmacShaKeyFor(otherSecret.getBytes(StandardCharsets.UTF_8)),
+                        SignatureAlgorithm.HS256
+                )
                 .compact();
 
         assertThatThrownBy(() -> jwtTokenProvider.getUserIdFromAccessToken(fakeToken))
@@ -84,36 +88,16 @@ class JwtTokenProviderTest {
     }
 
     @Test
-    @DisplayName("getRefreshTokenId: 잘못된 토큰 입력 시 INVALID_REFRESH_TOKEN 예외 발생")
-    void getRefreshTokenId_invalid_throws() {
-        String invalidToken = "invalid.token";
-
-        assertThatThrownBy(() -> jwtTokenProvider.getRefreshTokenId(invalidToken))
-                .isInstanceOf(BusinessException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_REFRESH_TOKEN);
-    }
-
-    @Test
-    @DisplayName("getRefreshExpiresAt: 리프레시 토큰 만료일 계산 로직이 설정값(7일)과 근사한지 확인")
-    void getRefreshExpiresAt_check() {
-        Instant now = Instant.now();
-
-        Instant expiresAt = jwtTokenProvider.getRefreshExpiresAt();
-
-        Instant expected = now.plus(REFRESH_EXP_DAYS, ChronoUnit.DAYS);
-        long diffSeconds = Math.abs(expected.getEpochSecond() - expiresAt.getEpochSecond());
-
-        assertThat(diffSeconds).isLessThan(60);
-    }
-
-    @Test
-    @DisplayName("만료된 토큰 파싱 시 예외가 발생한다")
+    @DisplayName("만료된 토큰을 파싱하면 INVALID_ACCESS_TOKEN 예외가 발생한다")
     void parse_expired_token_throws() {
         Date past = Date.from(Instant.now().minus(1, ChronoUnit.HOURS));
         String expiredToken = Jwts.builder()
-                .setSubject("100")
+                .setSubject(USER_ID.toString())
                 .setExpiration(past)
-                .signWith(Keys.hmacShaKeyFor(TEST_SECRET.getBytes(StandardCharsets.UTF_8)), SignatureAlgorithm.HS256)
+                .signWith(
+                        Keys.hmacShaKeyFor(TEST_SECRET.getBytes(StandardCharsets.UTF_8)),
+                        SignatureAlgorithm.HS256
+                )
                 .compact();
 
         assertThatThrownBy(() -> jwtTokenProvider.getUserIdFromAccessToken(expiredToken))

@@ -20,7 +20,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
-import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -71,21 +70,33 @@ class JwtAuthenticationFilterTest {
     void doFilterInternal_validToken_authenticates() throws ServletException, IOException {
         String token = "valid.access.token";
         Long userId = 1L;
+        String email = "user@test.com";
+        String role = "ROLE_USER";
+
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Authorization", "Bearer " + token);
         MockHttpServletResponse response = new MockHttpServletResponse();
 
         given(jwtTokenProvider.getUserIdFromAccessToken(token)).willReturn(userId);
-
-        CustomUserDetails userDetails = mock(CustomUserDetails.class);
-        given(userDetails.getAuthorities()).willReturn(Collections.emptyList());
-        given(userDetailsService.loadUserByUsername(userId.toString())).willReturn(userDetails);
+        given(jwtTokenProvider.getEmailFromAccessToken(token)).willReturn(email);
+        given(jwtTokenProvider.getRoleFromAccessToken(token)).willReturn(role);
 
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
         verify(filterChain).doFilter(request, response);
-        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNotNull();
-        assertThat(SecurityContextHolder.getContext().getAuthentication().getPrincipal()).isEqualTo(userDetails);
+
+        var context = SecurityContextHolder.getContext();
+        assertThat(context.getAuthentication()).isNotNull();
+        assertThat(context.getAuthentication().getPrincipal())
+                .isInstanceOf(CustomUserDetails.class);
+
+        CustomUserDetails principal = (CustomUserDetails) context.getAuthentication().getPrincipal();
+        assertThat(principal.getId()).isEqualTo(userId);
+        assertThat(principal.getEmail()).isEqualTo(email);
+
+        assertThat(context.getAuthentication().getAuthorities())
+                .extracting("authority")
+                .containsExactly(role);
     }
 
     @Test
