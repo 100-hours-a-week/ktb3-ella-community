@@ -2,6 +2,7 @@ package com.example.ktb3community.jwt;
 
 import com.example.ktb3community.auth.security.CustomUserDetails;
 import com.example.ktb3community.auth.security.CustomUserDetailsService;
+import com.example.ktb3community.auth.security.SecurityPaths;
 import com.example.ktb3community.common.error.ErrorCode;
 import com.example.ktb3community.exception.BusinessException;
 import jakarta.servlet.FilterChain;
@@ -13,9 +14,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 @RequiredArgsConstructor
 @Getter
@@ -23,18 +26,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final CustomUserDetailsService userDetailsService;
+    private final AntPathMatcher pathMatcher = new AntPathMatcher();
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getServletPath();
+
+        for (String pattern : SecurityPaths.PUBLIC_AUTH) {
+            if (pathMatcher.match(pattern, path)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     // 모든 요청마다 이 메서드가 호출되고, 여기서 JWT 검증과 인증 처리를 한 뒤 다음 필터로 넘어감
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        String path = request.getRequestURI();
-
-        // 인증이 필요없는 경로
-        if (path.equals("/auth/login") || path.equals("/auth/signup") || path.equals("/uploads/presigned-url") || path.startsWith("/users/availability/"))
-        {
-            filterChain.doFilter(request, response);
-            return;
-        }
 
         String header = request.getHeader("Authorization");
         if(header == null || !header.startsWith("Bearer ")) {

@@ -6,9 +6,7 @@ import com.example.ktb3community.common.domain.BaseTimeEntity;
 import com.example.ktb3community.common.error.ErrorCode;
 import com.example.ktb3community.exception.BusinessException;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.Instant;
 
@@ -16,6 +14,8 @@ import java.time.Instant;
 @Table(name = "users")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Builder
 public class User extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,28 +39,15 @@ public class User extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     private Role role;
 
-
-    private User(Long id, String email, String passwordHash, String nickname, String profileImageUrl, Instant deletedAt, Role role) {
-        this.id = id;
-        this.email = email.trim().toLowerCase();
-        this.passwordHash = passwordHash;
-        this.nickname = nickname.trim();
-        this.profileImageUrl = profileImageUrl;
-        this.deletedAt = deletedAt;
-        this.role = role;
-    }
-
     public static User createNew(String email, String passwordHash,
                                  String nickname, String profileImageUrl, Role role) {
-        return new User(null, email, passwordHash, nickname, profileImageUrl, null, role);
-    }
-
-    public static User rehydrate(Long id, String email, String passwordHash,
-                                 String nickname, String profileImageUrl, Instant createdAt, Instant updatedAt, Instant deletedAt, Role role) {
-        User user = new User(id, email, passwordHash, nickname, profileImageUrl, deletedAt, role);
-        user.createdAt = createdAt;
-        user.updatedAt = updatedAt;
-        return user;
+        return User.builder()
+                .email(email.toLowerCase().trim())
+                .passwordHash(passwordHash)
+                .nickname(nickname.trim())
+                .profileImageUrl(profileImageUrl.trim())
+                .role(role)
+                .build();
     }
 
     public void updateNickname(String nickname) {
@@ -84,24 +71,20 @@ public class User extends BaseTimeEntity {
     }
 
     public void updatePasswordHash(String passwordHash) {
+        if (passwordHash == null || passwordHash.isBlank()) { throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE); }
         this.passwordHash = passwordHash;
     }
 
     @Override
     public boolean equals(Object o) {
-        if(this == o) return true;
-        if(o == null || getClass() != o.getClass()) return false;
+        if (this == o) return true;
+        if (!(o instanceof User user)) return false;
 
-        User other = (User) o;
-        if(this.id == null || other.id == null ) return false;
-        return this.id.equals(other.id);
+        return id != null && id.equals(user.getId());
     }
 
     @Override
     public int hashCode() {
-        if (id != null) {
-            return id.hashCode();
-        }
-        return System.identityHashCode(this);
+        return getClass().hashCode();
     }
 }

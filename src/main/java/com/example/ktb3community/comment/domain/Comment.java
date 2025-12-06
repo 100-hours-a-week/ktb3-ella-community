@@ -6,8 +6,7 @@ import com.example.ktb3community.post.exception.PostNotFoundException;
 import com.example.ktb3community.user.domain.User;
 import com.example.ktb3community.user.exception.UserNotFoundException;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.Instant;
 
@@ -15,6 +14,8 @@ import java.time.Instant;
 @Table(name = "comments")
 @Getter
 @NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Builder
 public class Comment extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -34,23 +35,13 @@ public class Comment extends BaseTimeEntity {
     @Column(name = "deleted_at")
     private Instant deletedAt;
 
-    private Comment(Long id, Post post, User user, String content, Instant deletedAt) {
-        this.id = id;
-        this.post = post;
-        this.user = user;
-        this.content = content;
-        this.deletedAt = deletedAt;
-    }
-
     public static Comment createNew(Post post, User user, String content) {
-        return new Comment(null, post, user, content, null);
-    }
-
-    public static Comment rehydrate(Long id, Post post, User user, String content, Instant createdAt, Instant updatedAt, Instant deletedAt) {
-        Comment comment = new Comment(id, post, user, content, deletedAt);
-        comment.createdAt = createdAt;
-        comment.updatedAt = updatedAt;
-        return comment;
+        return Comment.builder()
+                .post(post)
+                .user(user)
+                .content(content)
+                .deletedAt(null)
+                .build();
     }
 
     public void updateContent(String content) {
@@ -79,19 +70,14 @@ public class Comment extends BaseTimeEntity {
 
     @Override
     public boolean equals(Object o) {
-        if(this == o) return true;
-        if(o == null || getClass() != o.getClass()) return false;
+        if (this == o) return true;
+        if (!(o instanceof Comment comment)) return false;
 
-        Comment other = (Comment) o;
-        if(this.id == null || other.id == null ) return false;
-        return this.id.equals(other.id);
+        return id != null && id.equals(comment.getId());
     }
 
     @Override
     public int hashCode() {
-        if (id != null) {
-            return id.hashCode();
-        }
-        return System.identityHashCode(this);
+        return getClass().hashCode();
     }
 }

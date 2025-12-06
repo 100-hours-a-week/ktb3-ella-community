@@ -26,8 +26,13 @@ public class InMemoryCommentRepositoryAdapter implements CommentRepository {
     public Comment save(Comment comment) {
         if (comment.getId() == null) {
             long id = seq.getAndIncrement();
-            comment = Comment.rehydrate(id, comment.getPost(), comment.getUser(), comment.getContent(),
-                    comment.getCreatedAt(), comment.getUpdatedAt(), comment.getDeletedAt());
+            comment = Comment.builder()
+                    .id(id)
+                    .post(comment.getPost())
+                    .user(comment.getUser())
+                    .content(comment.getContent())
+                    .deletedAt(null)
+                    .build();
         }
         comments.put(comment.getId(), comment);
         return comment;

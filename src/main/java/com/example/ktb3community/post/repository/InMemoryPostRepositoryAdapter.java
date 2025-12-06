@@ -25,9 +25,17 @@ public class InMemoryPostRepositoryAdapter implements PostRepository {
     public Post save(Post post) {
         if (post.getId() == null) {
             long id = seq.getAndIncrement();
-            post = Post.rehydrate(id, post.getUser(), post.getTitle(), post.getContent(), post.getPostImageUrl(),
-                    post.getLikeCount(), post.getViewCount(), post.getCommentCount(),
-                    post.getCreatedAt(), post.getUpdatedAt(), post.getDeletedAt());
+            post = Post.builder()
+                    .id(id)
+                    .user(post.getUser())
+                    .title(post.getTitle())
+                    .content(post.getContent())
+                    .postImageUrl(post.getPostImageUrl())
+                    .likeCount(post.getLikeCount())
+                    .viewCount(post.getViewCount())
+                    .commentCount(post.getCommentCount())
+                    .deletedAt(null)
+                    .build();
         }
         posts.put(post.getId(), post);
         return post;

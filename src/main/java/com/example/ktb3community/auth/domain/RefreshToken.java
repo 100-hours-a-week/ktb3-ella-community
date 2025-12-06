@@ -2,12 +2,10 @@ package com.example.ktb3community.auth.domain;
 
 import com.example.ktb3community.user.domain.User;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import org.springframework.data.domain.Persistable;
 
 import java.time.Instant;
-import java.util.UUID;
 
 @Entity
 @Table(
@@ -18,9 +16,11 @@ import java.util.UUID;
 )
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class RefreshToken {
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Builder
+public class RefreshToken{
     @Id
-    private String id;
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -32,19 +32,21 @@ public class RefreshToken {
     @Column(nullable = false)
     private boolean revoked;
 
-    private RefreshToken(String id, User user, Instant expiresAt, boolean revoked) {
-        this.id = id;
-        this.user = user;
-        this.expiresAt = expiresAt;
-        this.revoked = revoked;
-    }
+    @Version
+    @Column(nullable = false)
+    private Long version;
 
-    public static RefreshToken createNew(User user, Instant expiresAt) {
-        String id = UUID.randomUUID().toString();
-        return new RefreshToken(id, user, expiresAt, false);
+    public static RefreshToken createNew(Long id, User user, Instant expiresAt) {
+        return RefreshToken.builder()
+                .id(id)
+                .user(user)
+                .expiresAt(expiresAt)
+                .revoked(false)
+                .build();
     }
 
     public void revoke() {
+        if(this.revoked) return;
         this.revoked = true;
     }
 

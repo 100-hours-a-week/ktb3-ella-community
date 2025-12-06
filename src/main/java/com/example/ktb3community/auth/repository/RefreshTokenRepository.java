@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface RefreshTokenRepository extends JpaRepository<RefreshToken, String> {
+public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long> {
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("update RefreshToken rt set rt.revoked = true " +
             "where rt.user = :user and rt.revoked = false")

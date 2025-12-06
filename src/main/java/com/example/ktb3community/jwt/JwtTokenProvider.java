@@ -44,12 +44,12 @@ public class JwtTokenProvider {
                 .compact();
     }
 
-    public String createRefreshToken(String refreshTokenId, Long userId) {
+    public String createRefreshToken(Long refreshTokenId, Long userId) {
         Instant now = Instant.now();
         Instant exp = now.plus(refreshExpDays, ChronoUnit.DAYS);
 
         return Jwts.builder()
-                .setId(refreshTokenId)
+                .setId(refreshTokenId.toString())
                 .setSubject(userId.toString())
                 .setIssuedAt(Date.from(now))
                 .setExpiration(Date.from(exp))
@@ -74,9 +74,9 @@ public class JwtTokenProvider {
         return Instant.now().plus(refreshExpDays, ChronoUnit.DAYS);
     }
 
-    public String getRefreshTokenId(String refreshToken) {
+    public Long getRefreshTokenId(String refreshToken) {
         Claims claims = parseClaims(refreshToken, ErrorCode.INVALID_REFRESH_TOKEN);
-        return claims.getId();
+        return Long.valueOf(claims.getId());
     }
 
     public Long getUserIdFromAccessToken(String accessToken) {
