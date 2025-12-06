@@ -8,6 +8,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -77,11 +80,12 @@ class FileServiceTest {
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.CONTENT_TYPE_NOT_ALLOWED);
     }
 
-    @Test
+    @ParameterizedTest
     @DisplayName("presignUpload: 파일명이 비어있으면 예외 발생")
-    void presignUpload_blankName_throws() {
-        String fileName = "   ";
-        assertThatThrownBy(() -> fileService.presignUpload(fileName, "image/png"))
+    @NullAndEmptySource
+    @ValueSource(strings = {"  ", "\t", "\n"})
+    void presignUpload_blankName_throws(String invalid) {
+        assertThatThrownBy(() -> fileService.presignUpload(invalid, "image/png"))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FILE_NAME_IS_NOT_BLANK);
     }
@@ -175,4 +179,20 @@ class FileServiceTest {
                 .extracting(ex -> ((BusinessException) ex).getErrorCode())
                 .isEqualTo(ErrorCode.S3_DELETE_FAILED);
     }
+
+    @ParameterizedTest
+    @DisplayName("deleteImage: URL이 null이거나 공백이면 INVALID_IMG_URL 예외 발생")
+    @NullAndEmptySource
+    @ValueSource(strings = {"  ", "\t", "\n"})
+    void deleteImage_nullOrBlank_throws(String invalid) {
+        Throwable thrown = catchThrowable(() -> fileService.deleteImage(invalid));
+
+        assertThat(thrown)
+                .isInstanceOf(BusinessException.class)
+                .extracting(ex -> ((BusinessException) ex).getErrorCode())
+                .isEqualTo(ErrorCode.INVALID_IMG_URL);
+
+        verifyNoInteractions(s3Client);
+    }
+
 }

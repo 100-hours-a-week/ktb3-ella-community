@@ -18,6 +18,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -153,11 +155,12 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_REFRESH_TOKEN.getCode()));
     }
 
-    @Test
+    @ParameterizedTest
     @DisplayName("[401] 리프레시 토큰 쿠키가 공백이면 예외 발생")
-    void refresh_401_blankCookie() throws Exception {
+    @ValueSource(strings = {"", "  ", "\t", "\n"})
+    void refresh_401_blankCookie(String invalid) throws Exception {
         mockMvc.perform(post("/auth/refresh")
-                        .cookie(new Cookie("refresh_token", "   "))
+                        .cookie(new Cookie("refresh_token", invalid))  // null 안 줌!
                         .header("Authorization", "Bearer " + ACCESS_TOKEN)
                         .with(csrf()))
                 .andExpect(status().isUnauthorized())
