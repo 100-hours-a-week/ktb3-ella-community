@@ -1,21 +1,15 @@
 package com.example.ktb3community.post.like;
 
-import com.example.ktb3community.auth.security.CustomUserDetails;
-import com.example.ktb3community.common.Role;
+import com.example.ktb3community.WithMockCustomUser;
 import com.example.ktb3community.common.error.ErrorCode;
 import com.example.ktb3community.exception.BusinessException;
 import com.example.ktb3community.post.controller.LikeController;
 import com.example.ktb3community.post.dto.LikeResponse;
 import com.example.ktb3community.post.service.LikeService;
-import com.example.ktb3community.user.domain.User;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -30,7 +24,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(LikeController.class)
-@AutoConfigureMockMvc(addFilters = false)
 class LikeControllerTest {
 
     @Autowired MockMvc mockMvc;
@@ -38,30 +31,9 @@ class LikeControllerTest {
     @MockitoBean
     LikeService likeService;
 
-    @BeforeEach
-    void setUp() {
-        User mockUser = User.builder()
-                .id(USER_ID)
-                .email("test@email.com")
-                .passwordHash("encoded")
-                .nickname("test")
-                .role(Role.ROLE_USER)
-                .build();
-
-        CustomUserDetails principal = CustomUserDetails.from(mockUser);
-
-        var auth = new UsernamePasswordAuthenticationToken(
-                principal,
-                null,
-                principal.getAuthorities()
-        );
-        var context = SecurityContextHolder.createEmptyContext();
-        context.setAuthentication(auth);
-        SecurityContextHolder.setContext(context);
-    }
-
     @Test
     @DisplayName("[200] 게시글 좋아요 성공")
+    @WithMockCustomUser(id = USER_ID)
     void likePost_200_success() throws Exception {
         LikeResponse response = new LikeResponse(10L, 5L, 3L);
 
@@ -79,6 +51,7 @@ class LikeControllerTest {
 
     @Test
     @DisplayName("[404] 존재하지 않는 게시글에 좋아요 시도 시 예외 발생")
+    @WithMockCustomUser(id = USER_ID)
     void likePost_404_postNotFound() throws Exception {
         given(likeService.likePost(POST_ID, USER_ID))
                 .willThrow(new BusinessException(ErrorCode.POST_NOT_FOUND));
@@ -91,6 +64,7 @@ class LikeControllerTest {
 
     @Test
     @DisplayName("[200] 게시글 좋아요 취소 성공")
+    @WithMockCustomUser(id = USER_ID)
     void unlikePost_200_success() throws Exception {
         LikeResponse response = new LikeResponse(9L, 5L, 3L);
 

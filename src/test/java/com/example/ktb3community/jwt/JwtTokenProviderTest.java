@@ -1,5 +1,6 @@
 package com.example.ktb3community.jwt;
 
+import com.example.ktb3community.TestFixtures;
 import com.example.ktb3community.common.error.ErrorCode;
 import com.example.ktb3community.exception.BusinessException;
 import com.example.ktb3community.user.domain.User;
@@ -75,7 +76,7 @@ class JwtTokenProviderTest {
     void getUserIdFromAccessToken_wrongSignature_throws() {
         String otherSecret = "other_secret_key_must_be_over_32_bytes_long_9999";
         String fakeToken = Jwts.builder()
-                .setSubject(USER_ID.toString())
+                .setSubject(String.valueOf(TestFixtures.USER_ID))
                 .signWith(
                         Keys.hmacShaKeyFor(otherSecret.getBytes(StandardCharsets.UTF_8)),
                         SignatureAlgorithm.HS256
@@ -92,7 +93,7 @@ class JwtTokenProviderTest {
     void parse_expired_token_throws() {
         Date past = Date.from(Instant.now().minus(1, ChronoUnit.HOURS));
         String expiredToken = Jwts.builder()
-                .setSubject(USER_ID.toString())
+                .setSubject(String.valueOf(TestFixtures.USER_ID))
                 .setExpiration(past)
                 .signWith(
                         Keys.hmacShaKeyFor(TEST_SECRET.getBytes(StandardCharsets.UTF_8)),

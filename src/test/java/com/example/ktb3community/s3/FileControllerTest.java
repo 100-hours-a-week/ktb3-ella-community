@@ -1,23 +1,16 @@
 package com.example.ktb3community.s3;
 
-
-import com.example.ktb3community.auth.security.CustomUserDetails;
-import com.example.ktb3community.common.Role;
 import com.example.ktb3community.common.error.ErrorCode;
 import com.example.ktb3community.exception.BusinessException;
 import com.example.ktb3community.s3.controller.FileController;
 import com.example.ktb3community.s3.dto.PresignUploadResponse;
 import com.example.ktb3community.s3.service.FileService;
-import com.example.ktb3community.user.domain.User;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -25,7 +18,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static com.example.ktb3community.TestFixtures.USER_ID;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -39,28 +31,6 @@ class FileControllerTest {
     @Autowired MockMvc mockMvc;
 
     @MockitoBean FileService fileService;
-
-    @BeforeEach
-    void setUp() {
-        User mockUser = User.builder()
-                .id(USER_ID)
-                .email("test@email.com")
-                .passwordHash("encoded")
-                .nickname("test")
-                .role(Role.ROLE_USER)
-                .build();
-
-        CustomUserDetails principal = CustomUserDetails.from(mockUser);
-
-        var auth = new UsernamePasswordAuthenticationToken(
-                principal,
-                null,
-                principal.getAuthorities()
-        );
-        var context = SecurityContextHolder.createEmptyContext();
-        context.setAuthentication(auth);
-        SecurityContextHolder.setContext(context);
-    }
 
     @Test
     @DisplayName("[200] Presigned URL 발급 성공")

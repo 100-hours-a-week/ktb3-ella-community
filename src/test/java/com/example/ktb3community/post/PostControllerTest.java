@@ -1,7 +1,6 @@
 package com.example.ktb3community.post;
 
-import com.example.ktb3community.auth.security.CustomUserDetails;
-import com.example.ktb3community.common.Role;
+import com.example.ktb3community.WithMockCustomUser;
 import com.example.ktb3community.common.error.ErrorCode;
 import com.example.ktb3community.common.pagination.CursorResponse;
 import com.example.ktb3community.post.controller.PostController;
@@ -11,18 +10,12 @@ import com.example.ktb3community.post.dto.PostDetailResponse;
 import com.example.ktb3community.post.dto.PostListResponse;
 import com.example.ktb3community.post.service.PostService;
 import com.example.ktb3community.post.service.PostViewService;
-import com.example.ktb3community.user.domain.User;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -41,7 +34,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(PostController.class)
-@AutoConfigureMockMvc(addFilters = false)
 class PostControllerTest {
 
     @Autowired MockMvc mockMvc;
@@ -53,26 +45,9 @@ class PostControllerTest {
     @MockitoBean
     PostViewService postViewService;
 
-    @BeforeEach
-    void setUp() {
-        User mockUser = User.builder()
-                .id(USER_ID)
-                .email("test@email.com")
-                .passwordHash("encoded")
-                .nickname("test")
-                .role(Role.ROLE_USER)
-                .build();
-
-        CustomUserDetails principal = CustomUserDetails.from(mockUser);
-        SecurityContext context = SecurityContextHolder.createEmptyContext();
-        context.setAuthentication(
-                new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities())
-        );
-        SecurityContextHolder.setContext(context);
-    }
-
     @Test
     @DisplayName("[201] 게시글 생성 성공")
+    @WithMockCustomUser(id = USER_ID)
     void createPost_201_success() throws Exception {
         CreatePostRequest request = new CreatePostRequest("Title", "Content", "http://img.url");
         CreatePostResponse response = new CreatePostResponse(POST_ID);
@@ -90,6 +65,7 @@ class PostControllerTest {
 
     @Test
     @DisplayName("[422] 제목이 없으면 유효성 검사 실패")
+    @WithMockCustomUser(id = USER_ID)
     void createPost_422_invalidInput() throws Exception {
         CreatePostRequest invalidRequest = new CreatePostRequest("", "Content", "img");
 
@@ -103,6 +79,7 @@ class PostControllerTest {
 
     @Test
     @DisplayName("[200] 게시글 목록 조회 성공")
+    @WithMockCustomUser(id = USER_ID)
     void list_200_success() throws Exception {
         CursorResponse<PostListResponse> response =
                 new CursorResponse<>(Collections.emptyList(), null, null, false);
@@ -121,6 +98,7 @@ class PostControllerTest {
 
     @Test
     @DisplayName("[400] pageSize가 범위를 벗어나면(21) 예외 발생")
+    @WithMockCustomUser(id = USER_ID)
     void list_400_invalidPageSize() throws Exception {
         mockMvc.perform(get("/posts")
                         .param("page", "1")
@@ -132,6 +110,7 @@ class PostControllerTest {
 
     @Test
     @DisplayName("[200] 게시글 상세 조회 성공")
+    @WithMockCustomUser(id = USER_ID)
     void getPostDetail_200_success() throws Exception {
         PostDetailResponse response = new PostDetailResponse(POST_ID, "Title", "Content", null, null, 0, 0, 0, false, null, null);
 
@@ -146,6 +125,7 @@ class PostControllerTest {
 
     @Test
     @DisplayName("[200] 게시글 수정 성공")
+    @WithMockCustomUser(id = USER_ID)
     void updatePost_200_success() throws Exception {
         CreatePostRequest request = new CreatePostRequest("New Title", "New Content", "img");
         CreatePostResponse response = new CreatePostResponse(POST_ID);
@@ -162,6 +142,7 @@ class PostControllerTest {
 
     @Test
     @DisplayName("[204] 게시글 삭제 성공")
+    @WithMockCustomUser(id = USER_ID)
     void deletePost_204_success() throws Exception {
         mockMvc.perform(delete("/posts/{postId}", POST_ID)
                         .with(csrf()))

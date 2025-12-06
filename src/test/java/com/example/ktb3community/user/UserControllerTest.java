@@ -1,26 +1,21 @@
 package com.example.ktb3community.user;
 
-import com.example.ktb3community.auth.security.CustomUserDetails;
-import com.example.ktb3community.common.Role;
+import com.example.ktb3community.WithMockCustomUser;
 import com.example.ktb3community.common.error.ErrorCode;
 import com.example.ktb3community.exception.BusinessException;
 import com.example.ktb3community.user.controller.UserController;
-import com.example.ktb3community.user.domain.User;
 import com.example.ktb3community.user.dto.AvailabilityResponse;
 import com.example.ktb3community.user.dto.MeResponse;
 import com.example.ktb3community.user.dto.UpdateMeRequest;
 import com.example.ktb3community.user.dto.UpdatePasswordRequest;
 import com.example.ktb3community.user.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import static com.example.ktb3community.TestFixtures.USER_ID;
@@ -46,27 +41,6 @@ class UserControllerTest {
 
     @MockitoBean
     private UserService userService;
-
-    @BeforeEach
-    void setUp() {
-        User mockUser = User.builder()
-                .id(USER_ID)
-                .email("test@email.com")
-                .passwordHash("encoded")
-                .nickname("test")
-                .role(Role.ROLE_USER)
-                .build();
-
-        CustomUserDetails principal = CustomUserDetails.from(mockUser);
-        var auth = new UsernamePasswordAuthenticationToken(
-                principal,
-                null,
-                principal.getAuthorities()
-        );
-        var context = SecurityContextHolder.createEmptyContext();
-        context.setAuthentication(auth);
-        SecurityContextHolder.setContext(context);
-    }
 
     @Test
     @DisplayName("[200] 중복 확인 성공")
@@ -125,6 +99,7 @@ class UserControllerTest {
 
     @Test
     @DisplayName("[200] 내 정보 조회 성공")
+    @WithMockCustomUser(id = USER_ID)
     void getMe_200_success() throws Exception {
         MeResponse response = new MeResponse("email", "nick", "img");
         given(userService.getMe(USER_ID)).willReturn(response);
@@ -137,6 +112,7 @@ class UserControllerTest {
 
     @Test
     @DisplayName("[404] 존재하지 않는 유저 조회 시 404 Not Found")
+    @WithMockCustomUser(id = USER_ID)
     void getMe_404_notFound() throws Exception {
         given(userService.getMe(USER_ID))
                 .willThrow(new BusinessException(ErrorCode.USER_NOT_FOUND));
@@ -149,6 +125,7 @@ class UserControllerTest {
 
     @Test
     @DisplayName("[204] 내 비밀번호 수정 성공")
+    @WithMockCustomUser(id = USER_ID)
     void updatePassword_204_success() throws Exception {
         UpdatePasswordRequest request = new UpdatePasswordRequest("NewPassword1234!");
 
@@ -164,6 +141,7 @@ class UserControllerTest {
 
     @Test
     @DisplayName("[422] @Valid 검증 실패 시 422")
+    @WithMockCustomUser(id = USER_ID)
     void updatePassword_422_validation() throws Exception {
         UpdatePasswordRequest invalidRequest = new UpdatePasswordRequest( "newPassword");
 
@@ -178,6 +156,7 @@ class UserControllerTest {
 
     @Test
     @DisplayName("[200] 내 정보 수정 성공")
+    @WithMockCustomUser(id = USER_ID)
     void updateMe_200_success() throws Exception {
         UpdateMeRequest request = new UpdateMeRequest("newNick", "newImg");
         MeResponse response = new MeResponse("email", "newNick", "newImg");
@@ -195,6 +174,7 @@ class UserControllerTest {
 
     @Test
     @DisplayName("[422] @Valid 검증 실패 시 422")
+    @WithMockCustomUser(id = USER_ID)
     void updateMe_422_validation() throws Exception {
         UpdateMeRequest invalidRequest = new UpdateMeRequest("", "");
 
@@ -209,6 +189,7 @@ class UserControllerTest {
 
     @Test
     @DisplayName("[400] JSON 형식이 잘못된 경우 400 Bad Request")
+    @WithMockCustomUser(id = USER_ID)
     void updateMe_400_badJson() throws Exception {
         String brokenJson = "{ \"nickname\": \"test\", }";
 
@@ -223,6 +204,7 @@ class UserControllerTest {
     }
     @Test
     @DisplayName("[204] 회원 탈퇴 성공")
+    @WithMockCustomUser(id = USER_ID)
     void withdrawMe_204_success() throws Exception {
         mockMvc.perform(delete("/users/me")
                         .with(csrf()))
@@ -233,6 +215,7 @@ class UserControllerTest {
 
     @Test
     @DisplayName("[403] 서비스에서 접근 거부 예외 발생 시 403 Forbidden")
+    @WithMockCustomUser(id = USER_ID)
     void withdrawMe_403_forbidden() throws Exception {
         doThrow(new BusinessException(ErrorCode.AUTH_FORBIDDEN))
                 .when(userService).withdrawMe(eq(USER_ID), any());

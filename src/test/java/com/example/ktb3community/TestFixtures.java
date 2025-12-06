@@ -3,9 +3,9 @@ package com.example.ktb3community;
 
 public class TestFixtures {
 
-    public static final Long USER_ID = 1L;
-    public static final Long POST_ID = 100L;
-    public static final Long COMMENT_ID = 50L;
+    public static final long USER_ID = 1L;
+    public static final long POST_ID = 100L;
+    public static final long COMMENT_ID = 50L;
     public static final String TOKEN_ID = "token";
 
     public static final String OLD_RT = "old-rt";
