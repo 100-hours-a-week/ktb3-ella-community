@@ -1,9 +1,8 @@
 package com.example.ktb3community.auth;
 
-import com.example.ktb3community.auth.domain.RefreshToken;
 import com.example.ktb3community.auth.dto.LoginRequest;
 import com.example.ktb3community.auth.dto.SignUpRequest;
-import com.example.ktb3community.auth.dto.Token;
+import com.example.ktb3community.auth.dto.TokenDto;
 import com.example.ktb3community.auth.service.AuthService;
 import com.example.ktb3community.auth.service.RefreshTokenService;
 import com.example.ktb3community.common.Role;
@@ -25,7 +24,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Optional;
 
-import static com.example.ktb3community.TestFixtures.USER_ID;
+import static com.example.ktb3community.TestFixtures.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForClassTypes.catchThrowable;
@@ -67,13 +66,13 @@ class AuthServiceTest {
             return user;
         });
 
-        given(jwtTokenProvider.createAccessToken(USER_ID)).willReturn("access.token");
-        given(refreshTokenService.createRefreshToken(any(User.class))).willReturn("refresh.token");
+        TokenDto expectedToken = new TokenDto(ACCESS_TOKEN, REFRESH_TOKEN);
+        given(refreshTokenService.createToken(any(User.class))).willReturn(expectedToken);
 
-        Token token = authService.signup(request);
+        TokenDto tokenDto = authService.signup(request);
 
-        assertThat(token.accessToken()).isEqualTo("access.token");
-        assertThat(token.refreshToken()).isEqualTo("refresh.token");
+        assertThat(tokenDto.accessToken()).isEqualTo(ACCESS_TOKEN);
+        assertThat(tokenDto.refreshToken()).isEqualTo(REFRESH_TOKEN);
 
         ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
         verify(userRepository).save(captor.capture());
@@ -81,6 +80,10 @@ class AuthServiceTest {
 
         assertThat(savedUser.getEmail()).isEqualTo("test@email.com");
         assertThat(savedUser.getPasswordHash()).isEqualTo(encodedPassword);
+        assertThat(savedUser.getNickname()).isEqualTo("nickname");
+        assertThat(savedUser.getRole()).isEqualTo(Role.ROLE_USER);
+
+        verify(refreshTokenService).createToken(savedUser);
     }
 
     @Test
@@ -100,7 +103,6 @@ class AuthServiceTest {
     @Test
     @DisplayName("signup: 이미 존재하는 닉네임이면 NICKNAME_ALREADY_EXIST 예외 발생")
     void signup_nicknameDuplicate_throws() {
-        // Given
         SignUpRequest request = new SignUpRequest("test@email.com", "pw", "nick", "img");
         given(userRepository.existsByEmail("test@email.com")).willReturn(false);
         given(userRepository.existsByNickname("nick")).willReturn(true);
@@ -122,13 +124,13 @@ class AuthServiceTest {
         given(userRepository.findByEmail("test@email.com")).willReturn(Optional.of(user));
         given(passwordEncoder.matches("password", "encodedPassword")).willReturn(true);
 
-        given(jwtTokenProvider.createAccessToken(1L)).willReturn("access.token");
-        given(refreshTokenService.createRefreshToken(user)).willReturn("refresh.token");
+        TokenDto expectedToken = new TokenDto(ACCESS_TOKEN, REFRESH_TOKEN);
+        given(refreshTokenService.createToken(user)).willReturn(expectedToken);
 
-        Token token = authService.login(request);
+        TokenDto tokenDto = authService.login(request);
 
-        assertThat(token.accessToken()).isEqualTo("access.token");
-        assertThat(token.refreshToken()).isEqualTo("refresh.token");
+        assertThat(tokenDto.accessToken()).isEqualTo(ACCESS_TOKEN);
+        assertThat(tokenDto.refreshToken()).isEqualTo(REFRESH_TOKEN);
     }
 
     @Test
@@ -155,26 +157,19 @@ class AuthServiceTest {
     }
 
     @Test
-    @DisplayName("refresh: 유효한 리프레시 토큰으로 액세스 토큰 재발급 및 리프레시 토큰 교체(Rotate)")
+    @DisplayName("refresh: 유효한 리프레시 토큰으로 액세스 토큰 재발급 및 리프레시 토큰 교체")
     void refresh_success() {
         String oldRefreshToken = "old.refresh.token";
-        String newRefreshToken = "new.refresh.token";
-        String newAccessToken = "new.access.token";
-        User user = newUser("email", "pw");
+        String oldAccessToken = "old.access.token";
+        TokenDto rotated = new TokenDto("new.access.token", "new.refresh.token");
 
-        RefreshToken validToken = RefreshToken.createNew(100L, user, null);
-        given(refreshTokenService.getValidTokenOrThrow(oldRefreshToken)).willReturn(validToken);
+        given(refreshTokenService.rotate(oldRefreshToken, oldAccessToken))
+                .willReturn(rotated);
 
-        given(jwtTokenProvider.createAccessToken(user.getId())).willReturn(newAccessToken);
-        given(refreshTokenService.rotate(oldRefreshToken)).willReturn(newRefreshToken);
+        TokenDto tokenDto = authService.refresh(oldRefreshToken, oldAccessToken);
 
-        Token token = authService.refresh(oldRefreshToken);
-
-        assertThat(token.accessToken()).isEqualTo(newAccessToken);
-        assertThat(token.refreshToken()).isEqualTo(newRefreshToken);
-
-        verify(refreshTokenService).getValidTokenOrThrow(oldRefreshToken);
-        verify(refreshTokenService).rotate(oldRefreshToken);
+        assertThat(tokenDto).isEqualTo(rotated);
+        verify(refreshTokenService).rotate(oldRefreshToken, oldAccessToken);
     }
 
     @Test

@@ -35,21 +35,20 @@ public class RefreshTokenService {
 
     // 최초 로그인 시 새로운 familyId 생성 후 토큰 발급
     @Transactional
-    public TokenDto createToken(Long userId) {
+    public TokenDto createToken(User user) {
         String familyId = UUID.randomUUID().toString();
-        return createRefreshToken(userId, familyId);
+        return createRefreshToken(user, familyId);
     }
 
     // 로그인 유지 시 기존 familyId로 토큰 발급
     @Transactional
-    public TokenDto createRefreshToken(Long userId, String familyId) {
-        User user = userRepository.findByIdOrThrow(userId);
+    public TokenDto createRefreshToken(User user, String familyId) {
         String newAccessToken = jwtTokenProvider.createAccessToken(user, familyId);
         String newRefreshToken = UUID.randomUUID().toString();
 
         refreshTokenRepository.save(RefreshToken.builder()
                 .token(newRefreshToken)
-                .userId(userId)
+                .userId(user.getId())
                 .familyId(familyId)
                 .build());
 
@@ -67,7 +66,8 @@ public class RefreshTokenService {
         RefreshToken oldToken = validateAndHandleOldToken(oldRefreshToken, claims);
 
         refreshTokenRepository.delete(oldToken);
-        TokenDto newTokenDto = createRefreshToken(oldToken.getUserId(), oldToken.getFamilyId());
+        User user = userRepository.findByIdOrThrow(oldToken.getUserId());
+        TokenDto newTokenDto = createRefreshToken(user, oldToken.getFamilyId());
         putToGraceCache(oldRefreshToken, newTokenDto);
 
         return newTokenDto;

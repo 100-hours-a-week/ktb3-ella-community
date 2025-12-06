@@ -34,7 +34,7 @@ public class AuthService {
         }
         User saved = userRepository.save(User.createNew(email, hashedPassword, signUpRequest.nickname(), signUpRequest.profileImageUrl(), Role.ROLE_USER));
 
-        return refreshTokenService.createToken(saved.getId());
+        return refreshTokenService.createToken(saved);
     }
 
     @Transactional
@@ -44,7 +44,7 @@ public class AuthService {
         if (!passwordEncoder.matches(loginRequest.password(), user.getPasswordHash())) {
             throw new UserNotFoundException();
         }
-        return refreshTokenService.createToken(user.getId());
+        return refreshTokenService.createToken(user);
     }
 
     @Transactional

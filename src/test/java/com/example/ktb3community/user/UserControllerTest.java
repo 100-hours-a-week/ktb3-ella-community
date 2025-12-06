@@ -47,8 +47,6 @@ class UserControllerTest {
     @MockitoBean
     private UserService userService;
 
-    private CustomUserDetails principal;
-
     @BeforeEach
     void setUp() {
         User mockUser = User.builder()
@@ -59,7 +57,7 @@ class UserControllerTest {
                 .role(Role.ROLE_USER)
                 .build();
 
-        principal = CustomUserDetails.from(mockUser);
+        CustomUserDetails principal = CustomUserDetails.from(mockUser);
 
         var auth = new UsernamePasswordAuthenticationToken(
                 principal,
