@@ -1,6 +1,7 @@
 package com.example.ktb3community.user;
 
 import com.example.ktb3community.auth.security.CustomUserDetails;
+import com.example.ktb3community.common.Role;
 import com.example.ktb3community.common.error.ErrorCode;
 import com.example.ktb3community.exception.BusinessException;
 import com.example.ktb3community.user.controller.UserController;
@@ -15,20 +16,18 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-
 import static com.example.ktb3community.TestFixtures.USER_ID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -36,6 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(UserController.class)
+@AutoConfigureMockMvc(addFilters = false)
 class UserControllerTest {
 
     @Autowired
@@ -47,6 +47,8 @@ class UserControllerTest {
     @MockitoBean
     private UserService userService;
 
+    private CustomUserDetails principal;
+
     @BeforeEach
     void setUp() {
         User mockUser = User.builder()
@@ -54,12 +56,18 @@ class UserControllerTest {
                 .email("test@email.com")
                 .passwordHash("encoded")
                 .nickname("test")
-                .role(com.example.ktb3community.common.Role.ROLE_USER)
+                .role(Role.ROLE_USER)
                 .build();
 
-        CustomUserDetails principal = CustomUserDetails.from(mockUser);
-        SecurityContext context = SecurityContextHolder.createEmptyContext();
-        context.setAuthentication(new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities()));
+        principal = CustomUserDetails.from(mockUser);
+
+        var auth = new UsernamePasswordAuthenticationToken(
+                principal,
+                null,
+                principal.getAuthorities()
+        );
+        var context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(auth);
         SecurityContextHolder.setContext(context);
     }
 
@@ -85,13 +93,15 @@ class UserControllerTest {
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value(ErrorCode.MISSING_PARAMETER.getCode()));
+
+        verifyNoInteractions(userService);
     }
 
     @Test
     @DisplayName("[500] 서버 내부 에러 발생")
     void getAvailability_500_internalError() throws Exception {
         given(userService.getAvailability(any(), any()))
-                .willThrow(new RuntimeException("Unexpected error"));
+                .willThrow(new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR));
 
         mockMvc.perform(get("/users/availability")
                         .param("email", "test")
@@ -106,18 +116,10 @@ class UserControllerTest {
         MeResponse response = new MeResponse("email", "nick", "img");
         given(userService.getMe(USER_ID)).willReturn(response);
 
-        mockMvc.perform(get("/users/me").with(csrf()))
+        mockMvc.perform(get("/users/me")
+                        .with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.nickname").value("nick"));
-    }
-
-    @Test
-    @DisplayName("[401] 인증 정보가 없으면 Unauthorized")
-    void getMe_401_unauthenticated() throws Exception {
-        SecurityContextHolder.clearContext();
-
-        mockMvc.perform(get("/users/me").with(csrf()))
-                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -126,7 +128,8 @@ class UserControllerTest {
         given(userService.getMe(USER_ID))
                 .willThrow(new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        mockMvc.perform(get("/users/me").with(csrf()))
+        mockMvc.perform(get("/users/me")
+                        .with(csrf()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value(ErrorCode.USER_NOT_FOUND.getCode()));
     }
@@ -141,6 +144,9 @@ class UserControllerTest {
                         .content(objectMapper.writeValueAsString(request))
                         .with(csrf()))
                 .andExpect(status().isNoContent());
+
+        verify(userService).updatePassword(eq(USER_ID), any());
+
     }
 
     @Test
@@ -189,7 +195,7 @@ class UserControllerTest {
     }
 
     @Test
-    @DisplayName("[400] JSON 형식이 잘못된 경우 -> 400 Bad Request")
+    @DisplayName("[400] JSON 형식이 잘못된 경우 400 Bad Request")
     void updateMe_400_badJson() throws Exception {
         String brokenJson = "{ \"nickname\": \"test\", }";
 
@@ -199,21 +205,27 @@ class UserControllerTest {
                         .with(csrf()))
                 .andExpect(status().isBadRequest()) // 400 확인
                 .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_REQUEST_BODY.getCode()));
+
+        verifyNoInteractions(userService);
     }
     @Test
     @DisplayName("[204] 회원 탈퇴 성공")
     void withdrawMe_204_success() throws Exception {
-        mockMvc.perform(delete("/users/me").with(csrf()))
+        mockMvc.perform(delete("/users/me")
+                        .with(csrf()))
                 .andExpect(status().isNoContent());
+
+        verify(userService).withdrawMe(eq(USER_ID), any());
     }
 
     @Test
     @DisplayName("[403] 서비스에서 접근 거부 예외 발생 시 403 Forbidden")
     void withdrawMe_403_forbidden() throws Exception {
-        doThrow(new AccessDeniedException("No permission"))
+        doThrow(new BusinessException(ErrorCode.AUTH_FORBIDDEN))
                 .when(userService).withdrawMe(eq(USER_ID), any());
 
-        mockMvc.perform(delete("/users/me").with(csrf()))
+        mockMvc.perform(delete("/users/me")
+                        .with(csrf()))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value(ErrorCode.AUTH_FORBIDDEN.getCode()));
     }

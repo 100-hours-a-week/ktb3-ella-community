@@ -192,14 +192,13 @@ class UserServiceTest {
         userService.updatePassword(USER_ID, request);
 
         assertThat(user.getPasswordHash()).isEqualTo("hashedPassword");
+        verify(passwordEncoder).encode("newPassword");
     }
 
     @Test
     @DisplayName("withdrawMe: 회원 탈퇴 시 소프트 삭제 및 토큰을 폐기한다")
     void withdrawMe_success() {
-        User user = User.builder().id(USER_ID).build();
         HttpServletResponse response = mock(HttpServletResponse.class);
-        given(userRepository.findByIdOrThrow(USER_ID)).willReturn(user);
 
         userService.withdrawMe(USER_ID, response);
 
@@ -207,6 +206,6 @@ class UserServiceTest {
         verify(postRepository).softDeleteByUserId(eq(USER_ID), isA(Instant.class));
         verify(userRepository).softDeleteById(eq(USER_ID), isA(Instant.class));
 
-        verify(refreshTokenService).revokeAllByUser(user);
+        verify(refreshTokenService).revokeAllByUser(USER_ID);
     }
 }
