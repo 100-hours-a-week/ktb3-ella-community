@@ -126,12 +126,8 @@ public class RefreshTokenService {
             throw new BusinessException(ErrorCode.INVALID_ACCESS_TOKEN);
         }
 
-        try {
-            Long userId = Long.valueOf(userIdClaim);
-            return new AccessClaims(familyId, userId);
-        } catch (NumberFormatException e) {
-            throw new BusinessException(ErrorCode.INVALID_ACCESS_TOKEN);
-        }
+        Long userId = Long.valueOf(userIdClaim);
+        return new AccessClaims(familyId, userId);
     }
 
     // old RT 검증 및 탈취/위조 처리

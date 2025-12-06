@@ -277,7 +277,6 @@ class RefreshTokenServiceTest {
         verify(refreshTokenRepository).delete(oldToken);
     }
 
-
     @Test
     @DisplayName("revoke: 해당 RT가 존재하면 삭제한다")
     void revoke_success() {
