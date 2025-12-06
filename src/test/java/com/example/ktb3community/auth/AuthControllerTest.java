@@ -133,6 +133,20 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_REFRESH_TOKEN.getCode()));
     }
 
+    @ParameterizedTest
+    @DisplayName("[401] 리프레시 토큰 쿠키가 공백이면 예외 발생")
+    @ValueSource(strings = {"", "  ", "\t", "\n"})
+    void refresh_401_blankCookie(String invalid) throws Exception {
+        mockMvc.perform(post("/auth/refresh")
+                        .cookie(new Cookie("refresh_token", invalid))
+                        .header("Authorization", "Bearer " + ACCESS_TOKEN)
+                        .with(csrf()))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_REFRESH_TOKEN.getCode()));
+
+        verifyNoInteractions(authService, tokenResponder);
+    }
+
     @Test
     @DisplayName("[204] 로그아웃 성공")
     void logout_204_success() throws Exception {
@@ -156,11 +170,11 @@ class AuthControllerTest {
     }
 
     @ParameterizedTest
-    @DisplayName("[401] 리프레시 토큰 쿠키가 공백이면 예외 발생")
+    @DisplayName("[401] 로그아웃 시리프레시 토큰 쿠키가 공백이면 예외 발생")
     @ValueSource(strings = {"", "  ", "\t", "\n"})
-    void refresh_401_blankCookie(String invalid) throws Exception {
-        mockMvc.perform(post("/auth/refresh")
-                        .cookie(new Cookie("refresh_token", invalid))  // null 안 줌!
+    void logout_401_blankCookie(String invalid) throws Exception {
+        mockMvc.perform(post("/auth/logout")
+                        .cookie(new Cookie("refresh_token", invalid))
                         .header("Authorization", "Bearer " + ACCESS_TOKEN)
                         .with(csrf()))
                 .andExpect(status().isUnauthorized())
