@@ -8,6 +8,9 @@ import com.example.ktb3community.user.domain.User;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
@@ -89,6 +92,16 @@ class UserTest {
     }
 
     @Test
+    @DisplayName("updateNickname: 기존 닉네임과 동일한 경우 넘어간다")
+    void updateNickname_sameNick_noChange() {
+        User user = user().nickname("sameNick").build();
+
+        user.updateNickname("sameNick");
+
+        assertEquals("sameNick", user.getNickname());
+    }
+
+    @Test
     @DisplayName("updateProfileImageUrl: 정상 변경 시 trim되어 반영된다")
     void updateProfileImageUrl_success() {
         User user = user().build();
@@ -112,6 +125,16 @@ class UserTest {
     }
 
     @Test
+    @DisplayName("updateProfileImageUrl: 기존 이미지 url과 동일한 경우 넘어간다")
+    void updateProfileImageUrl_sameUrl_noChange() {
+        User user = user().profileImageUrl("http://same-image").build();
+
+        user.updateProfileImageUrl("http://same-image");
+
+        assertEquals("http://same-image", user.getProfileImageUrl());
+    }
+
+    @Test
     @DisplayName("updatePasswordHash: 정상 변경 확인")
     void updatePasswordHash_success() {
         User user = user().build();
@@ -121,14 +144,16 @@ class UserTest {
         assertEquals("passwordHashNew", user.getPasswordHash());
     }
 
-    @Test
-    @DisplayName("updatePasswordHash: 암호화된 비밀번호가 공백일 경우 예외가 발생한다")
-    void updatePasswordHash_blank_throws() {
+    @ParameterizedTest
+    @DisplayName("updatePasswordHash: 암호화된 비밀번호가 공백이거나 null일 경우 예외가 발생한다")
+    @NullAndEmptySource
+    @ValueSource(strings = {"  ", "\t", "\n"})
+    void updatePasswordHash_blank_throws(String invalid) {
         User user = user().build();
 
         BusinessException ex = assertThrows(
                 BusinessException.class,
-                () -> user.updatePasswordHash("   ")
+                () -> user.updatePasswordHash(invalid)
         );
 
         assertEquals(ErrorCode.INVALID_INPUT_VALUE, ex.getErrorCode());
@@ -208,5 +233,16 @@ class UserTest {
         };
 
         assertThat(original).isEqualTo(proxy);
+    }
+
+    @Test
+    @DisplayName("equals: User가 아닌 타입 또는 null과는 동등하지 않다")
+    void equals_nonUser_andNull_isNotEqual() {
+        User user = user().build();
+        ReflectionTestUtils.setField(user, "id", 1L);
+
+        assertThat(user).isNotEqualTo("not a user");
+
+        assertThat(user == null).isFalse();
     }
 }

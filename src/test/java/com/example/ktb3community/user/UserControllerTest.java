@@ -82,6 +82,22 @@ class UserControllerTest {
     }
 
     @Test
+    @DisplayName("[200] 파라미터 하나만으로 중복 확인 성공")
+    void getAvailability_200_success_nicknameOnly() throws Exception {
+        AvailabilityResponse response = new AvailabilityResponse(true, true);
+        given(userService.getAvailability(null, "nick"))
+                .willReturn(response);
+
+        mockMvc.perform(get("/users/availability")
+                        .param("nickname", "nick")
+                        .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.nicknameAvailable").value(true));
+
+        verify(userService).getAvailability(null, "nick");
+    }
+
+    @Test
     @DisplayName("[400] 파라미터가 둘 다 없으면 Bad Request")
     void getAvailability_400_missingParams() throws Exception {
 
