@@ -172,4 +172,15 @@ class CommentTest {
         };
         assertThat(original).isEqualTo(proxy);
     }
+
+    @Test
+    @DisplayName("equals: Comment 아닌 타입 또는 null과는 동등하지 않다")
+    void equals_nonComment_andNull_isNotEqual() {
+        Comment comment = Comment.builder().build();
+        ReflectionTestUtils.setField(comment, "id", 1L);
+
+        assertThat(comment).isNotEqualTo("not a comment");
+
+        assertThat(comment.equals(null)).isFalse();
+    }
 }

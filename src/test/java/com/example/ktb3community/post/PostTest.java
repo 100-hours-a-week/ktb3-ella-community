@@ -215,4 +215,15 @@ class PostTest {
 
         assertThat(original).isEqualTo(proxy);
     }
+
+    @Test
+    @DisplayName("equals: Post가 아닌 타입 또는 null과는 동등하지 않다")
+    void equals_nonPost_andNull_isNotEqual() {
+        Post post = post().build();
+        ReflectionTestUtils.setField(post, "id", 1L);
+
+        AssertionsForClassTypes.assertThat(post).isNotEqualTo("not a post");
+
+        AssertionsForClassTypes.assertThat(post.equals(null)).isFalse();
+    }
 }
