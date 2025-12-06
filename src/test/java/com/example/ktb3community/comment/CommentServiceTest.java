@@ -13,7 +13,6 @@ import com.example.ktb3community.post.domain.Post;
 import com.example.ktb3community.post.repository.PostRepository;
 import com.example.ktb3community.post.service.PostCommentCounter;
 import com.example.ktb3community.user.domain.User;
-import com.example.ktb3community.user.exception.UserNotFoundException;
 import com.example.ktb3community.user.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,18 +25,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 import static com.example.ktb3community.TestEntityFactory.comment;
 import static com.example.ktb3community.TestEntityFactory.post;
 import static com.example.ktb3community.TestEntityFactory.user;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForClassTypes.catchThrowable;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anySet;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.never;
@@ -65,9 +60,8 @@ class CommentServiceTest {
         Post post = post().id(postId).build();
         Comment savedComment = comment(post, user).id(100L).content("New Comment").build();
 
-        given(userRepository.findByIdOrThrow(userId)).willReturn(user);
         given(postRepository.findByIdOrThrow(postId)).willReturn(post);
-
+        given(userRepository.findByIdOrThrow(userId)).willReturn(user);
         given(commentRepository.save(any(Comment.class))).willReturn(savedComment);
 
         CommentResponse expectedResponse = new CommentResponse(100L, "New Comment", null, null);
@@ -77,7 +71,7 @@ class CommentServiceTest {
 
         assertThat(response).isEqualTo(expectedResponse);
 
-        verify(postCommentCounter).increaseCommentCount(postId);
+        verify(postCommentCounter).increaseCommentCount(post);
 
         ArgumentCaptor<Comment> captor = ArgumentCaptor.forClass(Comment.class);
         verify(commentRepository).save(captor.capture());
@@ -97,10 +91,8 @@ class CommentServiceTest {
 
         Page<Comment> commentPage = new PageImpl<>(List.of(c1, c2));
 
-        given(postRepository.findByIdOrThrow(postId)).willReturn(post);
-        given(commentRepository.findByPost(any(Post.class), any(PageRequest.class))).willReturn(commentPage);
-
-        given(userRepository.findAllByIdIn(Set.of(1L, 2L))).willReturn(List.of(user1, user2));
+        given(commentRepository.findByPostId(eq(postId), any(PageRequest.class)))
+                .willReturn(commentPage);
 
         given(commentMapper.toCommentResponse(any(), any())).willAnswer(invocation -> {
             Comment c = invocation.getArgument(0);
@@ -117,26 +109,32 @@ class CommentServiceTest {
     @Test
     @DisplayName("getCommentList: 작성자 정보가 없으면 UserNotFoundException 발생")
     void getCommentList_userNotFound_throws() {
-        Long postId = 10L;
-        Post post = post().id(postId).build();
-        User user1 = user().id(1L).nickname("nick").build();
-        Comment c1 = comment(post, user1).id(100L).content("Content1").build();
+        Long commentId = 100L;
+        Long ownerId = 1L;
+        long otherId = 2L;
 
-        Page<Comment> commentPage = new PageImpl<>(List.of(c1));
+        User owner = user().id(ownerId).nickname("nick").build();
+        Post post = post().id(10L).build();
+        Comment comment = comment(post, owner).id(commentId).content("Old Content").build();
 
-        given(postRepository.findByIdOrThrow(postId)).willReturn(post);
-        given(commentRepository.findByPost(any(Post.class), any(PageRequest.class))).willReturn(commentPage);
+        given(commentRepository.findByIdOrThrow(commentId)).willReturn(comment);
 
-        given(userRepository.findAllByIdIn(anySet())).willReturn(Collections.emptyList());
+        Throwable thrown = catchThrowable(() ->
+                commentService.updateComment(commentId, otherId, new CreateCommentRequest("New"))
+        );
 
-        assertThatThrownBy(() -> commentService.getCommentList(postId, 1))
-                .isInstanceOf(UserNotFoundException.class);
+        assertThat(thrown)
+                .isInstanceOf(BusinessException.class)
+                .extracting(ex -> ((BusinessException) ex).getErrorCode())
+                .isEqualTo(ErrorCode.AUTH_FORBIDDEN);
+
+        assertThat(comment.getContent()).isEqualTo("Old Content");
     }
 
     @Test
     @DisplayName("updateComment: 작성자 본인이면 댓글을 수정한다")
     void updateComment_success() {
-        Long commentId = 100L;
+        long commentId = 100L;
         Long userId = 1L;
         CreateCommentRequest request = new CreateCommentRequest("Updated Content");
 
@@ -145,7 +143,6 @@ class CommentServiceTest {
         Comment comment = comment(post, user).id(commentId).content("Old Content").build();
 
         given(commentRepository.findByIdOrThrow(commentId)).willReturn(comment);
-        given(userRepository.findByIdOrThrow(userId)).willReturn(user);
 
         CommentResponse expectedResponse = new CommentResponse(commentId, "Updated Content", null, null);
         given(commentMapper.toCommentResponse(comment, user)).willReturn(expectedResponse);
@@ -153,7 +150,6 @@ class CommentServiceTest {
         CommentResponse response = commentService.updateComment(commentId, userId, request);
 
         assertThat(response.content()).isEqualTo("Updated Content");
-
         assertThat(comment.getContent()).isEqualTo("Updated Content");
     }
 
@@ -169,7 +165,6 @@ class CommentServiceTest {
         Comment comment = comment(post().id(10L).build(), owner).id(commentId).content("Old Content").build();
 
         given(commentRepository.findByIdOrThrow(commentId)).willReturn(comment);
-        given(userRepository.findByIdOrThrow(otherId)).willReturn(otherUser);
 
         Throwable thrown = catchThrowable(() -> commentService.updateComment(commentId, otherId, new CreateCommentRequest("New")));
 
@@ -185,7 +180,7 @@ class CommentServiceTest {
     @DisplayName("deleteComment: 작성자 본인이면 댓글을 삭제하고 카운트를 감소시킨다")
     void deleteComment_success() {
         Long commentId = 100L;
-        Long userId = 1L;
+        long userId = 1L;
         Long postId = 10L;
 
         User user = user().id(userId).nickname("nick").build();
@@ -193,14 +188,12 @@ class CommentServiceTest {
         Comment comment = comment(post, user).id(commentId).content("Content").build();
 
         given(commentRepository.findByIdOrThrow(commentId)).willReturn(comment);
-        given(userRepository.findByIdOrThrow(userId)).willReturn(user);
         given(postRepository.findByIdOrThrow(postId)).willReturn(post);
 
         commentService.deleteComment(commentId, userId);
 
         assertThat(comment.getDeletedAt()).isNotNull();
-
-        verify(postCommentCounter).decreaseCommentCount(postId);
+        verify(postCommentCounter).decreaseCommentCount(post);
     }
 
     @Test
@@ -208,19 +201,18 @@ class CommentServiceTest {
     void deleteComment_forbidden_throws() {
         Long commentId = 100L;
         Long ownerId = 1L;
-        Long otherId = 2L;
+        long otherId = 2L;
         Long postId = 10L;
 
         User owner = user().id(ownerId).nickname("nick").build();
-        User otherUser = user().id(otherId).nickname("nick").build();
         Post post = post().id(postId).build();
         Comment comment = comment(post, owner).id(commentId).content("Content").build();
 
         given(commentRepository.findByIdOrThrow(commentId)).willReturn(comment);
-        given(userRepository.findByIdOrThrow(otherId)).willReturn(otherUser);
 
-
-        Throwable thrown = catchThrowable(() -> commentService.deleteComment(commentId, otherId));
+        Throwable thrown = catchThrowable(() ->
+                commentService.deleteComment(commentId, otherId)
+        );
 
         assertThat(thrown)
                 .isInstanceOf(BusinessException.class)

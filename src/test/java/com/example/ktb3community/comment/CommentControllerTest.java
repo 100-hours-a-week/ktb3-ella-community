@@ -5,6 +5,7 @@ import com.example.ktb3community.comment.controller.CommentController;
 import com.example.ktb3community.comment.dto.CommentResponse;
 import com.example.ktb3community.comment.dto.CreateCommentRequest;
 import com.example.ktb3community.comment.service.CommentService;
+import com.example.ktb3community.common.Role;
 import com.example.ktb3community.common.error.ErrorCode;
 import com.example.ktb3community.common.pagination.PageResponse;
 import com.example.ktb3community.user.domain.User;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -34,6 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(CommentController.class)
+@AutoConfigureMockMvc(addFilters = false)
 class CommentControllerTest {
 
     @Autowired MockMvc mockMvc;
@@ -46,13 +49,21 @@ class CommentControllerTest {
     void setUp() {
         User mockUser = User.builder()
                 .id(USER_ID)
-                .email("user@test.com")
-                .role(com.example.ktb3community.common.Role.ROLE_USER)
+                .email("test@email.com")
+                .passwordHash("encoded")
+                .nickname("test")
+                .role(Role.ROLE_USER)
                 .build();
 
         CustomUserDetails principal = CustomUserDetails.from(mockUser);
-        SecurityContext context = SecurityContextHolder.createEmptyContext();
-        context.setAuthentication(new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities()));
+
+        var auth = new UsernamePasswordAuthenticationToken(
+                principal,
+                null,
+                principal.getAuthorities()
+        );
+        var context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(auth);
         SecurityContextHolder.setContext(context);
     }
 
