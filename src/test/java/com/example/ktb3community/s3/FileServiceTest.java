@@ -100,10 +100,12 @@ class FileServiceTest {
         verify(s3Client).deleteObject(any(DeleteObjectRequest.class));
     }
 
-    @Test
+    @ParameterizedTest
     @DisplayName("deleteImageIfChanged: 기존 이미지가 없거나(null/blank) 변경되지 않았으면 삭제하지 않는다")
-    void deleteImageIfChanged_skip() {
-        fileService.deleteImageIfChanged(null, "new.jpg");
+    @NullAndEmptySource
+    @ValueSource(strings = {"  ", "\t", "\n"})
+    void deleteImageIfChanged_skip(String invalid) {
+        fileService.deleteImageIfChanged(invalid, "new.jpg");
         verify(s3Client, never()).deleteObject(any(DeleteObjectRequest.class));
 
         fileService.deleteImageIfChanged("same.jpg", "same.jpg");
